@@ -74,8 +74,11 @@ class Arm7tdmi{
 
         Arm7tdmi(Bus* bus);
 
-        u32 rReg(u8 reg); // read register in ARM mode
-        void wReg(u8 reg, u32 value); // write register in ARM mode
+        // reads register reg
+        u32 rReg(u8 reg); 
+
+        // writes value to register reg 
+        void wReg(u8 reg, u32 value); 
         
         u16 rRegTb(u8 reg); // read register in THUMB mode
         void wRegTb(u8 reg, u16 value); // write register in THUMB mode
@@ -84,8 +87,6 @@ class Arm7tdmi{
         // (CPSR if no SPSR in current mode)
         u32 getSPSRValue();
 
-        void MUL_NZ(u32 op);
-       
         void B_BL(u32 op); // merged B and BL altogether
         void BX(u32 op);
 
@@ -131,6 +132,18 @@ class Arm7tdmi{
         void MOV(u32 op);
         void BIC(u32 op);
         void MVN(u32 op);
+
+        void LDM(u32 op);
+        void STM(u32 op);
+
+        void LDR(u32 op);
+        void STR(u32 op);
+
+        void STR2(u32 op);
+        void LDR2(u32 op);
+
+        void SWP(u32 op);
+        void SWPB(u32 op);
 
         void checkCPSR_DP(u32& op, const u8& shifterCarryOut);
 };
