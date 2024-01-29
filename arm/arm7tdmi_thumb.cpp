@@ -3,6 +3,8 @@
 #define REG_20(x) (x & 0x7) // register pointed from bits 2 to 0
 #define REG_10_8(x) ((x>>8) & 0x7) // register pointed from bits 10 to 8
 
+#define CHECKCPSR cpsr = (cpsr & ~N) | ((r[rd] & BIT(31)) ? N : 0); \
+				  cpsr = (cpsr & ~Z) | ((r[rd] == 0) ? Z : 0)
 
 // THUMB operations
 
@@ -88,12 +90,13 @@ void Arm7tdmi::TB_BIC(u16 op) {
 	cpsr = (cpsr & ~Z) | ((r[rd] == 0) ? Z : 0);
 }
 
+
+
 void Arm7tdmi::TB_MVN(u16 op) {
 	u8 rd = REG_20(op);
 	u8 rm = REG_53(op);
 	r[rd] = ~r[rm];
-	cpsr = (cpsr & ~N) | ((r[rd] & BIT(31)) ? N : 0);
-	cpsr = (cpsr & ~Z) | ((r[rd] == 0) ? Z : 0);
+	CHECKCPSR;
 }
 
 void Arm7tdmi::TB_TST(u16 op) {
