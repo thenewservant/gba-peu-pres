@@ -1,4 +1,123 @@
+#ifndef TESTS_H
+#define TESTS_H
+
 #include "../arm7tdmi.h"
+
+
+
+
+#include <cassert>
+
+void test_SUB() {
+    Arm7tdmi cpu = Arm7tdmi(nullptr);
+
+    // Test SUB où le débordement ne se produit pas
+    cpu.wReg(1, 10);
+    cpu.wReg(2, 5);
+    cpu.SUB(0xE0411002); // SUB R1, R1, R2
+    assert(cpu.rReg(1) == 5);
+    assert((cpu.cpsr & V) == 0); // V flag should not be set
+
+    // Test SUB où le débordement se produit
+    cpu.wReg(1, 0x80000000);
+    cpu.wReg(2, 1);
+    cpu.SUB(0xE0411002); // SUB R1, R1, R2
+    assert(cpu.rReg(1) == 0x7FFFFFFF);
+    assert((cpu.cpsr & V) == 0); // V flag should not be set
+}
+
+void test_CMP() {
+	Arm7tdmi cpu = Arm7tdmi(nullptr);
+
+	// Test CMP où le débordement ne se produit pas
+	cpu.wReg(1, 10);
+	cpu.wReg(2, 5);
+	cpu.CMP(0xE1510002); // CMP R1, R2
+	assert(cpu.rReg(1) == 10);
+	assert((cpu.cpsr & V) == 0); // V flag should not be set
+
+	// Test CMP où le débordement se produit
+	cpu.wReg(1, 0x80000000);
+	cpu.wReg(2, 1);
+	cpu.evaluateArm(0xE1510002); // CMP R1, R2
+	assert(cpu.rReg(1) == 0x80000000);
+	assert((cpu.cpsr & V) == 0); // V flag should not be set
+
+    cpu.wReg(1, 0x80000000);
+	cpu.wReg(2, 0x80000000);
+	cpu.evaluateArm(0xE1510002); // CMP R1, R2
+	assert(cpu.rReg(1) == 0x80000000);
+	assert((cpu.cpsr & N) == 0); // N flag should not  be set
+    assert((cpu.cpsr & Z) == Z); //Z flag should be set
+    assert((cpu.cpsr & C) == C); //C flag should be set
+
+}
+
+void test_SUB2() {
+    Arm7tdmi cpu = Arm7tdmi(nullptr);
+
+    // Test SUB avec un opérande immédiat
+    cpu.wReg(1, 10);
+    cpu.SUB(0xE2411005); // SUB R1, R1, #5
+    assert(cpu.rReg(1) == 5);
+
+    // Test SUB avec un opérande de registre
+    cpu.wReg(1, 10);
+    cpu.wReg(2, 3);
+    cpu.SUB(0xE0411002); // SUB R1, R1, R2
+    assert(cpu.rReg(1) == 7);
+
+    // Test SUB avec un décalage logique à gauche
+    cpu.wReg(1, 32);
+    cpu.wReg(2, 1);
+    cpu.SUB(0xE1A012A2); // SUB R1, R1, R2, LSL #5
+    assert(cpu.rReg(1) == 0);
+
+    // Test SUB avec un décalage logique à droite
+    cpu.wReg(1, 32);
+    cpu.wReg(2, 64);
+    cpu.SUB(0xe04110a2); // SUB R1, R1, R2, LSR #1
+    assert(cpu.rReg(1) == 0);
+
+    // Test SUB avec une rotation à droite
+    cpu.wReg(1, 0x80000000);
+    cpu.wReg(2, 0x40000000);
+    cpu.SUB(0xe04110e2); // SUB R1, R1, R2, ROR #1
+    assert(cpu.rReg(1) == 0x60000000);
+}
+
+void test_ADD() {
+    Arm7tdmi cpu = Arm7tdmi(new Bus());
+
+    // Test ADD avec un opérande immédiat
+    cpu.wReg(1, 5);
+    cpu.ADD(0xE2811007); // ADD R1, R1, #7
+    assert(cpu.rReg(1) == 12);
+
+    // Test ADD avec un opérande de registre
+    cpu.wReg(2, 3);
+    cpu.ADD(0xE0801002); // ADD R1, R0, R2
+    assert(cpu.rReg(1) == 3);
+
+    // Test ADD avec un décalage logique à gauche
+    cpu.wReg(2, 1);
+    cpu.ADD(0xe0801282); // ADD R1, R0, R2, LSL #5
+    assert(cpu.rReg(1) == 32);
+
+    // Test ADD avec un décalage logique à droite
+    cpu.wReg(2, 32);
+    cpu.ADD(0xe08012a2); // ADD R1, R0, R2, LSR #5
+    assert(cpu.rReg(1) == 1);
+
+    // Test ADD avec une rotation à droite
+    cpu.wReg(2, 0x80000000);
+    cpu.ADD(0xe08010e2); // ADD R1, R0, R2, ROR #1
+    assert(cpu.rReg(1) == 0x40000000);
+}
+
+
+
+
 /*
 add r0, r1, #123
 umull r4, r5, r2, r0
@@ -95,3 +214,12 @@ void testRom1(Arm7tdmi* cpu) {
         cpu->evaluateArm(instrs[i]);
     }
 }
+
+void testAddVFLAG(Arm7tdmi* cpu) {
+    resetCPU(cpu);
+    cpu->evaluateArm(0xe3e00102);
+    cpu->evaluateArm(0xe3a01001);
+    cpu->evaluateArm(0xe0902001);
+}
+
+#endif // TESTS_H

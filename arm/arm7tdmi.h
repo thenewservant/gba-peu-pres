@@ -5,7 +5,7 @@
 #include <cstdlib>
 #include <cstdint>
 #include "../common/types.h"
-#include "gba_bus.h"
+#include "../bus/gba_bus.h"
 
 enum ARM7TDMI_MODE{
     ARM7TDMI_MODE_USER = 0x10,
@@ -157,10 +157,11 @@ class Arm7tdmi{
         void MRS(u32 op);
 
         void checkCPSR_DP(u32& op, const u8& shifterCarryOut);
+        void TB_MOV(u16 op);
+        void TB_COND_BRANCH(u16 op);
+        void TB_UNCOND_BRANCH(u16 op);
 };
 
 bool evalCondition(u32 cpsr, u32 op);
-
-int main();
 
 #endif

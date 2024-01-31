@@ -1,6 +1,5 @@
 #include "arm7tdmi.h"
 #include <windows.h>
-#include "tests/tests.h"
 
 /* arm7tdmi.cpp
 * General operation, instruction decoding, register access, etc.
@@ -13,7 +12,7 @@
 #define IS_BLOCK_DATA_TRANSFER(op)    ((op & 0x0E000000) == 0x08000000)
 #define IS_SINGLE_DATA_TRANSFER(op)   ((op & 0x0E000000) == 0x06000000)
 #define IS_UNDEFINED(op)              ((op & 0x0E000010) == 0x06000010)
-#define IS_DATA_PROCESSING(op)        ((op & 0x0E000000) == 0x02000000)
+#define IS_DATA_PROCESSING(op)        ((op & 0x0C000000) == 0x00000000)
 #define IS_HALFWORD_DAT_TRANS_REG(op) ((op & 0x0E400FF0) == 0x00000090)
 #define IS_HALFWORD_DAT_TRANS_IMM(op) ((op & 0x0E4000F0) == 0x00400090)
 #define IS_SINGLE_DATA_SWAP(op)       ((op & 0x0FB00FF0) == 0x01000090)
@@ -25,6 +24,7 @@
 
 #define IS_LOAD_INSTRUCTION(op)				      (op & BIT(20))
 #define IS_BYTE_TRANFER_INSTRUCTION(op)			  (op & BIT(22))
+
 bool evalCondition(u32 cpsr, u32 op) {
 	switch (op & 0xF0000000) {
 	case ARM7TDMI_CONDITION_EQ:
@@ -182,32 +182,6 @@ void Arm7tdmi::evaluateArm(u32 op) {
 	else if (IS_MSR_REG(op)) {
 		MSR_REG(op);
 	}
-	else if (IS_DATA_PROCESSING(op)) {
-		if (IS_MSR_IMM(op)) {
-			MSR_IMM(op);
-		}
-		else
-		{
-			switch (ARM7TDMI_ARM_EXTRACT_OPCODE(op)) {
-			case 0: AND(op); break;
-			case 1: EOR(op); break;
-			case 2: SUB(op); break;
-			case 3: RSB(op); break;
-			case 4: ADD(op); break;
-			case 5: ADC(op); break;
-			case 6: SBC(op); break;
-			case 7: RSC(op); break;
-			case 8: TST(op); break;
-			case 9: TEQ(op); break;
-			case 10: CMP(op); break;
-			case 11: CMN(op); break;
-			case 12: ORR(op); break;
-			case 13: MOV(op); break;
-			case 14: BIC(op); break;
-			case 15: MVN(op); break;
-			}
-		}
-	}
 	else if (IS_HALFWORD_DAT_TRANS_REG(op)) {
 		//Supposedly unused
 	}
@@ -234,6 +208,33 @@ void Arm7tdmi::evaluateArm(u32 op) {
 	else if (IS_MULTIPLY(op)) {
 		execMultiply(op);
 	}
+	else if (IS_DATA_PROCESSING(op)) {
+
+		if (IS_MSR_IMM(op)) {
+			MSR_IMM(op);
+		}
+		else
+		{
+			switch (ARM7TDMI_ARM_EXTRACT_OPCODE(op)) {
+			case 0: AND(op); break;
+			case 1: EOR(op); break;
+			case 2: SUB(op); break;
+			case 3: RSB(op); break;
+			case 4: ADD(op); break;
+			case 5: ADC(op); break;
+			case 6: SBC(op); break;
+			case 7: RSC(op); break;
+			case 8: TST(op); break;
+			case 9: TEQ(op); break;
+			case 10: CMP(op); break;
+			case 11: CMN(op); break;
+			case 12: ORR(op); break;
+			case 13: MOV(op); break;
+			case 14: BIC(op); break;
+			case 15: MVN(op); break;
+			}
+		}
+	}
 	else {
 		// Undefined
 	}
@@ -248,25 +249,4 @@ void Arm7tdmi::printRegsUserMode() {
 		printf("r%02d: %08x\n", i, r[i]);
 	}
 	printf("cpsr: %08x\n", cpsr);
-}
-
-int main() {
-	Bus* bus = new Bus();
-	Arm7tdmi* cpu = new Arm7tdmi(bus);
-
-	while (0) {
-		if (cpu->cpsr & T) { // Thumb mode
-			u16 op = 0;// cpu.read16(r[15]);
-			cpu->evaluateThumb(op);
-			cpu->r[15] += 2;
-		}
-		else { // ARM mode
-			u32 op = 0;// cpu.read32(r[15]);
-			cpu->evaluateArm(op);
-
-			cpu->r[15] += 4;
-		}
-	}
-	testRom1(cpu);
-	cpu->printRegsUserMode();
 }
