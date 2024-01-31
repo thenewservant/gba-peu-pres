@@ -11,8 +11,6 @@ void Arm7tdmi::B_BL(u32 op) {
 }
 
 void Arm7tdmi::BX(u32 op) {
-    if (evalCondition(cpsr, op)) {
-        cpsr &= ~T;
-        cpsr |= (op & 0x1) ? T : 0; // Set T bit to bit 0 of Rm
-    }
+    cpsr &= ~T;
+    cpsr |= (op & 0x1) ? T : 0; // Set T bit to bit 0 of Rm
 }
