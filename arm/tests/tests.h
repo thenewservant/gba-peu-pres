@@ -40,9 +40,7 @@ void testWrite1(Arm7tdmi* cpu) {
     cpu->bus->write16(0x00000002, 0x5678);
     u16 read1 = cpu->bus->read16(0x00000000);
     u16 read2 = cpu->bus->read16(0x00000002);
-
     printf("%04x, %04x\n", read1, read2);
-
 }
 
 /*
@@ -51,7 +49,6 @@ r01:00000100
 r02:00000280
 r03:00000a60
 r04:00000f60
-
 */
 void testMOV(Arm7tdmi* cpu) {
     cpu -> r[0] = 0;
@@ -83,4 +80,18 @@ void testSWPBsimple(Arm7tdmi* cpu) {
     cpu->bus->write32(0x00000000, 0x12345678);
     cpu->bus->write32(0x00000004, 0xdeadbeef);
     cpu->SWPB(0xe1413093);
+}
+
+void testSWI(Arm7tdmi* cpu) {
+	resetCPU(cpu);
+	cpu->evaluateArm(0xef00dead);
+}
+
+void testRom1(Arm7tdmi* cpu) {
+    resetCPU(cpu);
+    cpu->wReg(0, 0x11111111);
+    u32 instrs[] = {0xe3a00c01, 0xe3a01301, 0xe5810000, 0xe3a00f41, 0xe3a01301, 0xe5810008, 0xe3a00000, 0xe3a01405, 0xe3a02010, 0xe1c100b0};
+    for (int i = 0; i < 10; i++) {
+        cpu->evaluateArm(instrs[i]);
+    }
 }
