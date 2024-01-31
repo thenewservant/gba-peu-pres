@@ -40,6 +40,5 @@ lib
 gbapeupres
 *.sln
 x64
-tests
 .vscode
 /.vs
