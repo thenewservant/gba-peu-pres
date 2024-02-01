@@ -74,6 +74,8 @@ class Arm7tdmi{
 
         Arm7tdmi(Bus* bus);
 
+        void tick();
+
         // reads register reg of the current mode
         u32 rReg(u8 reg); 
         // reads register reg of the specified mode
@@ -160,6 +162,8 @@ class Arm7tdmi{
         void TB_MOV(u16 op);
         void TB_COND_BRANCH(u16 op);
         void TB_UNCOND_BRANCH(u16 op);
+        void TB_LDRH_STRH(u16 op);
+        void TB_LDRSP_STRSP(u16 op);
 };
 
 bool evalCondition(u32 cpsr, u32 op);

@@ -1,131 +1,62 @@
 #include "gba_bus.h"
+#pragma warning(disable:4996)
 
  constexpr u8* Bus::getMemoryChunkFromAddress(u32 add) {
 	switch (add & 0x0F000000) {
 	case 0x00000000:
-		return bios;
+		return bios + add;
 	case 0x02000000:
-		return ewram;
+		return ewram + add - 0x02000000;
 	case 0x03000000:
-		return iwram;
+		return iwram + add - 0x03000000;
 	case 0x05000000:
-		return palette_ram;
+		return palette_ram + add - 0x05000000;
 	case 0x06000000:
-		return vram;
+		return vram + add - 0x06000000;
 	case 0x07000000:
-		return oam;
+		return oam + add - 0x07000000;
+	case 0x08000000:
+		return rom + add - 0x08000000;
 	default:
 		return nullptr;
 	}
 }
 
 u8 Bus::read8(u32 addr) {
-	switch (addr & 0x0F000000) {
-	case 0x00000000:
-		return bios[addr];
-	case 0x02000000:
-		return ewram[addr];
-	case 0x03000000:
-		return iwram[addr];
-	case 0x05000000:
-		return palette_ram[addr];
-	case 0x06000000:
-		return vram[addr];
-	case 0x07000000:
-		return oam[addr];
-	default:
-		return 0;
-	}
+	return *(getMemoryChunkFromAddress(addr));
 }
 
 u16 Bus::read16(u32 addr) {
-	switch (addr & 0x0F000000) {
-	case 0x00000000:
-		return *(u16*)(bios + addr);
-	case 0x02000000:
-		return *(u16*)(ewram + addr);
-	case 0x03000000:
-		return *(u16*)(iwram + addr);
-	case 0x05000000:
-		return *(u16*)(palette_ram + addr);
-	case 0x06000000:
-		return *(u16*)(vram + addr);
-	case 0x07000000:
-		return *(u16*)(oam + addr);
-	default:
-		return 0;
-	}
+	return *(u16*)(getMemoryChunkFromAddress(addr));
 }
 
 u32 Bus::read32(u32 addr) {
-	switch (addr & 0x0F000000) {
-	case 0x00000000:
-		return *(u32*)(bios + addr);
-	case 0x02000000:
-		return *(u32*)(ewram + addr);
-	case 0x03000000:
-		return *(u32*)(iwram + addr);
-	case 0x05000000:
-		return *(u32*)(palette_ram + addr);
-	case 0x06000000:
-		return *(u32*)(vram + addr);
-	case 0x07000000:
-		return *(u32*)(oam + addr);
-	default:
-		return 0;
-	}
+	printf("Reading 32 bits from 0x%08X\n", addr);
+	return *(u32*)(getMemoryChunkFromAddress(addr));
 }
 
 void Bus::write8(u32 addr, u8 data) {
-	switch (addr & 0x0F000000) {
-	case 0x00000000:
-		bios[addr] = data;
-		break;
-	case 0x02000000:
-		ewram[addr] = data;
-		break;
-	case 0x03000000:
-		iwram[addr] = data;
-		break;
-	case 0x05000000:
-		palette_ram[addr] = data;
-		break;
-	case 0x06000000:
-		vram[addr] = data;
-		break;
-	case 0x07000000:
-		oam[addr] = data;
-		break;
-	default:
-		break;
-	}
+	*(getMemoryChunkFromAddress(addr)) = data;
 }
 
 void Bus::write16(u32 addr, u16 data) {
-	*(u16*)(getMemoryChunkFromAddress(addr) + addr) = data;
+	*(u16*)(getMemoryChunkFromAddress(addr)) = data;
 }
 
 void Bus::write32(u32 addr, u32 data) {
-	switch (addr & 0x0F000000) {
-	case 0x00000000:
-		*(u32*)(bios + addr) = data;
-		break;
-	case 0x02000000:
-		*(u32*)(ewram + addr) = data;
-		break;
-	case 0x03000000:
-		*(u32*)(iwram + addr) = data;
-		break;
-	case 0x05000000:
-		*(u32*)(palette_ram + addr) = data;
-		break;
-	case 0x06000000:
-		*(u32*)(vram + addr) = data;
-		break;
-	case 0x07000000:
-		*(u32*)(oam + addr) = data;
-		break;
-	default:
-		break;
+	*(u32*)(getMemoryChunkFromAddress(addr)) = data;
+}
+
+void Bus::loadGamePack(const char* filename) {
+	FILE* fp = fopen(filename, "rb");
+	if (fp == nullptr) {
+		printf("Failed to open file %s\n", filename);
+		return;
 	}
+
+	u32 cursor = 0;
+	while (!feof(fp)) {
+		fread(rom+cursor++, sizeof(u8), 1, fp);
+	}
+	romSizeInBytes = cursor;
 }

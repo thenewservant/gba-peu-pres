@@ -7,6 +7,7 @@
 #include <chrono>
 #include <sys/stat.h>
 #include <stdexcept>
+#pragma warning(disable : 4996)
 
 #ifdef _WIN32
 	#include <direct.h>

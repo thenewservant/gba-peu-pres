@@ -222,4 +222,97 @@ void testAddVFLAG(Arm7tdmi* cpu) {
     cpu->evaluateArm(0xe0902001);
 }
 
+void test_LDM(Arm7tdmi* cpu) {
+    // Initialiser le registre et la mémoire
+    cpu->wReg(1, 0x1000); // Adresse de la mémoire
+    cpu->bus->write32(0x1000, 0x12345678);
+    cpu->bus->write32(0x1004, 0x9abcdef0);
+
+    // Exécuter l'instruction LDM
+    cpu->evaluateArm(0xE8910003); // LDM R1, {R0, R1}
+
+    // Vérifier que les valeurs ont été correctement chargées
+    assert(cpu->rReg(0) == 0x12345678);
+    assert(cpu->rReg(1) == 0x9abcdef0);
+}
+
+void test_LDM_IA_DB(Arm7tdmi* cpu) {
+    // Initialiser le registre et la mémoire
+    cpu->wReg(1, 0x1000); // Adresse de la mémoire
+    cpu->bus->write32(0x1000, 0x12345678);
+    cpu->bus->write32(0x1004, 0x9abcdef0);
+
+    // Exécuter l'instruction LDM en mode IA
+    cpu->evaluateArm(0xE8910003); // LDMIA R1!, {R0, R1}
+
+    // Vérifier que les valeurs ont été correctement chargées
+    assert(cpu->rReg(0) == 0x12345678);
+    assert(cpu->rReg(1) == 0x9abcdef0);
+
+    // Réinitialiser le registre et la mémoire
+    cpu->wReg(1, 0x1008); // Adresse de la mémoire
+    cpu->bus->write32(0x1004, 0xabcdef12);
+    cpu->bus->write32(0x1008, 0x3456789a);
+
+    // Exécuter l'instruction LDM en mode DB
+    cpu->evaluateArm(0xE9110003); // LDMDB R1!, {R0, R1}
+
+    cpu->printRegsUserMode();
+    // Vérifier que les valeurs ont été correctement chargées
+    assert(cpu->rReg(0) == 0x3456789a);
+    assert(cpu->rReg(1) == 0xabcdef12 );
+}
+
+void test_STRBT(Arm7tdmi* cpu) {
+
+
+    // Initialiser le registre et la mémoire
+    cpu->wReg(1, 0x12345678);
+    cpu->wReg(2, 0x1000); // Adresse de la mémoire
+    cpu->bus->write8(0x1000, 0x00);
+
+    // Exécuter l'instruction STRBT
+    cpu->evaluateArm(0xe4e21000); // STRBT R1, [R2]
+
+    // Vérifier que la valeur a été correctement stockée
+    
+    assert(cpu->bus->read8(0x1000) == 0x78);
+}
+
+void test_STRBT_post_indexed(Arm7tdmi* cpu) {
+    Bus* mem = cpu->bus;
+    // Initialiser le registre et la mémoire
+    cpu->wReg(1, 0x12345678);
+    cpu->wReg(2, 0x1000); // Adresse de la mémoire
+    cpu->wReg(3, 4); // Offset
+    mem->write8(0x1000, 0x00);
+
+    // Exécuter l'instruction STRBT avec adressage post-indexé
+    cpu->evaluateArm(0xe6e21003); // STRBT R1, [R2], R3
+
+    // Vérifier que la valeur a été correctement stockée
+    assert(mem->read8(0x1004) == 0x78);
+
+    // Vérifier que l'adresse de base a été mise à jour
+    assert(cpu->rReg(2) == 0x1004);
+}
+
+void testSequence1(Arm7tdmi* cpu) {
+    test_STRBT(cpu);
+    printf("test STRBT: success\n");
+    test_LDM(cpu);
+    printf("test LDM: success\n");
+    test_LDM_IA_DB(cpu);
+    printf("test LDM IA DB: success\n");
+    test_STRBT_post_indexed(cpu);
+    printf("test STRBT post indexed: success\n");
+}
+
+
+void testInstr(Arm7tdmi* cpu) {
+    cpu->evaluateArm(0xe5810000);
+}
+
+
+
 #endif // TESTS_H

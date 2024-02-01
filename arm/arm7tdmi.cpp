@@ -10,7 +10,7 @@
 #define IS_SOFTWARE_INTERRUPT(op)     ((op & 0x0F000000) == 0x0F000000)
 #define IS_BRANCH(op)                 ((op & 0x0E000000) == 0x0A000000)
 #define IS_BLOCK_DATA_TRANSFER(op)    ((op & 0x0E000000) == 0x08000000)
-#define IS_SINGLE_DATA_TRANSFER(op)   ((op & 0x0E000000) == 0x06000000)
+#define IS_SINGLE_DATA_TRANSFER(op)   ((op & 0x0E000000) == 0x04000000)
 #define IS_UNDEFINED(op)              ((op & 0x0E000010) == 0x06000010)
 #define IS_DATA_PROCESSING(op)        ((op & 0x0C000000) == 0x00000000)
 #define IS_HALFWORD_DAT_TRANS_REG(op) ((op & 0x0E400FF0) == 0x00000090)
@@ -240,9 +240,25 @@ void Arm7tdmi::evaluateArm(u32 op) {
 	}
 }
 
-Arm7tdmi::Arm7tdmi(Bus* bus) : bus(bus), cpsr(0), spsr{ 0 }, r{ 0 },
-							   rFiq{ 0 }, rSvc{ 0 }, rAbt{ 0 }, rIrq{ 0 }
-							   {}
+Arm7tdmi::Arm7tdmi(Bus* bus) : bus(bus), cpsr(0), spsr{ 0 }, r{ 0 }, rFiq{ 0 }, rSvc{ 0 }, rAbt{ 0 }, rIrq{ 0 }
+{
+	r[15] = 0x08000000;
+	cpsr = 0x0000005f;
+}
+
+void Arm7tdmi::tick() {
+	if (this->cpsr & T) { // Thumb mode
+		u16 op = 0;// cpu.read16(r[15]);
+		this->evaluateThumb(op);
+		this->r[15] += 2;
+	}
+	else { // ARM mode
+		printf("PC: %08x\n", r[15]);
+		u32 op = bus->read32(r[15]);
+		this->evaluateArm(op);
+		this->r[15] += 4;
+	}
+}
 
 void Arm7tdmi::printRegsUserMode() {
 	for (int i = 0; i < 16; i++) {
