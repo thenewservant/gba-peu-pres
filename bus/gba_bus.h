@@ -12,6 +12,7 @@ typedef uint64_t u64;
 
 class Bus {
 	private:
+		u32 romSizeInBytes;
 		/**** Main Mem ****/
 		u8 bios[0x4000]; //00000000-00003FFF
 		// 00004000-01FFFFFF is not used 
@@ -29,6 +30,8 @@ class Bus {
 		//06018000 - 06FFFFFF   Not used
 		u8 oam[0x400]; //07000000 - 070003FF OAM 1KB
 		// 07000400-07FFFFFF   Not used
+		u8 rom[0x2000000]; //08000000 - 09FFFFFF ROM 32MB
+
 
 	public:
 		constexpr u8* getMemoryChunkFromAddress(u32 add);

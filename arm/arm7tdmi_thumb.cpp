@@ -53,10 +53,10 @@ void Arm7tdmi::evaluateThumb(u16 op) {
 
 	}
 	else if (IS_TB_SP_RELATIVE_LOAD_N_STORE(op)) {
-
+		TB_LDRSP_STRSP(op);
 	}
 	else if (IS_TB_LOAD_N_STORE_HALFWORD(op)) {
-
+		TB_LDRH_STRH(op);
 	}
 	else if (IS_TB_LOAD_N_STORE_WITH_IMM_OFFSET(op)) {
 
@@ -74,7 +74,7 @@ void Arm7tdmi::evaluateThumb(u16 op) {
 
 	}
 	else if (IS_TB_ALU_OPERATION(op)) {
-		//thumbALUOperation(op);
+
 	}
 	else if (IS_TB_MOV_COMP_ADD_SUB_IMMEDIATE(op)) {
 
