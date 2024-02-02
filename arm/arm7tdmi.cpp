@@ -13,8 +13,8 @@
 #define IS_SINGLE_DATA_TRANSFER(op)   ((op & 0x0E000000) == 0x04000000)
 #define IS_UNDEFINED(op)              ((op & 0x0E000010) == 0x06000010)
 #define IS_DATA_PROCESSING(op)        ((op & 0x0C000000) == 0x00000000)
-#define IS_HALFWORD_DAT_TRANS_REG(op) ((op & 0x0E400FF0) == 0x00000090)
-#define IS_HALFWORD_DAT_TRANS_IMM(op) ((op & 0x0E4000F0) == 0x00400090)
+#define IS_HALFWORD_DAT_TRANS_REG(op) ((op & 0x0E400F90) == 0x00000090)
+#define IS_HALFWORD_DAT_TRANS_IMM(op) ((op & 0x0E400090) == 0x00400090)
 #define IS_SINGLE_DATA_SWAP(op)       ((op & 0x0FB00FF0) == 0x01000090)
 #define IS_MULTIPLY(op)               ((op & 0x0F0000F0) == 0x00000090)
 #define IS_MRS(op)                    ((op & 0x0FBF0FFF) == 0x010F0000)
@@ -85,7 +85,7 @@ u32 Arm7tdmi::rReg(u8 reg) {
 	case ARM7TDMI_MODE_SYS:
 		return r[reg];
 	case ARM7TDMI_MODE_FIQ:
-		return (reg == 15) ? r[15] + 4 : rFiq[reg - 8];
+		return (reg == 15) ? r[15] : rFiq[reg - 8];
 	case ARM7TDMI_MODE_SVC:
 		return ((reg == 13) || (reg == 14)) ? rSvc[reg - 13] : r[reg];
 	case ARM7TDMI_MODE_ABT:
@@ -146,6 +146,7 @@ u32 Arm7tdmi::getSPSRValue() {
 }
 
 void Arm7tdmi::evaluateArm(u32 op) {
+
 	if (!evalCondition(cpsr, op)) {
 		return;
 	}
@@ -183,7 +184,13 @@ void Arm7tdmi::evaluateArm(u32 op) {
 		MSR_REG(op);
 	}
 	else if (IS_HALFWORD_DAT_TRANS_REG(op)) {
-		//Supposedly unused
+		if (IS_LOAD_INSTRUCTION(op)) {
+			LDR2(op);
+		}
+		else
+		{
+			STR2(op);
+		}
 	}
 	else if (IS_HALFWORD_DAT_TRANS_IMM(op)) {
 		// Halfword Data Transfer ( immediate OR register offset )
@@ -249,14 +256,17 @@ Arm7tdmi::Arm7tdmi(Bus* bus) : bus(bus), cpsr(0), spsr{ 0 }, r{ 0 }, rFiq{ 0 }, 
 void Arm7tdmi::tick() {
 	if (this->cpsr & T) { // Thumb mode
 		u16 op = 0;// cpu.read16(r[15]);
-		this->evaluateThumb(op);
 		this->r[15] += 2;
+		this->evaluateThumb(op);
+		
 	}
 	else { // ARM mode
 		printf("PC: %08x\n", r[15]);
 		u32 op = bus->read32(r[15]);
+		
 		this->evaluateArm(op);
 		this->r[15] += 4;
+		
 	}
 }
 

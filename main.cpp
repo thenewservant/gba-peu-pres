@@ -7,18 +7,6 @@
 #include <iostream>
 #include <string>
 
-long long getFileSize(const char* s);
-
-void execAndPrintRegs(Arm7tdmi* cpu, u32 op) {
-	cpu->evaluateArm(op);
-	cpu->printRegsUserMode();
-}
-
-void exec() {
-	printf("exec\n");
-	//execAndPrintRegs(new Arm7tdmi(new Bus), 0xe10fa000);
-}
-
 int main(int argc, char* argv[]) {
 	
 	char* filename= 0;

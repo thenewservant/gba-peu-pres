@@ -36,6 +36,8 @@
 *.prg
 *.asm
 *.ASM
+*.sav
+testroms
 lib
 gbapeupres
 *.sln
