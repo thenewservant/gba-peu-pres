@@ -1,5 +1,5 @@
-#ifndef SCREENTOOLS_H
-#define SCREENTOOLS_H
+#ifndef SCREEN_H
+#define SCREEN_H
 #include <SDL.h>
 #include "../common/types.h"
 #include "../arm/arm7tdmi.h"
@@ -9,10 +9,9 @@
 
 #define FILE_DROPPED 184
 
-extern u32* pixels; // real screen
-
 class Screen {
 private:
+	
 	Arm7tdmi* cpu;
 	char title[150];
 	SDL_Window* window;
@@ -23,6 +22,7 @@ private:
 	bool needFullScreenToggle = false;
 	SDL_Event keyEvent;
 	u16 screenW, screenH;
+	u32 pixels[SCREEN_WIDTH * SCREEN_HEIGHT];
 private:
 	void initSDLScreen();
 	char* newFilePath;
@@ -30,7 +30,6 @@ public:
 	void advance();//tick cpu and update screen
 	Screen(u8 scaleFact);
 	Screen(u8 scaleFact, Arm7tdmi* cpu);
-	//another constructor takes an u8 and a function pointer to call when a file is dropped
 	u32* getPixels();
 	void updateScreen();
 	void checkPressKey(SDL_Event event);

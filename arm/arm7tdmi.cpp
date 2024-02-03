@@ -1,6 +1,6 @@
 #include "arm7tdmi.h"
 #include <windows.h>
-
+#include "../ppu/ppu.h"
 /* arm7tdmi.cpp
 * General operation, instruction decoding, register access, etc.
 */
@@ -115,17 +115,23 @@ void Arm7tdmi::wReg(u8 reg, u32 value) {
 		switch (CURRENT_MODE) {
 		case ARM7TDMI_MODE_USER:
 		case ARM7TDMI_MODE_SYS:
-			r[reg];
+			r[reg] = value;
+			break;
 		case ARM7TDMI_MODE_FIQ:
 			(reg >= 15) ? r[15] = value : rFiq[reg - 13] = value;
+			break;
 		case ARM7TDMI_MODE_SVC:
 			((reg == 13) || (reg == 14)) ? rSvc[reg - 13] = value : r[reg] = value;
+			break;
 		case ARM7TDMI_MODE_ABT:
 			((reg == 13) || (reg == 14)) ? rAbt[reg - 13] = value : r[reg] = value;
+			break;
 		case ARM7TDMI_MODE_IRQ:
 			((reg == 13) || (reg == 14)) ? rIrq[reg - 13] = value : r[reg] = value;
+			break;
 		case ARM7TDMI_MODE_UND:
 			((reg == 13) || (reg == 14)) ? rUnd[reg - 13] = value : r[reg] = value;
+			break;
 		}
 	}
 }
@@ -247,13 +253,23 @@ void Arm7tdmi::evaluateArm(u32 op) {
 	}
 }
 
+void Arm7tdmi::setPPU(Ppu* ppu) {
+	this->ppu = ppu;
+
+}
+
 Arm7tdmi::Arm7tdmi(Bus* bus) : bus(bus), cpsr(0), spsr{ 0 }, r{ 0 }, rFiq{ 0 }, rSvc{ 0 }, rAbt{ 0 }, rIrq{ 0 }
 {
+	r[13] = BOOT_SP_USR;
+	rSvc[0] = BOOT_SP_SVC;
+	rIrq[0] = BOOT_SP_IRQ;
+	this->ppu = ppu;
 	r[15] = 0x08000000;
 	cpsr = 0x0000005f;
 }
 
 void Arm7tdmi::tick() {
+	static u8 step = 0;
 	if (this->cpsr & T) { // Thumb mode
 		u16 op = 0;// cpu.read16(r[15]);
 		this->r[15] += 2;
@@ -261,18 +277,26 @@ void Arm7tdmi::tick() {
 		
 	}
 	else { // ARM mode
-		printf("PC: %08x\n", r[15]);
+		//printf("PC: %08x\n", r[15]);
 		u32 op = bus->read32(r[15]);
-		
+#ifdef DEBUG
+		printf("PC: %08x\n", r[15]);
+		printf("op: %08x\n", op);
+#endif
 		this->evaluateArm(op);
 		this->r[15] += 4;
-		
+	}
+	step++;
+	if ((step % 4) == 0) {
+		ppu->tick();
 	}
 }
 
 void Arm7tdmi::printRegsUserMode() {
+	printf("\n");
 	for (int i = 0; i < 16; i++) {
-		printf("r%02d: %08x\n", i, r[i]);
+		if (r[i])printf("r%02d: %08x\n", i, r[i]);
 	}
+	printf("\n");
 	printf("cpsr: %08x\n", cpsr);
 }

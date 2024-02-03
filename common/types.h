@@ -1,5 +1,6 @@
 #ifndef TYPES_H
 #define TYPES_H
+//#define DEBUG
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>

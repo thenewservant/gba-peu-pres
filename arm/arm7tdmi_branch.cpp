@@ -8,7 +8,6 @@ void Arm7tdmi::B_BL(u32 op) {
     }
 
 	s32 offset = ((op & 0xFFFFFF) | ((op & BIT(23))?0x3F000000:0)) << 2; // Sign extend the offset
-    printf("pc: %08X, offset: %08X\n", r[15], offset);
 	r[15] = r[15] + offset+4;
 }
 
