@@ -1,6 +1,5 @@
 #include "Screen.h"
 
-u32 *pixels = (u32*)calloc(SCREEN_WIDTH * SCREEN_HEIGHT, sizeof(u32));
 
 void Screen::initSDLScreen() {
 	screenW = SCREEN_WIDTH * ScreenScaleFactor;
@@ -62,6 +61,13 @@ void Screen::checkPressKey(SDL_Event event) {
 	case SDLK_F10:
 		advance();
 		break;
+	case SDLK_F11:
+		printf("100 ticks at a time\n");
+		for (int i = 0; i < 100; i++){
+			advance();
+		}
+		
+		break;
 	default:
 		break;
 	}
@@ -110,7 +116,7 @@ u8 Screen::listener() {
 		}
 	}
 
-	SDL_Delay(2);
+	SDL_Delay(1);
 	return 0;
 }
 

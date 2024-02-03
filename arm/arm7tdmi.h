@@ -7,6 +7,7 @@
 #include "../common/types.h"
 #include "../bus/gba_bus.h"
 
+
 enum ARM7TDMI_MODE{
     ARM7TDMI_MODE_USER = 0x10,
     ARM7TDMI_MODE_FIQ = 0x11,
@@ -27,6 +28,10 @@ enum ARM7TDMI_MODE{
 #define FLAG(x) (cpsr & x)
 
 #define ARM7TDMI_ARM_EXTRACT_OPCODE(op) ((op >> 21) & 0xF)
+
+#define BOOT_SP_SVC 0x03007FE0
+#define BOOT_SP_IRQ 0x03007FA0
+#define BOOT_SP_USR 0x03007F00
 
 enum ARM7TDMI_CONDITION{
     ARM7TDMI_CONDITION_EQ = 0x0<<28, // Z set
@@ -58,11 +63,12 @@ enum CPSR_FLAGS{
     M = 0x0000001F  // Mode bits (see ARM7TDMI_MODE)
 };
 
+class Ppu;
 
 class Arm7tdmi{
     public:
         Bus* bus;
-
+        Ppu* ppu;
         u32 r[16]; // Standard System/User mode r0 - r15 registers
         u32 rFiq[7]; // FIQ mode r8 - r14 registers
         u32 rIrq[2]; // IRQ mode r13 - r14 registers
@@ -73,7 +79,7 @@ class Arm7tdmi{
         u32 spsr[5]; // FIQ, IRQ, SVC, ABT, UND
 
         Arm7tdmi(Bus* bus);
-
+        void setPPU(Ppu* ppu);
         void tick();
 
         // reads register reg of the current mode
