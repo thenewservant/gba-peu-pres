@@ -41,7 +41,6 @@ int main(int argc, char* argv[]) {
 	ppu->ppuRegs[0] = 0x91;
 	cpu->setPPU(ppu);
 	bus->setPPU(ppu);
-	
 
 #ifndef DEBUG
 	//thread for cpuRun

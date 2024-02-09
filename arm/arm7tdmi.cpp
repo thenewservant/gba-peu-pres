@@ -189,6 +189,9 @@ void Arm7tdmi::evaluateArm(u32 op) {
 	else if (IS_MSR_REG(op)) {
 		MSR_REG(op);
 	}
+	else if (IS_MULTIPLY(op)) {
+		execMultiply(op);
+	}
 	else if (IS_HALFWORD_DAT_TRANS_REG(op)) {
 		if (IS_LOAD_INSTRUCTION(op)) {
 			LDR2(op);
@@ -217,9 +220,6 @@ void Arm7tdmi::evaluateArm(u32 op) {
 			printf("SWP : op: %08x\n", op);
 			SWP(op);
 		}
-	}
-	else if (IS_MULTIPLY(op)) {
-		execMultiply(op);
 	}
 	else if (IS_DATA_PROCESSING(op)) {
 
@@ -278,13 +278,15 @@ void Arm7tdmi::tick() {
 	}
 	else { // ARM mode
 		//printf("PC: %08x\n", r[15]);
-		u32 op = bus->read32(r[15]);
+		this->r[15] += 4;
+		u32 op = bus->read32(r[15] - 4);
 #ifdef DEBUG
 		printf("PC: %08x\n", r[15]);
 		printf("op: %08x\n", op);
 #endif
+		
 		this->evaluateArm(op);
-		this->r[15] += 4;
+		
 	}
 	step++;
 	if ((step % 4) == 0) {

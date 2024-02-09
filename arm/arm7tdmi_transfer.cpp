@@ -80,6 +80,7 @@ void Arm7tdmi::SWPB(u32 op) {
  
 void Arm7tdmi::LDM(u32 op) {
 	u32 start_adress;
+	u32 end_adress = 0;
 	switch ((op & (BIT(24) | BIT(23))) >> 23) {
 	case 0: DA(start_adress, op); break;
 	case 1: IA(start_adress, op); break;
@@ -96,7 +97,7 @@ void Arm7tdmi::LDM(u32 op) {
 		}
 		if (op & BIT(15)) {
 			u32 value = bus->read32(start_adress);
-			wReg(15, value & 0xFFFFFFFC);
+			wReg(15, (value & 0xFFFFFFFC) );
 		}
 	}
 	else if (op & BIT(15)) { // LDM (3)
@@ -127,6 +128,7 @@ void Arm7tdmi::LDM(u32 op) {
 
 void Arm7tdmi::STM(u32 op) {
 	u32 start_adress;
+	u32 end_adress = 0;
 	switch ((op & (BIT(24) | BIT(23))) >> 23) {
 	case 0: DA(start_adress, op); break;
 	case 1: IA(start_adress, op); break;
@@ -151,28 +153,82 @@ void Arm7tdmi::STM(u32 op) {
 	}
 }
 
-void Arm7tdmi::LDR(u32 op) { //LDR { , T, B, BT} 
+#define BIT_P(op) (op & BIT(24))
+#define BIT_U(op) (op & BIT(23))
+#define BIT_B(op) (op & BIT(22))
+#define EVAL_CONDITION true
+
+
+void Arm7tdmi::LDR(u32 op) { //LDR { , T, B, BT} (mode 2 or mode 2 P)
 	//N.B.
 	// If LDRBT is executed when the processor is in a privileged mode, the memory system is signaled to treat
 	// the access as if the processor were in User mode.
 
-	if (IS_BT_OR_T(op)) {
-		u32 address;
-		BT_T_POST_IDX_ADRESSING(address, op);
-		if (op & BIT(22)) { // LDRBT
-			wReg(RD(op), bus->read8(address));
-			wReg(RN(op), address);
+	u32 address = 0; // final address to be deducted by the following flow
+	u32 rnVal = rReg(RN(op));
+	u32 offset = 0;
+	if (!(op & BIT(25))) { // offset is immediate
+		offset = (u32)(op & 0xFFF);
+	}
+	else {
+		offset = rReg(RM(op));
+		// + a case for scale register 
+	}
+
+
+	if (BIT_W(op) && BIT_P(op)) { // P and W set, pre indexed
+		if (TRUE) {
+			if (BIT_U(op)) {
+				// U set
+
+				address = rnVal + offset;
+			}
+			else {
+				address = rnVal - offset;
+			}
+			if (EVAL_CONDITION) {
+				wReg(RN(op), address);
+			}
 		}
-		else { // LDRT
+		else if (FALSE) {// TODO : scaled register
 
 		}
 	}
-	else { // LDR, LDRB
-		if (op & BIT(22)) { // LDRB
-
+	else if (!BIT_W(op) && BIT_P(op)) { // offset
+		if (BIT_U(op)) { // U set
+			address = rnVal + offset;
 		}
-		else { // LDR
+		else {
+			address = rnVal - offset;
+		}
+	}
+	else if (!BIT_W(op) && !BIT_P(op)) {
+		address = rnVal;
+		if (EVAL_CONDITION) {
+			if (BIT_U(op)) { // U set
+				address = rnVal + offset;
+			}
+			else {
+				address = rnVal - offset;
+			}
+		}
+	}
 
+	if (BIT_B(op)) {
+		if (op & BIT(22)) { // LDRB
+			wReg(RD(op), bus->read8(address));
+		}
+		else { // LDRBT
+			wReg(RD(op), bus->read8(address));
+		}
+	}
+	else {
+		
+		if (op & BIT(22)) { // LDR
+			wReg(RD(op), bus->read32(address));
+		}
+		else { // LDRT
+			wReg(RD(op), bus->read32(address));
 		}
 	}
 }
@@ -206,8 +262,6 @@ u32 mode3address(u32 op) {
 	return 0;
 }
 
-#define BIT_P(op) (op & BIT(24))
-#define EVAL_CONDITION true
 
 void Arm7tdmi::STR2(u32 op) { //STRH
 	u32 address = 0; // final address to be deducted by the following flow
