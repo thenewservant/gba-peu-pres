@@ -18,6 +18,9 @@ u8* Bus::ioAccess(u32 add) {
 	case 0x00000000:
 		return bios + add;
 	case 0x02000000:
+#ifdef DEBUG
+	printf("accessing ewram\n");
+#endif
 		return ewram + add - 0x02000000;
 	case 0x03000000:
 		return iwram + add - 0x03000000;
@@ -36,19 +39,32 @@ u8* Bus::ioAccess(u32 add) {
 	}
 }
 
+
 u8 Bus::read8(u32 addr) {
+#ifdef DEBUG
+	printf("Reading 8 bits from %08x\n", addr);
+#endif
 	return *(getMemoryChunkFromAddress(addr));
 }
 
 u16 Bus::read16(u32 addr) {
+#ifdef DEBUG
+	printf("Reading 16 bits from %08x\n", addr);
+#endif
 	return *(u16*)(getMemoryChunkFromAddress(addr));
 }
 
 u32 Bus::read32(u32 addr) {
+#ifdef DEBUG
+	printf("Reading 32 bits from %08x\n", addr);
+#endif
 	return *(u32*)(getMemoryChunkFromAddress(addr));
 }
 
 void Bus::write8(u32 addr, u8 data) {
+#ifdef DEBUG
+	printf("Writing 8 bits from %08x\n", addr);
+#endif
 	*(getMemoryChunkFromAddress(addr)) = data;
 }
 
@@ -61,7 +77,7 @@ void Bus::write16(u32 addr, u16 data) {
 
 void Bus::write32(u32 addr, u32 data) {
 #ifdef DEBUG
-	printf("Writing %08x to %08x\n", data, addr);
+	printf("Writing %08x (32 bits) to %08x\n", data, addr);
 #endif
 	*(u32*)(getMemoryChunkFromAddress(addr)) = data;
 }

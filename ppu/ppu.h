@@ -12,9 +12,10 @@ private:
 	u16 scanline = 0;
 	u16 cycle = 0;
 public:
-	u8* ppuRegs;
+	u8 ppuRegs[0x57];
 	Ppu(Screen* screen, Bus* bus);
 	u8* readIO(u32 addr);
+	void updateDipstat();
 	void tick();
 };
 
