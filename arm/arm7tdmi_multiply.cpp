@@ -19,7 +19,7 @@ void Arm7tdmi::MUL(u32 op) {
 }
 
 void Arm7tdmi::MLA(u32 op) {
-	u32 result = (rReg(RM(op)) * rReg(RS(op)) + rReg(RN(op))) & MASK_32BIT;
+	u32 result = (u32) (rReg(RM(op)) * rReg(RS(op)) + rReg(RN(op))) ;
 	wReg(RD(op), result);
 	if (op & BIT(20)) {
 		cpsr &= ~N & ~Z;

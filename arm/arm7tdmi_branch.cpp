@@ -8,8 +8,8 @@ void Arm7tdmi::B_BL(u32 op) {
         wReg(14, r[15]); // address of the instruction after the branch instruction
     }
 
-	s32 offset = ((op & 0xFFFFFF) | ((op & BIT(23))?0x3F000000:0)) << 2; // Sign extend the offset
-	r[15] = r[15] + offset+4;
+	s32 offset = (s32)((op & 0xFFFFFF) | ((op & BIT(23))?0x3F000000:0)); // Sign extend the offset
+	r[15] = r[15] + offset*4 +4;
 
    
 }

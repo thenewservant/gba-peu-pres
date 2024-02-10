@@ -9,7 +9,7 @@
 #include <string>
 
 #include <thread>
-
+//#define TEST
 void cpuRun(Arm7tdmi* cpu) {
 	static int i = 0;
 	
@@ -22,7 +22,9 @@ void cpuRun(Arm7tdmi* cpu) {
 }
 
 int main(int argc, char* argv[]) {
-	
+#ifdef WIN32
+	SetProcessDPIAware();
+#endif
 	char* filename= 0;
 	if (argc > 1) {
 		 filename = argv[1];
@@ -36,12 +38,14 @@ int main(int argc, char* argv[]) {
 
 	Arm7tdmi* cpu = new Arm7tdmi(bus);
 
-	Screen* screen = new Screen(3, cpu);
+	Screen* screen = new Screen(5, cpu);
 	Ppu* ppu = new Ppu(screen, bus);
-	ppu->ppuRegs[0] = 0x91;
 	cpu->setPPU(ppu);
 	bus->setPPU(ppu);
+#ifdef TEST
+	testSequence1(new Arm7tdmi(new Bus()));
 
+#else 
 #ifndef DEBUG
 	//thread for cpuRun
 	std::thread cpuThread(cpuRun, cpu);
@@ -55,6 +59,7 @@ int main(int argc, char* argv[]) {
 		screen->listener();
 		//SDL_Delay(1);
 	}
+#endif
 #endif
 	return 0;
 }

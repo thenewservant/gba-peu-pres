@@ -7,7 +7,6 @@
 #include "../common/types.h"
 #include "../bus/gba_bus.h"
 
-
 enum ARM7TDMI_MODE{
     ARM7TDMI_MODE_USER = 0x10,
     ARM7TDMI_MODE_FIQ = 0x11,
@@ -24,8 +23,8 @@ enum ARM7TDMI_MODE{
 #define MASK_32BIT 0xFFFFFFFF
 #define MASK_16BIT 0xFFFF
 
-#define BIT(x) (1 << x)
-#define FLAG(x) (cpsr & x)
+#define BIT(x) (1 << (x))
+#define FLAG(x) (cpsr & (x))
 
 #define ARM7TDMI_ARM_EXTRACT_OPCODE(op) ((op >> 21) & 0xF)
 
