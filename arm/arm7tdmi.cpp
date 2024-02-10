@@ -80,12 +80,15 @@ u32 Arm7tdmi::rReg(u8 reg) {
 	if (reg < 8) {
 		return r[reg];
 	}
+	if (reg == 15) {
+		return r[15]+8;
+	}
 	switch (CURRENT_MODE) {
 	case ARM7TDMI_MODE_USER:
 	case ARM7TDMI_MODE_SYS:
 		return r[reg];
 	case ARM7TDMI_MODE_FIQ:
-		return (reg == 15) ? r[15] : rFiq[reg - 8];
+		return rFiq[reg - 8];
 	case ARM7TDMI_MODE_SVC:
 		return ((reg == 13) || (reg == 14)) ? rSvc[reg - 13] : r[reg];
 	case ARM7TDMI_MODE_ABT:
@@ -102,6 +105,9 @@ u32 Arm7tdmi::rRegMode(u8 reg, u8 mode) {
 	switch (mode) {
 	case ARM7TDMI_MODE_USER:
 	case ARM7TDMI_MODE_SYS:
+		if (reg == 15){
+			return r[15] + 8;
+		}
 		return r[reg];
 	default: return 0;
 	}
@@ -111,6 +117,7 @@ void Arm7tdmi::wReg(u8 reg, u32 value) {
 	if (reg < 8) {
 		r[reg] = value;
 	}
+
 	else {
 		switch (CURRENT_MODE) {
 		case ARM7TDMI_MODE_USER:
@@ -152,7 +159,6 @@ u32 Arm7tdmi::getSPSRValue() {
 }
 
 void Arm7tdmi::evaluateArm(u32 op) {
-
 	if (!evalCondition(cpsr, op)) {
 		return;
 	}
@@ -249,7 +255,8 @@ void Arm7tdmi::evaluateArm(u32 op) {
 		}
 	}
 	else {
-		// Undefined
+		printf("UNDEFINED : op: %08x\n", op);
+		exit(1);
 	}
 }
 
@@ -272,20 +279,22 @@ void Arm7tdmi::tick() {
 	static u8 step = 0;
 	if (this->cpsr & T) { // Thumb mode
 		u16 op = 0;// cpu.read16(r[15]);
-		this->r[15] += 2;
+		
 		this->evaluateThumb(op);
 		
 	}
 	else { // ARM mode
 		//printf("PC: %08x\n", r[15]);
-		this->r[15] += 4;
-		u32 op = bus->read32(r[15] - 4);
+		
+		u32 op = bus->read32(r[15]);
+		
 #ifdef DEBUG
 		printf("PC: %08x\n", r[15]);
 		printf("op: %08x\n", op);
 #endif
 		
 		this->evaluateArm(op);
+		this->r[15] += 4;
 		
 	}
 	step++;

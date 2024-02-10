@@ -85,7 +85,7 @@ void Arm7tdmi::LDM(u32 op) {
 	case 0: DA(start_adress, op); break;
 	case 1: IA(start_adress, op); break;
 	case 2: DB(start_adress, op); break;
-	case 3: default: IB(start_adress, op); break;;
+	case 3: default: IB(start_adress, op); break;
 	}
 
 	if (!(op & BIT(22))) { // LDM (1) 
@@ -97,7 +97,7 @@ void Arm7tdmi::LDM(u32 op) {
 		}
 		if (op & BIT(15)) {
 			u32 value = bus->read32(start_adress);
-			wReg(15, (value & 0xFFFFFFFC) );
+			wReg(15, (value & 0xFFFFFFFC));
 		}
 	}
 	else if (op & BIT(15)) { // LDM (3)
@@ -105,16 +105,13 @@ void Arm7tdmi::LDM(u32 op) {
 			if (op & BIT(i)) {
 				wReg(i, bus->read32(start_adress));
 				start_adress += 4;
-				if (currentModeHasSPSR()) {
-					cpsr = getSPSRValue();
-				}
-				else {
-					//UNPREDICTABLE
-					u32 value = bus->read32(start_adress);
-					wReg(15, value);
-				}
 			}
 		}
+		if (currentModeHasSPSR()) {
+			cpsr = getSPSRValue();
+		}
+		u32 value = bus->read32(start_adress);
+		wReg(15, value);
 	}
 	else { // LDM (2)
 		for (u8 i = 0; i < 15; i++) {
@@ -136,7 +133,7 @@ void Arm7tdmi::STM(u32 op) {
 	case 3: default: IB(start_adress, op); break;
 	}
 	if (!(op & BIT(22))) {//STM (1)
-		for (u8 i = 0; i < 15; i++) {
+		for (u8 i = 0; i <= 15; i++) {
 			if (op & BIT(i)) {
 				bus->write32(start_adress, rReg(i));
 				start_adress += 4;
@@ -144,7 +141,7 @@ void Arm7tdmi::STM(u32 op) {
 		}
 	}
 	else { //STM (2)
-		for (u8 i = 0; i < 15; i++) {
+		for (u8 i = 0; i <= 15; i++) {
 			if (op & BIT(i)) {
 				bus->write32(start_adress, rRegMode(i, ARM7TDMI_MODE_USER));
 				start_adress += 4;
@@ -255,14 +252,6 @@ void Arm7tdmi::STR(u32 op) {
 	}
 }
 
-//mode 3 access:
-
-u32 mode3address(u32 op) {
-
-	return 0;
-}
-
-
 void Arm7tdmi::STR2(u32 op) { //STRH
 	u32 address = 0; // final address to be deducted by the following flow
 	u32 rnVal = rReg(RN(op));
@@ -293,7 +282,7 @@ void Arm7tdmi::STR2(u32 op) { //STRH
 			address = rnVal - offset;
 		}
 	}
-	else if (!BIT_W(op) && !BIT_P(op)) {
+	else if (!BIT_W(op) && !BIT_P(op)) { // post indexed
 		address = rnVal;
 		if (EVAL_CONDITION) {
 			if (BIT_U(op)) { // U set
@@ -302,6 +291,7 @@ void Arm7tdmi::STR2(u32 op) { //STRH
 			else {
 				address = rnVal - offset;
 			}
+			wReg(RN(op), address);
 		}
 	}
 	
