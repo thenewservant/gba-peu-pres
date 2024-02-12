@@ -17,6 +17,7 @@ enum ARM7TDMI_MODE{
     ARM7TDMI_MODE_SYS = 0x1F
 };
 
+#define ARM7TDMI_MODE_MASK 0x1F
 #define CURRENT_MODE (cpsr & 0x1F)
 #define CURRENT_MODE_HAS_SPSR (CURRENT_MODE != ARM7TDMI_MODE_USER && CURRENT_MODE != ARM7TDMI_MODE_SYS)
 
@@ -98,6 +99,7 @@ class Arm7tdmi{
         // returns the value of the SPSR register of the current mode.
         // (CPSR if no SPSR in current mode)
         u32 getSPSRValue();
+        void setSPSRValue(u32 value);
         bool currentModeHasSPSR();
 
         void B_BL(u32 op); // merged B and BL altogether
@@ -118,16 +120,6 @@ class Arm7tdmi{
 
         void thumbCondBranch(u16 op);
 
-        void TB_MOV1(u16 op);
-
-        void TB_ROR(u16 op);
-        void TB_EOR(u16 op);
-        void TB_BIC(u16 op);
-        void TB_AND(u16 op);
-        void TB_ORR(u16 op);
-        void TB_MVN(u16 op);
-        void TB_TST(u16 op);
-
         // Data Processing
         void AND(u32 op);
         void EOR(u32 op);
@@ -145,6 +137,8 @@ class Arm7tdmi{
         void MOV(u32 op);
         void BIC(u32 op);
         void MVN(u32 op);
+
+        void MSR(u32 operand, u32 op);
 
         void LDM(u32 op);
         void STM(u32 op);
@@ -164,11 +158,11 @@ class Arm7tdmi{
         void MRS(u32 op);
 
         void checkCPSR_DP(u32& op, const u8& shifterCarryOut);
-        void TB_MOV(u16 op);
         void TB_COND_BRANCH(u16 op);
         void TB_UNCOND_BRANCH(u16 op);
         void TB_LDRH_STRH(u16 op);
         void TB_LDRSP_STRSP(u16 op);
+        void TB_ALU_OP(u16 op);
 };
 
 bool evalCondition(u32 cpsr, u32 op);

@@ -35,7 +35,9 @@ int main(int argc, char* argv[]) {
 	}
 	Bus* bus = new Bus();
 	bus->loadGamePack(filename);
-
+	if (argc > 2) {
+		bus->loadBios(argv[2]);
+	}
 	Arm7tdmi* cpu = new Arm7tdmi(bus);
 
 	Screen* screen = new Screen(5, cpu);
@@ -43,8 +45,8 @@ int main(int argc, char* argv[]) {
 	cpu->setPPU(ppu);
 	bus->setPPU(ppu);
 #ifdef TEST
-	testSequence1(new Arm7tdmi(new Bus()));
-
+	//testSequence1(new Arm7tdmi(new Bus()));
+	testWriteToEWRAM(new Arm7tdmi(new Bus()));
 #else 
 #ifndef DEBUG
 	//thread for cpuRun

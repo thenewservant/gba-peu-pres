@@ -160,7 +160,6 @@ void Arm7tdmi::LDR(u32 op) { //LDR { , T, B, BT} (mode 2 or mode 2 P)
 	//N.B.
 	// If LDRBT is executed when the processor is in a privileged mode, the memory system is signaled to treat
 	// the access as if the processor were in User mode.
-
 	u32 address = 0; // final address to be deducted by the following flow
 	u32 rnVal = rReg(RN(op));
 	u32 offset = 0;
@@ -171,7 +170,73 @@ void Arm7tdmi::LDR(u32 op) { //LDR { , T, B, BT} (mode 2 or mode 2 P)
 		offset = rReg(RM(op));
 		// + a case for scale register 
 	}
+	if (BIT_W(op) && BIT_P(op)) { // P and W set, pre indexed
+		if (TRUE) {
+			if (BIT_U(op)) {
+				// U set
 
+				address = rnVal + offset;
+			}
+			else {
+				address = rnVal - offset;
+			}
+			if (EVAL_CONDITION) {
+				wReg(RN(op), address);
+			}
+		}
+		else if (FALSE) {// TODO : scaled register
+
+		}
+	}
+	else if (!BIT_W(op) && BIT_P(op)) { // offset
+		if (BIT_U(op)) { // U set
+			address = rnVal + offset;
+		}
+		else {
+			address = rnVal - offset;
+		}
+	}
+	else if (!BIT_W(op) && !BIT_P(op)) {
+		address = rnVal;
+		if (EVAL_CONDITION) {
+			if (BIT_U(op)) { // U set
+				address = rnVal + offset;
+			}
+			else {
+				address = rnVal - offset;
+			}
+		}
+	}
+	else if (BIT_W(op) && !BIT_P(op)) { //LDRT, LDRBT
+		if (BIT_B(op)) { // LDRBT
+			wReg(RD(op), bus->read8(address));
+		}
+		else { // LDRT
+			wReg(RD(op), bus->read32(address));
+		}
+		return;
+	}
+	if (BIT_B(op)) { // LDRB
+		wReg(RD(op), bus->read8(address));
+	}
+	else { // LDR
+		u32 data = bus->read32(address);
+		//wReg(RD(op), (data >> (8 * (address & 0x3))) | (data << (32 - (8 * (address & 0x3)))));
+		wReg(RD(op), data);
+	}
+}
+
+void Arm7tdmi::STR(u32 op) {
+	u32 address = 0; // final address to be deducted by the following flow
+	u32 rnVal = rReg(RN(op));
+	u32 offset = 0;
+	if (!(op & BIT(25))) { // offset is immediate
+		offset = (u32)(op & 0xFFF);
+	}
+	else {
+		offset = rReg(RM(op));
+		// + a case for scale register 
+	}
 
 	if (BIT_W(op) && BIT_P(op)) { // P and W set, pre indexed
 		if (TRUE) {
@@ -210,45 +275,21 @@ void Arm7tdmi::LDR(u32 op) { //LDR { , T, B, BT} (mode 2 or mode 2 P)
 			}
 		}
 	}
-
-	if (BIT_B(op)) {
-		if (op & BIT(22)) { // LDRB
+	else if (BIT_W(op) && !BIT_P(op)) { //STRT, STRBT
+		if (BIT_B(op)) { // STRBT
 			wReg(RD(op), bus->read8(address));
-		}
-		else { // LDRBT
-			wReg(RD(op), bus->read8(address));
-		}
-	}
-	else {
-		
-		if (op & BIT(22)) { // LDR
-			wReg(RD(op), bus->read32(address));
-		}
-		else { // LDRT
-			wReg(RD(op), bus->read32(address));
-		}
-	}
-}
-
-void Arm7tdmi::STR(u32 op) {
-	if (IS_BT_OR_T(op)) {
-		u32 address;
-		BT_T_POST_IDX_ADRESSING(address, op);
-		if (op & BIT(22)) { // STRBT
-			bus->write8(address, rReg(RD(op)));
-			wReg(RN(op), address);
 		}
 		else { // STRT
-
+			wReg(RD(op), bus->read32(address));
 		}
+		return;
 	}
-	else { // STR, STRB
-		if (op & BIT(22)) { // STRB
 
-		}
-		else { // STR
-
-		}
+	if (BIT_B(op)) {
+		bus->write8(address, rReg(RD(op)));
+	}
+	else {
+		bus->write32(address, rReg(RD(op)));
 	}
 }
 
@@ -298,6 +339,53 @@ void Arm7tdmi::STR2(u32 op) { //STRH
 	bus->write16(address, rReg(RD(op)));
 }
 
-void Arm7tdmi::LDR2(u32 op) {//LDRSB, LDRH, LDRSH and STRH...
+void Arm7tdmi::LDR2(u32 op) {//LDRSB, LDRH, LDRSH
+	u32 address = 0; // final address to be deducted by the following flow
+	u32 rnVal = rReg(RN(op));
+	u32 offset = 0;
+	if (op & BIT(22)) { // offset is immediate
+		offset = (u8)(((op & 0xF00) >> 4) | (op & 0xF));
+	}
+	else {
+		offset = rReg(RM(op));
+	}
 
+	if (BIT_W(op) && BIT_P(op)) { // p and W set, pre indexed
+		if (BIT_U(op)) { // U set
+			address = rnVal + offset;
+		}
+		else {
+			address = rnVal - offset;
+		}
+		if (EVAL_CONDITION) {
+			wReg(RN(op), address);
+		}
+	}
+	else if (!BIT_W(op) && BIT_P(op)) { // offset
+		if (BIT_U(op)) { // U set
+			address = rnVal + offset;
+		}
+		else {
+			address = rnVal - offset;
+		}
+	}
+	else if (!BIT_W(op) && !BIT_P(op)) { // post indexed
+		address = rnVal;
+		if (EVAL_CONDITION) {
+			if (BIT_U(op)) { // U set
+				address = rnVal + offset;
+			}
+			else {
+				address = rnVal - offset;
+			}
+			wReg(RN(op), address);
+		}
+	}
+	
+	if (op & BIT(22)) { // LDRH
+			wReg(RD(op), bus->read16(address));
+		}
+	else { // LDRSH
+			wReg(RD(op), bus->read16(address));
+		}
 }

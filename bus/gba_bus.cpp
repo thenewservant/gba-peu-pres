@@ -6,39 +6,63 @@ u8* Bus::ioAccess(u32 add) {
 	if (add <= 0x04000056) {
 		return ppu->readIO(add);
 	}
-	else if (0x040000A8) {
-
+	else if (add >=0x4000200) {
+		printf("where : %08x\n", add);
+		return intCtrl.array + (add & 0x00000FFF);
 	}
+	printf("IO Access not implemented yet: %08x\n", add);
 	exit(1);
 	return nullptr;
 }
 
- constexpr u8* Bus::getMemoryChunkFromAddress(u32 add) {
+constexpr u8* Bus::getMemoryChunkFromAddress(u32 add) {
 	switch (add & 0x0F000000) {
 	case 0x00000000:
 		return bios + add;
 	case 0x02000000:
-#ifdef DEBUG
-	printf("accessing ewram\n");
-#endif
-		return ewram + add - 0x02000000;
+		return ewram + (add & 0x0003FFFF);
 	case 0x03000000:
-		return iwram + add - 0x03000000;
+		return iwram + (add & 0x00007FFF);
 	case 0x04000000:
 		return ioAccess(add);
 	case 0x05000000:
-		return palette_ram + add - 0x05000000;
+		return palette_ram + (add & 0x000003FF);
 	case 0x06000000:
-		return vram + add - 0x06000000;
+		return vram + (add & 0x00017FFF);
 	case 0x07000000:
-		return oam + add - 0x07000000;
+		return oam + (add & 0x000003FF);
 	case 0x08000000:
-		return rom + add - 0x08000000;
+	case 0x09000000:
+		return rom + add - 0x08000000;// wait state 0
+	case 0x0A000000:
+	case 0x0B000000:
+		return rom + add - 0x0A000000; // wait state 1
+	case 0x0C000000:
+	case 0x0D000000:
+		return rom + add - 0x0C000000; // wait state 2
+	case 0x0E000000:
+	case 0x0F000000:
+		return sram + (add & 0x0000FFFF); // GamePak SRAM
 	default:
 		return nullptr;
 	}
 }
 
+constexpr u8* Bus::get8bitWritableChunk(u32 add) {
+	switch (add & 0x0F000000) {
+	case 0x02000000:
+		return ewram + (add & 0x0003FFFF);
+	case 0x03000000:
+		return iwram + (add & 0x00007FFF);
+	case 0x04000000:
+		return ioAccess(add);
+	case 0x0E000000:
+	case 0x0F000000:
+		return sram + (add & 0x0000FFFF); // GamePak SRAM
+	default:
+		return (u8*)&potHole;
+	}
+}
 
 u8 Bus::read8(u32 addr) {
 #ifdef DEBUG
@@ -48,6 +72,7 @@ u8 Bus::read8(u32 addr) {
 }
 
 u16 Bus::read16(u32 addr) {
+	//printf("Reading 16 bits from %08x\n", addr);
 #ifdef DEBUG
 	printf("Reading 16 bits from %08x\n", addr);
 #endif
@@ -65,7 +90,7 @@ void Bus::write8(u32 addr, u8 data) {
 #ifdef DEBUG
 	printf("Writing 8 bits from %08x\n", addr);
 #endif
-	*(getMemoryChunkFromAddress(addr)) = data;
+	*(get8bitWritableChunk(addr)) = data;
 }
 
 void Bus::write16(u32 addr, u16 data) {
@@ -94,4 +119,17 @@ void Bus::loadGamePack(const char* filename) {
 		fread(rom+cursor++, sizeof(u8), 1, fp);
 	}
 	romSizeInBytes = cursor;
+}
+
+void Bus::loadBios(const char* filename) {
+	FILE* fp = fopen(filename, "rb");
+	if (fp == nullptr) {
+		printf("Failed to open file %s\n", filename);
+		return;
+	}
+
+	u32 cursor = 0;
+	while (!feof(fp)) {
+		fread(bios + cursor++, sizeof(u8), 1, fp);
+	}
 }

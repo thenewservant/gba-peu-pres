@@ -2,14 +2,14 @@
 
 
 Ppu::Ppu(Screen* s, Bus* bus) {
-	printf("ppu regs address in memory: %p, %p\n", ppuRegs, &ppuRegs);
+	printf("ppu lcd address in memory: %p, %p\n", lcd, &lcd);
 	screen = s;
 	this->bus = bus;
 
 }
 
 u8* Ppu::readIO(u32 addr) {
-	return (ppuRegs + (addr & 0xFF));
+	return (lcd.array + (addr & 0xFF));
 }
 
 #define LINE_SIZE_IN_DRAWN_PX SCREEN_WIDTH
@@ -49,8 +49,7 @@ void Ppu::updateDipstat() {
 	dipstatAndVcount = (dipstatAndVcount & 0xF0FF) | currentScanline;
 
 
-	*(u32*)(ppuRegs + 0x04) = dipstatAndVcount;
-
+	lcd.regs.dispstat = dipstatAndVcount;
 }
 
 

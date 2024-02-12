@@ -337,12 +337,50 @@ void Arm7tdmi::MVN(u32 op) {
 	checkCPSR_DP(op, carryOut);
 }
 
-void Arm7tdmi::MSR_IMM(u32 op) {
+#define MSR_FIELD_MASK(op) ((op>>16) & 0xF)
+#define MSR_IMM_ROTATE_IMM(op) ((op >> 8) & 0xF)
 
+#define PSR_MASK_UNALLOC 0x0FFFFF00
+#define PSR_USER_MASK 0xF0000000
+#define PSR_PRIV_MASK 0x0000000F
+#define PSR_STATE_MASK 0x00000020
+#define BIT_R(op) (op & BIT(22))
+
+void Arm7tdmi::MSR(u32 operand, u32 op) {
+	u32 mask = MSR_FIELD_MASK(op);
+	u32 byteMask = (mask & 1 ? 0xFF : 0) |
+		(mask & 2 ? 0xFF00 : 0) |
+		(mask & 4 ? 0xFF0000 : 0) |
+		(mask & 8 ? 0xFF000000 : 0);
+	u32 finalMask = 0;
+	if (!BIT_R(op)) {
+		if (true) {//in a privilege mode
+			finalMask = byteMask & (PSR_USER_MASK | PSR_PRIV_MASK);
+		}
+		else {
+			finalMask = byteMask & PSR_USER_MASK;
+		}
+		cpsr = (cpsr & ~finalMask) | (operand & finalMask);
+	}
+	else {
+		if (currentModeHasSPSR()) {
+			finalMask = byteMask & (PSR_USER_MASK | PSR_PRIV_MASK | PSR_STATE_MASK);
+			setSPSRValue(getSPSRValue() & ~finalMask | (op & finalMask));
+		}
+		else {
+			
+		}
+	}
+}
+
+void Arm7tdmi::MSR_IMM(u32 op) {
+	u32 operand =  ((op & 0xFF) >> (2 * MSR_IMM_ROTATE_IMM(op))) | ((op & 0xFF) << (32 - 2 * MSR_IMM_ROTATE_IMM(op)));//rotated by 2*rotate_imm
+	MSR(operand, op);
 }
 
 void Arm7tdmi::MSR_REG(u32 op) {
-
+	u32 operand = rReg(op & 0xF);
+	MSR(operand, op);
 }
 #define BIT_R(op) (op & BIT(22))
 
