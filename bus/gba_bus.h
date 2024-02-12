@@ -7,11 +7,28 @@
 
 #include "../common/types.h"
 
+typedef struct _intCtrl_t {
+	u16 ie; // Interrupt enable register
+	u16 if_; // Interrupt request flags / IRQ Acknowledge
+	u16 waitcnt; // Waitstate control
+	u16 padding1;
+	u16 ime; // Interrupt Master Enable
+	u16 padding2;
+	u16 postflg; // Post-boot flag
+	u16 haltcnt; // Halt control
+}InterruptControl;
+
+typedef union _intCtrlUnion_t {
+	InterruptControl regs; // Interrupt control registers as a struct
+	u8 array[sizeof(_intCtrl_t)]; // Interrupt control registers as an array
+} InterruptControlUnion;
+
 class Ppu;
 
 class Bus {
 private:
 	Ppu* ppu;
+	InterruptControlUnion intCtrl;
 private:
 	u32 romSizeInBytes;
 	/**** Main Mem ****/
@@ -33,13 +50,15 @@ private:
 	// 07000400-07FFFFFF   Not used
 	u8 rom[0x2000000]; //08000000 - 09FFFFFF ROM 32MB
 
-
+	u8 sram[0x10000]; //0E000000 - 0E00FFFF GamePak SRAM 64KB
+	u32 potHole; // if invalid write is attempted (wrong width), write there instead
 public:
 	void setPPU(Ppu* p) {
 		ppu = p;
 	};
 	u8* ioAccess(u32 add);
 	constexpr u8* getMemoryChunkFromAddress(u32 add);
+	constexpr u8* get8bitWritableChunk(u32 add);
 	u8 read8(u32 addr);
 	u16 read16(u32 addr);
 	u32 read32(u32 addr);
@@ -49,7 +68,7 @@ public:
 	void write32(u32 addr, u32 data);
 
 	void loadGamePack(const char* filename);
-
+	void loadBios(const char* filename);
 };
 
 #endif // GBA_BUS_H

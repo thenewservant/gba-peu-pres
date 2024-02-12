@@ -1,16 +1,16 @@
 #include "arm7tdmi.h"
 #include <windows.h>
 #include "../ppu/ppu.h"
+
 /* arm7tdmi.cpp
 * General operation, instruction decoding, register access, etc.
 */
-
 
 #define IS_BRANCH_AND_EXCHANGE(op)    ((op & 0x0FFFFFF0) == 0x012FFF10)
 #define IS_SOFTWARE_INTERRUPT(op)     ((op & 0x0F000000) == 0x0F000000)
 #define IS_BRANCH(op)                 ((op & 0x0E000000) == 0x0A000000)
 #define IS_BLOCK_DATA_TRANSFER(op)    ((op & 0x0E000000) == 0x08000000)
-#define IS_SINGLE_DATA_TRANSFER(op)   ((op & 0x0E000000) == 0x04000000)
+#define IS_SINGLE_DATA_TRANSFER(op)   ((op & 0x0C000000) == 0x04000000)
 #define IS_UNDEFINED(op)              ((op & 0x0E000010) == 0x06000010)
 #define IS_DATA_PROCESSING(op)        ((op & 0x0C000000) == 0x00000000)
 #define IS_HALFWORD_DAT_TRANS_REG(op) ((op & 0x0E400F90) == 0x00000090)
@@ -20,7 +20,6 @@
 #define IS_MRS(op)                    ((op & 0x0FBF0FFF) == 0x010F0000)
 #define IS_MSR_IMM(op)                ((op & 0x0FB0F000) == 0x0320F000)
 #define IS_MSR_REG(op)                ((op & 0x0FB00FF0) == 0x01200000)
-
 
 #define IS_LOAD_INSTRUCTION(op)				      (op & BIT(20))
 #define IS_BYTE_TRANFER_INSTRUCTION(op)			  (op & BIT(22))
@@ -144,7 +143,14 @@ void Arm7tdmi::wReg(u8 reg, u32 value) {
 }
 
 void Arm7tdmi::SWI(u32 op) {
+	
 	printf("SWI : op: %08x\n", op);
+	rSvc[1] = r[15]+4;
+	spsr[2] = cpsr;
+	cpsr &= ~(ARM7TDMI_MODE_MASK | BIT(5)  | BIT(9));
+	cpsr &= BIT(7);
+	cpsr |= ARM7TDMI_MODE_SVC;
+	r[15] = 0x4;
 }
 
 u32 Arm7tdmi::getSPSRValue() {
@@ -154,7 +160,17 @@ u32 Arm7tdmi::getSPSRValue() {
 	case ARM7TDMI_MODE_SVC:return spsr[2];
 	case ARM7TDMI_MODE_ABT:return spsr[3];
 	case ARM7TDMI_MODE_UND:return spsr[4];
-	default:return cpsr;
+	}
+	return cpsr;
+}
+
+void Arm7tdmi::setSPSRValue(u32 value) {
+	switch (CURRENT_MODE) {
+	case ARM7TDMI_MODE_FIQ:spsr[0] = value;
+	case ARM7TDMI_MODE_IRQ:spsr[1] = value;
+	case ARM7TDMI_MODE_SVC:spsr[2] = value;
+	case ARM7TDMI_MODE_ABT:spsr[3] = value;
+	case ARM7TDMI_MODE_UND:spsr[4] = value;
 	}
 }
 
@@ -180,6 +196,8 @@ void Arm7tdmi::evaluateArm(u32 op) {
 		SWI(op);
 	}
 	else if (IS_UNDEFINED(op)) {
+		printf("FAIL");
+		exit(2);
 	}
 	else if (IS_SINGLE_DATA_TRANSFER(op)) {
 		if (IS_LOAD_INSTRUCTION(op)) {
@@ -262,7 +280,6 @@ void Arm7tdmi::evaluateArm(u32 op) {
 
 void Arm7tdmi::setPPU(Ppu* ppu) {
 	this->ppu = ppu;
-
 }
 
 Arm7tdmi::Arm7tdmi(Bus* bus) : bus(bus), cpsr(0), spsr{ 0 }, r{ 0 }, rFiq{ 0 }, rSvc{ 0 }, rAbt{ 0 }, rIrq{ 0 }
@@ -278,16 +295,12 @@ Arm7tdmi::Arm7tdmi(Bus* bus) : bus(bus), cpsr(0), spsr{ 0 }, r{ 0 }, rFiq{ 0 }, 
 void Arm7tdmi::tick() {
 	static u8 step = 0;
 	if (this->cpsr & T) { // Thumb mode
-		u16 op = 0;// cpu.read16(r[15]);
-		
+		u16 op = bus->read16(r[15]);
 		this->evaluateThumb(op);
-		
+		this->r[15] += 2;
 	}
 	else { // ARM mode
-		//printf("PC: %08x\n", r[15]);
-		
 		u32 op = bus->read32(r[15]);
-		
 #ifdef DEBUG
 		printf("PC: %08x\n", r[15]);
 		printf("op: %08x\n", op);
@@ -295,7 +308,6 @@ void Arm7tdmi::tick() {
 		
 		this->evaluateArm(op);
 		this->r[15] += 4;
-		
 	}
 	step++;
 	if ((step % 4) == 0) {

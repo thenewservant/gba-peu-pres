@@ -308,6 +308,13 @@ void testSequence1(Arm7tdmi* cpu) {
     printf("test STRBT post indexed: success\n");
 }
 
+void testWriteToEWRAM(Arm7tdmi* cpu) {
+    cpu->r[0] = 0x02000000;
+    cpu->r[1] = 0x12345678;
+    cpu->evaluateArm(0xe5801000);
+    printf("\n test read: %08X \n", cpu->bus->read32(0x02000000));
+    assert (cpu->bus->read32(0x02000000) == 0x12345678);
+}
 
 void testInstr(Arm7tdmi* cpu) {
     cpu->evaluateArm(0xe5810000);

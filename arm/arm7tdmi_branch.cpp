@@ -9,9 +9,7 @@ void Arm7tdmi::B_BL(u32 op) {
     }
 
 	s32 offset = (s32)((op & 0xFFFFFF) | ((op & BIT(23))?0x3F000000:0)); // Sign extend the offset
-	r[15] = r[15] + offset*4 +4;
-
-   
+	r[15] = r[15] + offset *4 +4;
 }
 
 void Arm7tdmi::BX(u32 op) {
