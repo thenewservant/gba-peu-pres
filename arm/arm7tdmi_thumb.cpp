@@ -6,7 +6,6 @@
 #define CHECKCPSR cpsr = (cpsr & ~N) | ((r[rd] & BIT(31)) ? N : 0); \
 				  cpsr = (cpsr & ~Z) | ((r[rd] == 0) ? Z : 0)
 
-
 #define IS_TB_SOFTWARE_INTERRUPT(op)	         ((op & 0xFF00) == 0xDF00)
 #define IS_TB_COND_BRANCH(op)			         ((op & 0xF000) == 0xD000)
 #define IS_TB_UNCOND_BRANCH(op)			         ((op & 0xF800) == 0xE000)
@@ -29,7 +28,7 @@
 
 void Arm7tdmi::evaluateThumb(u16 op) {
 	if (IS_TB_SOFTWARE_INTERRUPT(op)) {
-
+		exit(99);
 	}
 	else if (IS_TB_COND_BRANCH(op)) {
 		TB_COND_BRANCH(op);
@@ -41,9 +40,9 @@ void Arm7tdmi::evaluateThumb(u16 op) {
 
 	}
 	else if (IS_TB_MULTIPLE_LOAD_N_STORE(op)) {
-
+		TB_LDMIA_STMIA(op);
 	}
-	else if (IS_TB_PUSH_N_POP_REGISTERS(op)) {
+	/*else if (IS_TB_PUSH_N_POP_REGISTERS(op)) {
 
 	}
 	else if (IS_TB_ADD_OFFSET_TO_STACK_POINTER(op)) {
@@ -51,7 +50,7 @@ void Arm7tdmi::evaluateThumb(u16 op) {
 	}
 	else if (IS_TB_LOAD_ADDRESS(op)) {
 
-	}
+	}*/
 	else if (IS_TB_SP_RELATIVE_LOAD_N_STORE(op)) {
 		TB_LDRSP_STRSP(op);
 	}
@@ -59,37 +58,35 @@ void Arm7tdmi::evaluateThumb(u16 op) {
 		TB_LDRH_STRH(op);
 	}
 	else if (IS_TB_LOAD_N_STORE_WITH_IMM_OFFSET(op)) {
-
+		TB_LDR_STR_IMMEDIATE(op);
 	}
+	/*
 	else if (IS_TB_LOAD_N_STORE_S_E_BYTE_AND_HW(op)) {
 
-	}
+	}*/
 	else if (IS_TB_LOAD_N_STORE_WITH_REL_OFFSET(op)) {
-
+		TB_LDR_STR_RELATIVE(op);
 	}
 	else if (IS_TB_PC_RELATIVE_LOAD(op)) {
-
-	}
+		TB_LDRPC(op);
+	}/*
 	else if (IS_TB_HIGH_REG_OPERATIONS_AND_BRANCH(op)) {
 
-	}
+	}*/
 	else if (IS_TB_ALU_OPERATION(op)) {
 		TB_ALU_OP(op);
 	}
-	else if (IS_TB_MOV_COMP_ADD_SUB_IMMEDIATE(op)) {
+	/*else if (IS_TB_MOV_COMP_ADD_SUB_IMMEDIATE(op)) {
 
 	}
 	else if (IS_TB_ADD_AND_SUBSTRACT(op)) {
 
-	}
+	}*/
 	else if (IS_TB_MOVE_SHIFTED_REGISTER(op)) {
-
+		TB_MOVE_SHIFTED_REG(op);
 	}
 	else {
-		printf("Unknown Thumb instruction: %04X\n", op);
+		printf("Yet unknown Thumb instruction: %04X\n", op);
+		exit(59);
 	}
-}
-
-void Arm7tdmi :: thumbCondBranch(u16 op) {
-	cpsr = 0;
 }

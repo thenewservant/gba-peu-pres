@@ -5,9 +5,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <chrono>
-#include <sys/stat.h>
-#include <stdexcept>
+//#include <chrono>
+//#include <sys/stat.h>
+//#include <stdexcept>
 #pragma warning(disable : 4996)
 
 #ifdef _WIN32
@@ -16,6 +16,15 @@
 	#define MKDIR(x) _mkdir(x)
 #else
 	#define MKDIR(x) mkdir(x, 0755)
+#endif
+
+// removes struct alignment
+#ifdef __GNUC__
+#define PACK( __Declaration__ ) __Declaration__ __attribute__((__packed__))
+#endif
+
+#ifdef _MSC_VER
+#define PACK( __Declaration__ ) __pragma( pack(push, 1) ) __Declaration__ __pragma(pack(pop)) 
 #endif
 
 typedef uint8_t u8;
@@ -28,8 +37,8 @@ typedef int16_t s16;
 typedef int32_t s32;
 typedef int64_t s64;
 
-typedef std::chrono::high_resolution_clock Time;
-typedef std::chrono::microseconds ms;
-typedef std::chrono::duration<float> fsec;
+//typedef std::chrono::high_resolution_clock Time;
+//typedef std::chrono::microseconds ms;
+//typedef std::chrono::duration<float> fsec;
 
 #endif

@@ -7,21 +7,24 @@
 
 #include "../common/types.h"
 
-typedef struct _intCtrl_t {
-	u16 ie; // Interrupt enable register
-	u16 if_; // Interrupt request flags / IRQ Acknowledge
-	u16 waitcnt; // Waitstate control
-	u16 padding1;
-	u16 ime; // Interrupt Master Enable
-	u16 padding2;
-	u16 postflg; // Post-boot flag
-	u16 haltcnt; // Halt control
-}InterruptControl;
-
 typedef union _intCtrlUnion_t {
-	InterruptControl regs; // Interrupt control registers as a struct
-	u8 array[sizeof(_intCtrl_t)]; // Interrupt control registers as an array
-} InterruptControlUnion;
+	PACK(struct regs {
+		u16 ie; // Interrupt enable register
+		u16 if_; // Interrupt request flags / IRQ Acknowledge
+		u16 waitcnt; // Waitstate control
+		u16 padding1;
+		u16 ime; // Interrupt Master Enable
+	});
+	u8 array[sizeof(regs)]; // Interrupt control registers as an array
+}InterruptControlUnion;
+
+typedef union _pwrStatusUnion_t {
+	PACK(struct regs {
+		u8 postflg;
+		u8 haltcnt;
+	});
+	u8 array[sizeof(regs)];
+}PwrStatusUnion;
 
 class Ppu;
 
@@ -29,6 +32,7 @@ class Bus {
 private:
 	Ppu* ppu;
 	InterruptControlUnion intCtrl;
+	PwrStatusUnion pwrStatus;
 private:
 	u32 romSizeInBytes;
 	/**** Main Mem ****/
@@ -52,13 +56,17 @@ private:
 
 	u8 sram[0x10000]; //0E000000 - 0E00FFFF GamePak SRAM 64KB
 	u32 potHole; // if invalid write is attempted (wrong width), write there instead
+
+	u32 internalMemoryControl; // at 0x4000804 (undocumented)
+private:
+	inline u8* getMemoryChunkFromAddress(u32 add);
+	inline u8* get8bitWritableChunk(u32 add);
+	inline u8* ioAccess(u32 add);
 public:
 	void setPPU(Ppu* p) {
 		ppu = p;
 	};
-	u8* ioAccess(u32 add);
-	constexpr u8* getMemoryChunkFromAddress(u32 add);
-	constexpr u8* get8bitWritableChunk(u32 add);
+	
 	u8 read8(u32 addr);
 	u16 read16(u32 addr);
 	u32 read32(u32 addr);
