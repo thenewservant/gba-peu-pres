@@ -23,34 +23,20 @@ enum THUMB_BRANCH {
 void Arm7tdmi::TB_COND_BRANCH(u16 op) {
     s32 sOffSet = (s32)(op & 0xff);
     switch (GET_BRANCH_OPCODE(op)) {
-    case TB_BEQ:
-        TEST_BRANCH(cpsr & Z); break;
-    case TB_BNE:
-        TEST_BRANCH(!(cpsr & Z)); break;
-    case TB_BCS:
-        TEST_BRANCH(cpsr & C); break;
-    case TB_BCC:
-        TEST_BRANCH(!(cpsr & C)); break;
-    case TB_BMI:
-        TEST_BRANCH(cpsr & N); break;
-    case TB_BPL:
-        TEST_BRANCH(!(cpsr & N)); break;
-    case TB_BVS:
-        TEST_BRANCH(cpsr & V); break;
-    case TB_BVC:
-        TEST_BRANCH(!(cpsr & V)); break;
-    case TB_BHI:
-        TEST_BRANCH((cpsr & C) && !(cpsr & Z)); break;
-    case TB_BLS:
-        TEST_BRANCH(!(cpsr & C) || (cpsr & Z)); break;
-    case TB_BGE:
-        TEST_BRANCH((cpsr & N) == (cpsr & V)); break;
-    case TB_BLT:
-        TEST_BRANCH((cpsr & N) != (cpsr & V)); break;
-    case TB_BGT:
-        TEST_BRANCH(!(cpsr & Z) && ((cpsr & N) == (cpsr & V))); break;
-    case TB_BLE:
-        TEST_BRANCH((cpsr & Z) || ((cpsr & N) != (cpsr & V))); break;
+    case TB_BEQ:TEST_BRANCH(cpsr & Z); break;
+    case TB_BNE:TEST_BRANCH(!(cpsr & Z)); break;
+    case TB_BCS:TEST_BRANCH(cpsr & C); break;
+    case TB_BCC:TEST_BRANCH(!(cpsr & C)); break;
+    case TB_BMI:TEST_BRANCH(cpsr & N); break;
+    case TB_BPL:TEST_BRANCH(!(cpsr & N)); break;
+    case TB_BVS:TEST_BRANCH(cpsr & V); break;
+    case TB_BVC:TEST_BRANCH(!(cpsr & V)); break;
+    case TB_BHI:TEST_BRANCH((cpsr & C) && !(cpsr & Z)); break;
+    case TB_BLS:TEST_BRANCH(!(cpsr & C) || (cpsr & Z)); break;
+    case TB_BGE:TEST_BRANCH((cpsr & N) == (cpsr & V)); break;
+    case TB_BLT:TEST_BRANCH((cpsr & N) != (cpsr & V)); break;
+    case TB_BGT:TEST_BRANCH(!(cpsr & Z) && ((cpsr & N) == (cpsr & V))); break;
+    case TB_BLE:TEST_BRANCH((cpsr & Z) || ((cpsr & N) != (cpsr & V))); break;
     default:
         break;
     }

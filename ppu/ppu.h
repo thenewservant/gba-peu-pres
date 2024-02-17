@@ -4,7 +4,7 @@
 #include "../screen/screen.h"
 #include "../bus/gba_bus.h"
 
-typedef struct _lcdIORegs_t {
+PACK(struct lcdIORegs_t {
 	u16 dispcnt;
 	u16 padding1;
 	u16 dispstat;
@@ -45,11 +45,11 @@ typedef struct _lcdIORegs_t {
 	u16 bldalpha;
 	u16 bldy;
 	u16 padding3;
-} LcdIORegs;
+});
 
 typedef union _lcdUnion_t {
-	LcdIORegs regs; // lcd registers as a struct
-	u8 array[sizeof(_lcdIORegs_t)]; // lcd registers as an array
+	struct lcdIORegs_t regs; // lcd registers as a struct
+	u8 array[sizeof(struct lcdIORegs_t)]; // lcd registers as an array
 } LcdUnion;
 
 class Ppu {
@@ -63,6 +63,9 @@ public:
 	Ppu(Screen* screen, Bus* bus);
 	u8* readIO(u32 addr);
 	void updateDipstat();
+	void mode3();
+	void mode4();
+	void mode5();
 	void tick();
 };
 

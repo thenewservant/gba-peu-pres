@@ -19,7 +19,7 @@ enum ARM7TDMI_MODE{
 
 #define ARM7TDMI_MODE_MASK 0x1F
 #define CURRENT_MODE (cpsr & 0x1F)
-#define CURRENT_MODE_HAS_SPSR (CURRENT_MODE != ARM7TDMI_MODE_USER && CURRENT_MODE != ARM7TDMI_MODE_SYS)
+#define CURRENT_MODE_HAS_SPSR ((CURRENT_MODE != ARM7TDMI_MODE_USER) && (CURRENT_MODE != ARM7TDMI_MODE_SYS))
 
 #define MASK_32BIT 0xFFFFFFFF
 #define MASK_16BIT 0xFFFF
@@ -118,8 +118,6 @@ class Arm7tdmi{
 
         void evaluateThumb(u16 op);
 
-        void thumbCondBranch(u16 op);
-
         // Data Processing
         void AND(u32 op);
         void EOR(u32 op);
@@ -143,6 +141,8 @@ class Arm7tdmi{
         void LDM(u32 op);
         void STM(u32 op);
 
+        void getAddressMode2(u32& op, u32& address, const u32& rnVal, const u32& offset);
+
         void LDR(u32 op);
         void STR(u32 op);
 
@@ -160,8 +160,13 @@ class Arm7tdmi{
         void checkCPSR_DP(u32& op, const u8& shifterCarryOut);
         void TB_COND_BRANCH(u16 op);
         void TB_UNCOND_BRANCH(u16 op);
+        void TB_LDRPC(u16 op);
+        void TB_LDR_STR_RELATIVE(u16 op);
+        void TB_LDR_STR_IMMEDIATE(u16 op);
         void TB_LDRH_STRH(u16 op);
         void TB_LDRSP_STRSP(u16 op);
+        void TB_LDMIA_STMIA(u16 op);
+        void TB_MOVE_SHIFTED_REG(u16 op);
         void TB_ALU_OP(u16 op);
 };
 

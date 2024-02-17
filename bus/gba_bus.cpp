@@ -2,20 +2,32 @@
 #include "../ppu/ppu.h"
 #pragma warning(disable:4996)
 
-u8* Bus::ioAccess(u32 add) {
+inline u8* Bus::ioAccess(u32 add) {
 	if (add <= 0x04000056) {
 		return ppu->readIO(add);
 	}
 	else if (add >=0x4000200) {
-		printf("where : %08x\n", add);
-		return intCtrl.array + (add & 0x00000FFF);
+		u16 addr = add & 0xF00;
+		if (addr == 0x200) {
+			return intCtrl.array + (add & 0x000000FF);
+		}
+		else if (addr == 0x300){
+			return pwrStatus.array + (add & 0x000000FF);
+		}
+		else if (addr == 0x400) { // supposedly a bug, unused and undocumented access
+			return (u8*)&potHole;
+		}
+		else if ((addr & 0x0F00FFFF) == 0x04000800) {
+			return (u8*)&internalMemoryControl;
+		}
+		
 	}
 	printf("IO Access not implemented yet: %08x\n", add);
 	exit(1);
 	return nullptr;
 }
 
-constexpr u8* Bus::getMemoryChunkFromAddress(u32 add) {
+inline u8* Bus::getMemoryChunkFromAddress(u32 add) {
 	switch (add & 0x0F000000) {
 	case 0x00000000:
 		return bios + add;
@@ -48,7 +60,7 @@ constexpr u8* Bus::getMemoryChunkFromAddress(u32 add) {
 	}
 }
 
-constexpr u8* Bus::get8bitWritableChunk(u32 add) {
+inline u8* Bus::get8bitWritableChunk(u32 add) {
 	switch (add & 0x0F000000) {
 	case 0x02000000:
 		return ewram + (add & 0x0003FFFF);

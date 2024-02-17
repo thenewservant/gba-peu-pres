@@ -37,6 +37,10 @@ u32 operand2(Arm7tdmi* cpu, u32 op, u32 cpsr, u8* carryOut) {
 		u8 shiftAmount = (op >> 7) & 0x1F;
 		u8 rm = op & 0xF;
 		u32 rmVal = cpu->rReg(rm);
+		//if (rm == 15) { // this block is for SHIFT BY REG. case
+		//	printf("used r15\n");
+		//	rmVal += 4;
+		//}
 		u32 cpsrVal = cpsr;
 		if (((op >> 4) & 0xFF) == 0) { //Data-processing operands - Register
 			*carryOut = (cpsrVal & C) ? 1 : 0;
