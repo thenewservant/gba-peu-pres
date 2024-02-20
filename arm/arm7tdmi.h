@@ -160,14 +160,23 @@ class Arm7tdmi{
         void checkCPSR_DP(u32& op, const u8& shifterCarryOut);
         void TB_COND_BRANCH(u16 op);
         void TB_UNCOND_BRANCH(u16 op);
+        void TB_BL(u16 op);
+        void TB_HIGH_REG_OPERATION(u16 op);
         void TB_LDRPC(u16 op);
         void TB_LDR_STR_RELATIVE(u16 op);
+        void TB_LDR_STR_SE_HW(u16 op);
         void TB_LDR_STR_IMMEDIATE(u16 op);
         void TB_LDRH_STRH(u16 op);
         void TB_LDRSP_STRSP(u16 op);
         void TB_LDMIA_STMIA(u16 op);
+        void TB_GET_REL_ADDR(u16 op);
+        void TB_ADD_OFFSET_SP(u16 op);
+        void TB_PUSH(u16 op);
+        void TB_POP(u16 op);
         void TB_MOVE_SHIFTED_REG(u16 op);
         void TB_ALU_OP(u16 op);
+        void TB_IMMEDIATE_OPERATION(u16 op);
+        void TB_ADD_SUBSTRACT(u16 op);
 };
 
 bool evalCondition(u32 cpsr, u32 op);

@@ -16,6 +16,37 @@ static u8 countSetBits(u32 n) {
 	}
 	return count;
 }
+#define MSB_RD(op) (op & BIT(7))
+#define MSB_RM(op) (op & BIT(6))
+
+enum HIGH_REG_OPERATION_OPCODE {
+	TB_HR_ADD = 0,
+	TB_HR_CMP,
+	TB_HR_MOV,
+	TB_HR_BX
+};
+
+//THUMB.05
+void Arm7tdmi::TB_HIGH_REG_OPERATION(u16 op) {
+	u8 rd = MSB_RD(op) ? (RD_LOW(op) | 0x8) : RD_LOW(op);
+	u8 rm = MSB_RM(op) ? (RB(op) | 0x8)		: RB(op);
+	u32 rmVal = rReg(rm);
+	switch ((op >> 8) & 0x3) {
+	case TB_HR_ADD:
+		wReg(rd, rReg(rd) + rmVal);
+		break;
+	case TB_HR_CMP:
+		break;
+	case TB_HR_MOV:
+		wReg(rd, rmVal);
+		break;
+	case TB_HR_BX:
+		cpsr &= ~T;
+		cpsr |= (rmVal & 0x1) ? T : 0; // Set T bit to bit 0 of Rm
+		r[15] = (u32)(2*(rmVal & 0xFFFFFFFE)) + ((cpsr & T)?2:6); // Clear the bottom two bits of the address
+		break;
+	}
+}
 
 //THUMB.06
 void Arm7tdmi::TB_LDRPC(u16 op) {
@@ -35,6 +66,39 @@ void Arm7tdmi::TB_LDR_STR_RELATIVE(u16 op) {
 	else { //STR
 		u32 data = rReg(RD_LOW(op));
 		bus->write32(address, data);
+	}
+}
+
+enum LDR_STR_SE_HW_OPCODE {
+	TB_SE_STRSH = 0,
+	TB_SE_LDSB,
+	TB_SE_LDRH,
+	TB_SE_LDSH
+};
+
+//THUMB.08
+// LDR/STR with Sign-extension and halfword/byte transfer
+void Arm7tdmi::TB_LDR_STR_SE_HW(u16 op) {
+	u32 opp = op;
+	u32 rnVal = rReg(RB(op));
+	u32 rmVal = rReg((op >> 6) & 0x7);
+	u8 rd = RD_LOW(op);
+	u32 address = rnVal + rmVal;
+	u32 data = 0;
+	switch ((op & 0x0C00) >> 10) {
+	case TB_SE_STRSH:
+		bus->write16(address, rReg(rd));
+		break;
+	case TB_SE_LDSB:
+		wReg(rd, (s32)(s8)bus->read8(address));
+		break;
+	case TB_SE_LDRH:
+		wReg(rd, (u16)bus->read16(address));
+		break;
+	case TB_SE_LDSH:
+		data = bus->read16(address);
+		wReg(rd, (s32)(s16)data);
+		break;
 	}
 }
 
@@ -118,6 +182,66 @@ void Arm7tdmi::TB_LDMIA_STMIA(u16 op) {
 			}
 		}
 	}
+	wReg(rn, rnVal + (countSetBits(op & 0xFF) * 4));
+}
 
-	wReg(rn, rn + (countSetBits(op) * 4));
+//THUMB.12
+void Arm7tdmi::TB_GET_REL_ADDR(u16 op) {
+	u8 offset = op & 0xFF;
+	u8 rd = RD_HIGH(op);
+	if (!(op & BIT(11))) { // ADD (5)
+		wReg(rd, (r[15] & 0xFFFFFFFC) + offset << 2);
+	}
+	else { // ADD(6)
+		wReg(rd, rReg(13) + offset << 2);
+	}
+	
+}
+
+//THUMB.13
+void Arm7tdmi::TB_ADD_OFFSET_SP(u16 op) {
+	u16 offset = op & 0x7F << 2;
+	if (op & BIT(7)) { // SUB
+		wReg(13, rReg(13) - offset);
+	}
+	else { // ADD
+		wReg(13, rReg(13) + offset);
+	}
+}
+
+//THUMB.14
+void Arm7tdmi::TB_PUSH(u16 op) {
+	u32 startAddress = rReg(13) - (countSetBits(op & 0x1FF) * 4);
+	u32 address = startAddress;
+	for (int i = 0; i < 8; i++) {
+		if (op & BIT(i)) {
+			bus->write32(address, rReg(i));
+			address += 4;
+		}
+	}
+	if (op & BIT(8)) {//BIT R
+		bus->write32(address, rReg(14));
+		address += 4;
+	}
+	wReg(13, startAddress);
+}
+
+//THUMB.14
+void Arm7tdmi::TB_POP(u16 op) {
+	u32 address = rReg(13);
+
+	for (int i = 0; i < 8; i++) {
+		if (op & BIT(i)) {
+			wReg(i, bus->read32(address));
+			address += 4;
+		}
+	}
+
+	if (op & BIT(8)) {//BIT R
+		u32 value = bus->read32(address);
+		wReg(15, (value & 0xFFFFFFFE)+2);
+		address += 4;
+
+	}
+	wReg(13, address);
 }
