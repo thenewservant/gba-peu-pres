@@ -187,7 +187,6 @@ void Arm7tdmi::checkCPSR_DP(u32& op, const u8& carryOut) {
 	}
 }
 
-
 void Arm7tdmi::AND(u32 op) {
 	u8 carryOut;
 	wReg(RD(op), rReg(RN(op)) & operand2(this, op, cpsr, &carryOut));
@@ -378,7 +377,7 @@ void Arm7tdmi::MSR(u32 operand, u32 op) {
 }
 
 void Arm7tdmi::MSR_IMM(u32 op) {
-	u32 operand =  ((op & 0xFF) >> (2 * MSR_IMM_ROTATE_IMM(op))) | ((op & 0xFF) << (32 - 2 * MSR_IMM_ROTATE_IMM(op)));//rotated by 2*rotate_imm
+	u32 operand = ((op & 0xFF) >> (2 * MSR_IMM_ROTATE_IMM(op))) | ((op & 0xFF) << (32 - 2 * MSR_IMM_ROTATE_IMM(op)));//rotated by 2*rotate_imm
 	MSR(operand, op);
 }
 

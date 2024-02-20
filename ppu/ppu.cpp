@@ -82,11 +82,9 @@ void Ppu::tick() {
 		case 0x3:mode3();break;
 		case 0x4:mode4();break;
 		case 0x5:mode5();break;
-		default:break; // not supposed to happenbreak;
-
+		default:break; // not supposed to happen
 		}
 	}
-
 	cycle++;
 	if (cycle == REAL_HBLANK_CYCLES) {
 		cycle = 0;

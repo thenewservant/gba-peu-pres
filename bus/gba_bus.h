@@ -14,6 +14,7 @@ typedef union _intCtrlUnion_t {
 		u16 waitcnt; // Waitstate control
 		u16 padding1;
 		u16 ime; // Interrupt Master Enable
+		u16 padding2;
 	});
 	u8 array[sizeof(regs)]; // Interrupt control registers as an array
 }InterruptControlUnion;

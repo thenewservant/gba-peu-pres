@@ -1,7 +1,7 @@
 #include "arm7tdmi.h"
 
 #define GET_BRANCH_OPCODE(op) ((op >> 8) & 0xF)
-#define TEST_BRANCH(cond) if(cond){wReg(15, rReg(15) + (s32)(sOffSet << 1));}
+#define TEST_BRANCH(cond) if(cond){wReg(15, ((s32)rReg(15) + (s32)(sOffSet << 1)) + 2);}
 
 enum THUMB_BRANCH {
     TB_BEQ = 0x0, // Z set
@@ -21,7 +21,7 @@ enum THUMB_BRANCH {
 };
 
 void Arm7tdmi::TB_COND_BRANCH(u16 op) {
-    s32 sOffSet = (s32)(op & 0xff);
+    s32 sOffSet = (s32)(s8)(op & 0xff);
     switch (GET_BRANCH_OPCODE(op)) {
     case TB_BEQ:TEST_BRANCH(cpsr & Z); break;
     case TB_BNE:TEST_BRANCH(!(cpsr & Z)); break;
@@ -45,4 +45,19 @@ void Arm7tdmi::TB_COND_BRANCH(u16 op) {
 void Arm7tdmi::TB_UNCOND_BRANCH(u16 op) {
 	s32 sOffSet =(s32)( op & 0x7ff);
     TEST_BRANCH(true);
+}
+
+void Arm7tdmi::TB_BL(u16 op) {
+    u16 offset11 = op & 0x7ff;
+    if (op & BIT(11)) {
+        printf("BL11\n");
+        u32 oldPc = rReg(15) - 2;
+        r[15] = rReg(14)+2 + (offset11 << 1);
+        r[14] = oldPc | 1;
+    }
+    else {
+        printf("BL10\n");
+        s16 signExtendedOffset =( offset11 & BIT(10)) ? offset11 | 0xF800 : offset11;
+        r[14] = rReg(15) + (signExtendedOffset<<12);
+    }
 }
