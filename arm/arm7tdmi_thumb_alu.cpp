@@ -148,7 +148,7 @@ void Arm7tdmi::TB_ALU_OP(u16 op) {
 		ASSIGN_TO_REG_NZ;
 		break;
 	case TB_ALU_MVN:
-		result = ~rsVal;
+		result = (u32)~rsVal;
 		ASSIGN_TO_REG_NZ;
 		break;
 	default:

@@ -315,7 +315,9 @@ void Arm7tdmi::tick() {
 		this->r[15] += 4;
 	}
 	step++;
+	static u64 nbShots = 0;
 	if ((step % 4) == 0) {
+		//printf("nbShots: %lld\n", nbShots++);
 		ppu->tick();
 		step = 0;
 	}

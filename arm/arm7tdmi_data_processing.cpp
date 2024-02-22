@@ -199,7 +199,6 @@ void Arm7tdmi::EOR(u32 op) {
 	checkCPSR_DP(op, carryOut);
 }
 
-// UNSAFE vvvv (missing V flag)
 
 void Arm7tdmi::SUB(u32 op) {
 	u8 carryOut;
@@ -227,37 +226,64 @@ void Arm7tdmi::RSB(u32 op) {
 	CHECKCPSR_WITH_V_FLAG;
 }
 
-
 void Arm7tdmi::ADD(u32 op) {
 	u8 carryOut;
-	s32 operand2Val = operand2(this, op, cpsr, &carryOut);
-	s32 result = rReg(RN(op)) + operand2Val;
+	u32 rnVal = rReg(RN(op));
+	u32 operand2Val = operand2(this, op, cpsr, &carryOut);
+	u64 result = (u64)rReg(RN(op)) + operand2Val;
 	wReg(RD(op), (u32)result);
 	if (BIT_S(op) && (RD(op) == 15)) {
-			if (CURRENT_MODE_HAS_SPSR) {
-					cpsr = getSPSRValue();
-			}
+		if (CURRENT_MODE_HAS_SPSR) {
+			cpsr = getSPSRValue();
+		}
 	}
-	else {
+	else if (BIT_S(op)) {
 		cpsr &= ~N & ~Z & ~C & ~V;
 		cpsr |= ((u32)result & BIT(31)) ? N : 0;
 		cpsr |= (result == 0) ? Z : 0;
-		cpsr |= result > 0xFFFFFFFF ? C : 0;
-		cpsr |= ((rReg(RN(op)) ^ operand2Val) & (rReg(RD(op)) ^ rReg(RN(op))) & BIT(31)) ? V : 0;
+		cpsr |= (((u32)result) < ((u32)operand2Val)) ? C : 0;
+		cpsr |= ((((rnVal ^ result) & (operand2Val ^ result)) >> 31) & 1) ? V : 0;
 	}
 }
 
 void Arm7tdmi::ADC(u32 op) {
 	u8 carryOut;
-	u64 result = rReg(RN(op)) + operand2(this, op, cpsr, &carryOut) + ((cpsr & C) >0);
+	u32 rnVal = rReg(RN(op));
+	u32 operand2Val = operand2(this, op, cpsr, &carryOut);
+	u64 result = (u64)rnVal + operand2Val + (u64)((cpsr & C) >0);
 	wReg(RD(op), (u32)result);
-	CHECKCPSR_WITH_V_FLAG;
+	if (BIT_S(op) && (RD(op) == 15)) {
+		if (CURRENT_MODE_HAS_SPSR) {
+			cpsr = getSPSRValue();
+		}
+	}
+	else if(BIT_S(op)){
+		cpsr &= ~N & ~Z & ~C & ~V;
+		cpsr |= ((u32)result & BIT(31)) ? N : 0;
+		cpsr |= (result == 0) ? Z : 0;
+		cpsr |= (result > 0xFFFFFFFF) ? C : 0;
+		cpsr |= ((((rnVal ^ result) & (operand2Val ^ result)) >> 31) & 1) ? V : 0;
+	}
 }
 
 void Arm7tdmi::SBC(u32 op) {
 	u8 carryOut;
-	wReg(RD(op), rReg(RN(op)) - operand2(this, op, cpsr, &carryOut) - (cpsr & C));
-	checkCPSR_DP(op, carryOut);
+	u32 rnVal = rReg(RN(op));
+	u32 operand2Val = operand2(this, op, cpsr, &carryOut);
+	u64 result = (u64)rnVal + ~operand2Val + (u64)((cpsr & C) > 0) ;
+	wReg(RD(op), (u32)result);
+	if (BIT_S(op) && (RD(op) == 15)) {
+		if (CURRENT_MODE_HAS_SPSR) {
+			cpsr = getSPSRValue();
+		}
+	}
+	else if (BIT_S(op)) {
+		cpsr &= ~N & ~Z & ~C & ~V;
+		cpsr |= ((u32)result & BIT(31)) ? N : 0;
+		cpsr |= (result == 0) ? Z : 0;
+		cpsr |= (result > 0xFFFFFFFF) ? C : 0;
+		cpsr |= ((((rnVal ^ result) & (~operand2Val ^ result)) >> 31) & 1) ? V : 0;
+	}
 }
 
 void Arm7tdmi::RSC(u32 op) {
@@ -269,8 +295,8 @@ void Arm7tdmi::RSC(u32 op) {
 void Arm7tdmi::CMP(u32 op) {
 	u8 carryOut;
 	u32 rnVal = rReg(RN(op));
-	u32 shifterOperand = operand2(this, op, cpsr, &carryOut);
-	u32 result = rReg(RN(op)) - shifterOperand;
+	u32 operand2Val = operand2(this, op, cpsr, &carryOut);
+	u64 result = (u64)rnVal - operand2Val;
 	if (BIT_S(op) && (RD(op) == 15)) {
 		if (CURRENT_MODE_HAS_SPSR) {
 			cpsr = getSPSRValue();
@@ -278,23 +304,24 @@ void Arm7tdmi::CMP(u32 op) {
 	}
 	else if (BIT_S(op)) {
 		cpsr &= ~N & ~Z & ~C & ~V;
-		cpsr |= (result & BIT(31)) ? N : 0;
+		cpsr |= ((u32)result & BIT(31)) ? N : 0;
 		cpsr |= (result == 0) ? Z : 0;
-		cpsr |= (rnVal >= shifterOperand) ? C : 0;
-		cpsr |= ((rnVal ^ shifterOperand) & (rnVal ^ result) & BIT(31)) ? V : 0;
+		cpsr |= (result > 0xFFFFFFFF) ? C : 0;
+		cpsr |= ((((rnVal ^ result) & (operand2Val ^ result)) >> 31) & 1) ? V : 0;
 	}
 }
 
 void Arm7tdmi::CMN(u32 op) {
 	u8 carryOut;
-	u32 result = rReg(RN(op)) + operand2(this, op, cpsr, &carryOut);
+	u32 operand2Val = operand2(this, op, cpsr, &carryOut);
+	u32 rnVal = rReg(RN(op));
+	u64 result = (u64)rnVal + operand2Val;
 	cpsr &= ~N & ~Z & ~C;
-	cpsr |= (result & BIT(31)) ? N : 0;
+	cpsr |= ((u32)result & BIT(31)) ? N : 0;
 	cpsr |= (result == 0) ? Z : 0;
-	cpsr |= carryOut ? C : 0;
+	cpsr |= (result > 0xFFFFFFFF) ? C : 0;
+	cpsr |= ((((rnVal ^ result) & (operand2Val ^ result)) >> 31) & 1) ? V : 0;
 }
-
-// UNSAFE ^^^^
 
 
 void Arm7tdmi::TST(u32 op) {
