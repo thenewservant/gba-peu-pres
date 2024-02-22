@@ -78,11 +78,11 @@ u32 operand2(Arm7tdmi* cpu, u32 op, u32 cpsr, u8* carryOut) {
 		}
 		else if (((op >> 4) & 0x7) == 2) {
 			if (shiftAmount) {
-				*carryOut = (rmVal & BIT(shiftAmount - 1)) ? 1 : 0;
+				*carryOut = ((rmVal >> (shiftAmount - 1)) & 1)? 1 : 0;
 				return rmVal >> shiftAmount;
 			}
 			else {
-				*carryOut = rmVal & BIT(31);
+				*carryOut = ( (rmVal & BIT(31)) >0 )? 1 : 0;
 				return 0;
 			}
 		}
@@ -146,7 +146,7 @@ u32 operand2(Arm7tdmi* cpu, u32 op, u32 cpsr, u8* carryOut) {
 		}
 		else if (((op >> 4) & 0x7) == 6) {
 			if (shiftAmount) {
-				*carryOut = rmVal & BIT(shiftAmount - 1);
+				*carryOut =(( rmVal & BIT(shiftAmount - 1) ) > 0 )? 1 : 0;
 				u32 rotatedValue = rmVal >> shiftAmount;
 				return (rotatedValue | (rmVal << (32 - shiftAmount)));
 			}
@@ -349,6 +349,7 @@ void Arm7tdmi::ORR(u32 op) {
 }
 
 void Arm7tdmi::MOV(u32 op) {
+
 	u8 carryOut;
 	u32 result = operand2(this, op, cpsr, &carryOut);
 	wReg(RD(op), result);

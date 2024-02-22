@@ -306,6 +306,10 @@ void Arm7tdmi::tick() {
 	}
 	else { // ARM mode
 		u32 op = bus->read32(r[15]-8);
+		while (op == 0) {
+			printf("r15: %08x\n", r[15]);
+		
+		}
 #ifdef DEBUG
 		printf("PC: %08x\n", r[15]);
 		printf("op: %08x\n", op);
