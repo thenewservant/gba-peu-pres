@@ -22,7 +22,7 @@ inline u8* Bus::ioAccess(u32 add) {
 		}
 		
 	}
-	return (u8*)&potHole;
+	
 	printf("IO Access not implemented yet: %08x\n", add);
 	exit(1);
 	return nullptr;

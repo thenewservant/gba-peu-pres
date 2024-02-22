@@ -29,13 +29,14 @@ enum HIGH_REG_OPERATION_OPCODE {
 //THUMB.05
 void Arm7tdmi::TB_HIGH_REG_OPERATION(u16 op) {
 	u8 rd = MSB_RD(op) ? (RD_LOW(op) | 0x8) : RD_LOW(op);
-	u8 rm = MSB_RM(op) ? (RB(op) | 0x8)		: RB(op);
+	u8 rm = (op>>3) & (MSB_RM(op) ? 0xF : 0x7);
 	u32 rmVal = rReg(rm);
 	switch ((op >> 8) & 0x3) {
 	case TB_HR_ADD:
 		wReg(rd, rReg(rd) + rmVal);
 		break;
 	case TB_HR_CMP:
+		exit(159);
 		break;
 	case TB_HR_MOV:
 		wReg(rd, rmVal);
@@ -43,7 +44,7 @@ void Arm7tdmi::TB_HIGH_REG_OPERATION(u16 op) {
 	case TB_HR_BX:
 		cpsr &= ~T;
 		cpsr |= (rmVal & 0x1) ? T : 0; // Set T bit to bit 0 of Rm
-		r[15] = (u32)(2*(rmVal & 0xFFFFFFFE)) + ((cpsr & T)?2:6); // Clear the bottom two bits of the address
+		r[15] = (u32)((rmVal & 0xFFFFFFFE)) + ((cpsr & T)?2:6); // Clear the bottom two bits of the address
 		break;
 	}
 }
@@ -190,17 +191,17 @@ void Arm7tdmi::TB_GET_REL_ADDR(u16 op) {
 	u8 offset = op & 0xFF;
 	u8 rd = RD_HIGH(op);
 	if (!(op & BIT(11))) { // ADD (5)
-		wReg(rd, (r[15] & 0xFFFFFFFC) + offset << 2);
+		wReg(rd, (r[15] & 0xFFFFFFFC) + (offset << 2));
 	}
 	else { // ADD(6)
-		wReg(rd, rReg(13) + offset << 2);
+		wReg(rd, rReg(13) + (offset << 2));
 	}
 	
 }
 
 //THUMB.13
 void Arm7tdmi::TB_ADD_OFFSET_SP(u16 op) {
-	u16 offset = op & 0x7F << 2;
+	u16 offset = (op & 0x7F) << 2;
 	if (op & BIT(7)) { // SUB
 		wReg(13, rReg(13) - offset);
 	}
