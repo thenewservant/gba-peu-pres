@@ -68,7 +68,6 @@ void Arm7tdmi::TB_MOVE_SHIFTED_REG(u16 op) { //MOV(2)
 	wReg(rd, result);
 }
 
-
 enum THUMB_ALU_OPCODE {
 	TB_ALU_AND = 0x0,
 	TB_ALU_EOR = 0x1,
@@ -174,19 +173,28 @@ void Arm7tdmi::TB_IMMEDIATE_OPERATION(u16 op) {
 			break;
 		case TB_IMM_CMP:
 			result = rReg(rd) - immed8;
-			CHECKCPSR_NZ;
-			//MISSING CV
+
+			cpsr = (cpsr & ~N) | ((result & (1 << (31))) ? N : 0); cpsr = (cpsr & ~Z) | ((result == 0) ? Z : 0);
+			cpsr = (cpsr & ~C) | ((rReg(rd) >= immed8) ? C : 0); // unsafe
+			cpsr = (cpsr & ~V) | ((rReg(rd) & (1 << (31))) != (immed8 & (1 << (31))) && (rReg(rd) & (1 << (31))) != (result & (1 << (31))) ? V : 0); // unsafe
+
 			result = rReg(rd); // real result will not be set to rd
 			break;
 		case TB_IMM_ADD:
 			result = rReg(rd) + immed8;
-			CHECKCPSR_NZ;
-			//MISSING CV
+			cpsr = (cpsr & ~N) | ((result & (1 << (31))) ? N : 0); cpsr = (cpsr & ~Z) | ((result == 0) ? Z : 0);
+			cpsr = (cpsr & ~C) | ((rReg(rd) >= immed8) ? C : 0); // unsafe
+			cpsr = (cpsr & ~V) | ((rReg(rd) & (1 << (31))) != (immed8 & (1 << (31))) && (rReg(rd) & (1 << (31))) != (result & (1 << (31))) ? V : 0); // unsafe
+
+
 			break;
 		case TB_IMM_SUB:
 			result = rReg(rd) - immed8;
-			CHECKCPSR_NZ;
-			//MISSING CV
+			cpsr = (cpsr & ~N) | ((result & (1 << (31))) ? N : 0); cpsr = (cpsr & ~Z) | ((result == 0) ? Z : 0);
+			cpsr = (cpsr & ~C) | ((rReg(rd) >= immed8) ? C : 0); // unsafe
+			cpsr = (cpsr & ~V) | ((rReg(rd) & (1 << (31))) != (immed8 & (1 << (31))) && (rReg(rd) & (1 << (31))) != (result & (1 << (31))) ? V : 0); // unsafe
+
+
 			break;
 		default:
 			break;

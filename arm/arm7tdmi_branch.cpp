@@ -15,6 +15,5 @@ void Arm7tdmi::B_BL(u32 op) {
 void Arm7tdmi::BX(u32 op) {
     cpsr &= ~T;
     cpsr |= (rReg(RM(op)) & 0x1) ? T : 0; // Set T bit to bit 0 of Rm
-    if((rReg(RM(op)) & 0x1))printf("BX: T bit set\n");
     r[15] = (rReg(RM(op)) & 0xFFFFFFFE) + ((cpsr & T) ? 0 : 4); // Clear the bottom two bits of the address
 }

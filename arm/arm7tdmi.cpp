@@ -143,7 +143,6 @@ void Arm7tdmi::wReg(u8 reg, u32 value) {
 }
 
 void Arm7tdmi::SWI(u32 op) {
-	
 	printf("SWI : op: %08x\n", op);
 	rSvc[1] = r[15] - 4;
 	spsr[2] = cpsr;
