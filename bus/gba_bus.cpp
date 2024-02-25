@@ -1,10 +1,28 @@
 #include "gba_bus.h"
 #include "../ppu/ppu.h"
+
+
 #pragma warning(disable:4996)
+
+#define DMA_FIRST_MAP_ADDRESS 0x040000B0
+#define DMA_LAST_MAP_ADDRESS 0x040000DE
+
+Bus::Bus() {
+	for (int i = 0; i < 4; i++) {
+		dmaArray[i] = Dma();
+		dmaArray[i].setBus(this);
+	}
+}
+
 
 inline u8* Bus::ioAccess(u32 add) {
 	if (add <= 0x04000056) {
 		return ppu->readIO(add);
+	}
+	else if ((add >= DMA_FIRST_MAP_ADDRESS) && (add <= DMA_LAST_MAP_ADDRESS)) {
+		u8 dmaNb = Dma::selectDma(add);
+		printf("accessed dma %d\n", dmaNb);
+		return (u8*)dmaArray[dmaNb].readIO((add & 0xFF) - 0xB0 - 0xC * dmaNb);
 	}
 	else if (add >=0x4000200) {
 		u16 addr = add & 0xF00;
@@ -22,7 +40,6 @@ inline u8* Bus::ioAccess(u32 add) {
 		}
 		
 	}
-	
 	printf("IO Access not implemented yet: %08x\n", add);
 	exit(1);
 	return nullptr;
@@ -124,7 +141,7 @@ void Bus::loadGamePack(const char* filename) {
 	FILE* fp = fopen(filename, "rb");
 	if (fp == nullptr) {
 		printf("Failed to open file %s\n", filename);
-		return;
+		exit(1);
 	}
 
 	u32 cursor = 0;
@@ -146,3 +163,4 @@ void Bus::loadBios(const char* filename) {
 		fread(bios + cursor++, sizeof(u8), 1, fp);
 	}
 }
+

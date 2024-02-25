@@ -50,7 +50,7 @@ void Arm7tdmi::TB_MOVE_SHIFTED_REG(u16 op) { //MOV(2)
 		break;
 	case TB_MOVE_ASR:
 		if (immed5) {
-			result = rmVal >> immed5;
+			result = (s32)rmVal >> immed5;
 			cpsr = (cpsr & ~C) | ((rmVal & BIT(immed5 - 1)) ? C : 0);
 		}
 		else {
@@ -103,36 +103,139 @@ void Arm7tdmi::TB_ALU_OP(u16 op) {
 		ASSIGN_TO_REG_NZ;
 		break;
 	case TB_ALU_LSL:
-		result = rdVal ^ rsVal;
-		ASSIGN_TO_REG_NZ;
-		//ASSIGN_TO_REG_NZC;
-		break;
+	{
+		result = rdVal;
+		u8 rsVal8 = (u8)rsVal;
+		if (rsVal8 > 0 && rsVal < 32) {
+			cpsr = (cpsr & ~C) | ((rdVal & BIT(32 - rsVal8)) ? C : 0);
+			result = rdVal << rsVal8;
+		}
+		else if (rsVal8 == 32) {
+			cpsr = (cpsr & ~C) | ((rdVal & BIT(0)) ? C : 0);
+			result = 0;
+		}
+		else if (rsVal8 > 32) {
+			cpsr = (cpsr & ~C);
+			result = 0;
+		}
+		wReg(rd, result);
+		cpsr = (cpsr & ~N) | ((result & BIT(31)) ? N : 0);
+		cpsr = (cpsr & ~Z) | ((result == 0) ? Z : 0);
+	}
+	break;
 	case TB_ALU_LSR:
-		
+	{
+		result = rdVal;
+		u8 rsVal8 = (u8)rsVal;
+		if (rsVal8 > 0 && rsVal < 32) {
+			cpsr = (cpsr & ~C) | ((rsVal8 - 1) ? C : 0);
+			result = rdVal >> rsVal8;
+		}
+		else if (rsVal8 == 32) {
+			cpsr = (cpsr & ~C) | ((rdVal & BIT(31)) ? C : 0);
+			result = 0;
+		}
+		else if (rsVal8 > 32) {
+			cpsr = (cpsr & ~C);
+			result = 0;
+		}
+		wReg(rd, result);
+		cpsr = (cpsr & ~N) | ((result & BIT(31)) ? N : 0);
+		cpsr = (cpsr & ~Z) | ((result == 0) ? Z : 0);
+	}
+	break;
 	case TB_ALU_ASR:
+	{
+		result = rdVal;
+		u8 rsVal8 = (u8)rsVal;
+		if (rsVal8 > 0 && rsVal < 32) {
+			cpsr = (cpsr & ~C) | ((rsVal8 - 1) ? C : 0);
+			result = (s32)rdVal >> rsVal8;
+		}
+		else if (rsVal8 >= 32) {
+			cpsr = (cpsr & ~C) | ((rdVal & BIT(31)) ? C : 0);
+			if (rdVal & BIT(31)) {
+				result = 0xFFFFFFFF;
+			}
+			else {
+				result = 0;
+			}
+		}
 
+		wReg(rd, result);
+		cpsr = (cpsr & ~N) | ((result & BIT(31)) ? N : 0);
+		cpsr = (cpsr & ~Z) | ((result == 0) ? Z : 0);
+	}
+	break;
 	case TB_ALU_ADC:
-		
+	{
+		u64 result = (u64)rdVal + rsVal + (u64)((cpsr & C) > 0);
+		cpsr = (cpsr & ~N) | (((u32)result & BIT(31)) ? N : 0);
+		cpsr = (cpsr & ~Z) | (((u32)result == 0) ? Z : 0);
+		cpsr = (cpsr & ~C) | ((result > 0xFFFFFFFF) ? C : 0); // unsafe
+		cpsr = (cpsr & ~V) | (((((rdVal ^ result) & (rsVal ^ result)) >> 31) & 1) ? V : 0);
+		wReg(rd, result);
+	}
+	break;
 	case TB_ALU_SBC:
-		
+	{
+		u64 result = (u64)rdVal + ~rsVal + (u64)((cpsr & C) > 0);
+		cpsr = (cpsr & ~N) | (((u32)result & BIT(31)) ? N : 0);
+		cpsr = (cpsr & ~Z) | (((u32)result == 0) ? Z : 0);
+		cpsr = (cpsr & ~C) | ((result > 0xFFFFFFFF) ? C : 0); // unsafe
+		cpsr = (cpsr & ~V) | (((((rdVal ^ result) & (~rsVal ^ result)) >> 31) & 1) ? V : 0);
+		wReg(rd, result);
+	}
+	break;
 	case TB_ALU_ROR:
-		printf("unimplemented\n");
-		exit(56);
+	{
+		result = rdVal;
+		u8 rsVal8 = (u8)rsVal;
+		if (rsVal8 == 0) {
+		}
+		else if ((rsVal8 & 0xF) == 0) {
+			cpsr = (cpsr & ~C) | ((rdVal & BIT(31)) ? C : 0);
+		}
+		else {
+			cpsr = (cpsr & ~C) | ((rdVal & BIT((rsVal8 & 0xF) - 1)) ? C : 0);
+			result = (rdVal >> (rsVal8 & 0xF)) | (rdVal << (32 - (rsVal8 & 0xF)));
+		}
+
+		wReg(rd, result);
+		cpsr = (cpsr & ~N) | ((result & BIT(31)) ? N : 0);
+		cpsr = (cpsr & ~Z) | ((result == 0) ? Z : 0);
+	}
+	break;
 	case TB_ALU_TST:
 		result = rdVal & rsVal;
 		CHECKCPSR_NZ;
 		break;
 	case TB_ALU_NEG:
-		result = rdVal & rsVal;
-		ASSIGN_TO_REG_NZ;
+	{
+		u64 result = ~rsVal + 1;
+		cpsr = (cpsr & ~N) | (((u32)result & BIT(31)) ? N : 0);
+		cpsr = (cpsr & ~Z) | (((u32)result == 0) ? Z : 0);
+		cpsr = (cpsr & ~C) | ((result > 0xFFFFFFFF) ? C : 0); // unsafe
+		cpsr = (cpsr & ~V) | (((((rdVal ^ result) & (rsVal ^ result)) >> 31) & 1) ? V : 0);
+		wReg(rd, result);
+	}
 		break;
 	case TB_ALU_CMP:
 		result = rdVal - rsVal;
-		CHECKCPSR_NZ;
-	case TB_ALU_CMN:
-		result = rdVal + rsVal;
-		CHECKCPSR_NZ;
+		cpsr = (cpsr & ~N) | ((result & (1 << (31))) ? N : 0);
+		cpsr = (cpsr & ~Z) | ((result > 0) ? 0 : Z);
+		cpsr = (cpsr & ~C) | ((rdVal >= rsVal) ? C : 0); // unsafe
+		cpsr = (cpsr & ~V) | (((((rdVal ^ result) & (rsVal ^ result)) >> 31) & 1) ? V : 0);
 		break;
+	case TB_ALU_CMN:
+	{
+		u64 result = (u64)rdVal + rsVal;
+		cpsr = (cpsr & ~N) | (((u32)result & BIT(31)) ? N : 0);
+		cpsr = (cpsr & ~Z) | (((u32)result == 0) ? Z : 0);
+		cpsr = (cpsr & ~C) | ((result > 0xFFFFFFFF) ? C : 0); // unsafe
+		cpsr = (cpsr & ~V) | (((((rdVal ^ result) & (rsVal ^ result)) >> 31) & 1) ? V : 0);
+	}
+	break;
 	case TB_ALU_ORR:
 		result = rdVal | rsVal;
 		ASSIGN_TO_REG_NZ;
@@ -164,40 +267,45 @@ enum THUMB_IMMEDIATE_OPCODE {
 
 void Arm7tdmi::TB_IMMEDIATE_OPERATION(u16 op) {
 	u8 rd = (op >> 8) & 0x7;
+	u32 rdVal = rReg(rd);
 	u8 immed8 = op & 0xFF;
 	u32 result = 0;
 	switch ((op >> 11) & 0x3) {
-		case TB_IMM_MOV:
-			result = immed8;
-			CHECKCPSR_NZ;
-			break;
-		case TB_IMM_CMP:
-			result = rReg(rd) - immed8;
+	case TB_IMM_MOV:
+		result = immed8;
+		cpsr = (cpsr & ~N) | ((result & (1 << (31))) ? N : 0); cpsr = (cpsr & ~Z) | ((result == 0) ? Z : 0);
+		wReg(rd, result);
+		break;
+	case TB_IMM_CMP:
+	{
+		u32 rsVal = immed8;
+		result = rdVal - rsVal;
+		printf( "rdVal: %08x, rsVal: %08x, result: %08x\n", rdVal, rsVal, result);
+		cpsr = (cpsr & ~N) | ((result & (1 << (31))) ? N : 0);
+		cpsr = (cpsr & ~Z) | ((result > 0) ? 0 : Z);
+		cpsr = (cpsr & ~C) | ((rdVal >= rsVal) ? C : 0); // unsafe
+		cpsr = (cpsr & ~V) | (((((rdVal ^ result) & (rsVal ^ result)) >> 31) & 1) ? V : 0);
+	}
+		return;
+	case TB_IMM_ADD:
+		result = rReg(rd) + immed8;
+		cpsr = (cpsr & ~N) | ((result & (1 << (31))) ? N : 0); cpsr = (cpsr & ~Z) | ((result == 0) ? Z : 0);
+		cpsr = (cpsr & ~C) | ((rReg(rd) >= immed8) ? C : 0); // unsafe
+		cpsr = (cpsr & ~V) | ((result & (1 << (31))) != (immed8 & (1 << (31))) && (rReg(rd) & (1 << (31))) != (result & (1 << (31))) ? V : 0);
+		break;
+	case TB_IMM_SUB:
+	{
+		u32 imm8_32 = ~(u32)immed8 + 1;
+		result = rReg(rd) + imm8_32;
+		cpsr = (cpsr & ~N) | ((result & (1 << (31))) ? N : 0);
+		cpsr = (cpsr & ~Z) | ((result == 0) ? Z : 0);
+		cpsr = (cpsr & ~C) | ((rReg(rd) >= immed8) ? C : 0); // unsafe
+		cpsr = (cpsr & ~V) | (((imm8_32 ^ result) & (rReg(rd) ^ result) & BIT(31)) ? V : 0);
+	}
 
-			cpsr = (cpsr & ~N) | ((result & (1 << (31))) ? N : 0); cpsr = (cpsr & ~Z) | ((result == 0) ? Z : 0);
-			cpsr = (cpsr & ~C) | ((rReg(rd) >= immed8) ? C : 0); // unsafe
-			cpsr = (cpsr & ~V) | ((rReg(rd) & (1 << (31))) != (immed8 & (1 << (31))) && (rReg(rd) & (1 << (31))) != (result & (1 << (31))) ? V : 0); // unsafe
-
-			result = rReg(rd); // real result will not be set to rd
-			break;
-		case TB_IMM_ADD:
-			result = rReg(rd) + immed8;
-			cpsr = (cpsr & ~N) | ((result & (1 << (31))) ? N : 0); cpsr = (cpsr & ~Z) | ((result == 0) ? Z : 0);
-			cpsr = (cpsr & ~C) | ((rReg(rd) >= immed8) ? C : 0); // unsafe
-			cpsr = (cpsr & ~V) | ((rReg(rd) & (1 << (31))) != (immed8 & (1 << (31))) && (rReg(rd) & (1 << (31))) != (result & (1 << (31))) ? V : 0); // unsafe
-
-
-			break;
-		case TB_IMM_SUB:
-			result = rReg(rd) - immed8;
-			cpsr = (cpsr & ~N) | ((result & (1 << (31))) ? N : 0); cpsr = (cpsr & ~Z) | ((result == 0) ? Z : 0);
-			cpsr = (cpsr & ~C) | ((rReg(rd) >= immed8) ? C : 0); // unsafe
-			cpsr = (cpsr & ~V) | ((rReg(rd) & (1 << (31))) != (immed8 & (1 << (31))) && (rReg(rd) & (1 << (31))) != (result & (1 << (31))) ? V : 0); // unsafe
-
-
-			break;
-		default:
-			break;
+	break;
+	default:
+		break;
 	}
 	wReg(rd, result);
 }
