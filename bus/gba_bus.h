@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <cstdint>
 
+#include "../dma/dma.h"
 #include "../common/types.h"
 
 typedef union _intCtrlUnion_t {
@@ -31,6 +32,7 @@ class Ppu;
 
 class Bus {
 private:
+	Dma dmaArray[4];
 	Ppu* ppu;
 	InterruptControlUnion intCtrl;
 	PwrStatusUnion pwrStatus;
@@ -78,6 +80,7 @@ public:
 
 	void loadGamePack(const char* filename);
 	void loadBios(const char* filename);
+	Bus();
 };
 
 #endif // GBA_BUS_H

@@ -28,7 +28,13 @@
 
 void Arm7tdmi::evaluateThumb(u16 op) {
 	if (IS_TB_SOFTWARE_INTERRUPT(op)) {
-		exit(99);
+		printf("THUMB SWI : op: %08x\n", op);
+		rSvc[1] = r[15] - 2;
+		spsr[2] = cpsr;
+		cpsr &= ~(ARM7TDMI_MODE_MASK | BIT(5) | BIT(9));
+		cpsr |= BIT(7);
+		cpsr |= ARM7TDMI_MODE_SVC;
+		r[15] = 0x8 + 6;
 	}
 	else if (IS_TB_COND_BRANCH(op)) {
 		TB_COND_BRANCH(op);

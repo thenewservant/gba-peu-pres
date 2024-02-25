@@ -122,8 +122,9 @@ void Arm7tdmi::STM(u32 op) {
 	case 2: DB(start_adress, op); break;
 	case 3: default: IB(start_adress, op); break;
 	}
+	int i = 0;
 	if ((op & BIT(22)) == 0) {//STM (1)
-		for (u8 i = 0; i <= 15; i++) {
+		for (i=0; i < 15; i++) {
 			if (op & BIT(i)) {
 				bus->write32(start_adress, rReg(i));
 				start_adress += 4;
@@ -131,12 +132,16 @@ void Arm7tdmi::STM(u32 op) {
 		}
 	}
 	else { //STM (2)
-		for (u8 i = 0; i <= 15; i++) {
+		for (i=0; i < 15; i++) {
 			if (op & BIT(i)) {
 				bus->write32(start_adress, rRegMode(i, ARM7TDMI_MODE_USER));
 				start_adress += 4;
 			}
 		}
+	}
+	if (op & BIT(15)) {
+		bus->write32(start_adress, rReg(15) + 4);
+		start_adress += 4;
 	}
 }
 
@@ -214,7 +219,7 @@ void Arm7tdmi::LDR(u32 op) { //LDR { , T, B, BT} (mode 2 or mode 2 P)
 	//N.B.
 	// If LDRBT is executed when the processor is in a privileged mode, the memory system is signaled to treat
 	// the access as if the processor were in User mode.
-	u32 address = 0; // final address to be deducted by the following flow
+	u32 address = 0;
 	u32 rnVal = rReg(RN(op));
 	u32 baseOffset = 0;
 
@@ -225,7 +230,6 @@ void Arm7tdmi::LDR(u32 op) { //LDR { , T, B, BT} (mode 2 or mode 2 P)
 	}
 	else { // LDR
 		u32 data = bus->read32(address);
-		//wReg(RD(op), (data >> (8 * (address & 0x3))) | (data << (32 - (8 * (address & 0x3)))));
 		wReg(RD(op), data);
 		if (RD(op) == 15) {
 			exit(55);
@@ -234,16 +238,24 @@ void Arm7tdmi::LDR(u32 op) { //LDR { , T, B, BT} (mode 2 or mode 2 P)
 }
 
 void Arm7tdmi::STR(u32 op) {
-	u32 address = 0; // final address to be deducted by the following flow
+	u32 address = 0;
 	u32 rnVal = rReg(RN(op));
 	u32 offset = 0;
 	getAddressMode2(op, address, rnVal, offset);
 
-	if (BIT_B(op)) {
-		bus->write8(address, rReg(RD(op)));
+	u32 data;
+	if (RD(op) == 15) {
+		data = rReg(RD(op)) + 4;
 	}
 	else {
-		bus->write32(address, rReg(RD(op)));
+		data = rReg(RD(op));
+	}
+
+	if (BIT_B(op)) {
+		bus->write8(address, (u8)data);
+	}
+	else {
+		bus->write32(address, data);
 	}
 }
 

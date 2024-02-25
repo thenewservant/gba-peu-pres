@@ -24,38 +24,26 @@
 #define IS_LOAD_INSTRUCTION(op)				      (op & BIT(20))
 #define IS_BYTE_TRANFER_INSTRUCTION(op)			  (op & BIT(22))
 
+#define FLAG_SET(x) ((cpsr & x) > 0)
+#define FLAG_UNSET(x) ((cpsr & x) == 0)
+
 bool evalCondition(u32 cpsr, u32 op) {
 	switch (op & 0xF0000000) {
-	case ARM7TDMI_CONDITION_EQ:
-		return FLAG(Z) == Z;
-	case ARM7TDMI_CONDITION_NE:
-		return FLAG(Z) == 0;
-	case ARM7TDMI_CONDITION_CS:
-		return FLAG(C) == C;
-	case ARM7TDMI_CONDITION_CC:
-		return FLAG(C) == 0;
-	case ARM7TDMI_CONDITION_MI:
-		return FLAG(N) == N;
-	case ARM7TDMI_CONDITION_PL:
-		return FLAG(N) == 0;
-	case ARM7TDMI_CONDITION_VS:
-		return FLAG(V) == V;
-	case ARM7TDMI_CONDITION_VC:
-		return FLAG(V) == 0;
-	case ARM7TDMI_CONDITION_HI:
-		return (FLAG(C) == C) && (FLAG(Z) == 0);
-	case ARM7TDMI_CONDITION_LS:
-		return (FLAG(C) == 0) || (FLAG(Z) == Z);
-	case ARM7TDMI_CONDITION_GE:
-		return ((FLAG(N) == N) && (FLAG(V) == V)) || (FLAG(N) == FLAG(V));
-	case ARM7TDMI_CONDITION_LT:
-		return ((FLAG(N) == 0) && (FLAG(V) == V)) || ((FLAG(N) == N) && (FLAG(V) == 0));
-	case ARM7TDMI_CONDITION_GT:
-		return (FLAG(Z) == 0) && (((FLAG(N) == N) && (FLAG(V) == V)) || (FLAG(N) == FLAG(V)));
-	case ARM7TDMI_CONDITION_LE:
-		return (FLAG(Z) == Z) || !(((FLAG(N) == N) && (FLAG(V) == V)) || (FLAG(N) == FLAG(V)));
-	case ARM7TDMI_CONDITION_AL:
-		return true;
+	case ARM7TDMI_CONDITION_EQ:	return FLAG_SET(Z);
+	case ARM7TDMI_CONDITION_NE:	return FLAG_UNSET(Z);
+	case ARM7TDMI_CONDITION_CS:	return FLAG_SET(C);
+	case ARM7TDMI_CONDITION_CC:	return FLAG_UNSET(C);
+	case ARM7TDMI_CONDITION_MI:	return FLAG_SET(N);
+	case ARM7TDMI_CONDITION_PL:	return FLAG_UNSET(N);
+	case ARM7TDMI_CONDITION_VS:	return FLAG_SET(V);
+	case ARM7TDMI_CONDITION_VC:	return FLAG_UNSET(V);
+	case ARM7TDMI_CONDITION_HI:	return FLAG_SET(C) && FLAG_UNSET(Z);
+	case ARM7TDMI_CONDITION_LS:	return FLAG_UNSET(C) || FLAG_SET(Z);
+	case ARM7TDMI_CONDITION_GE:	return (FLAG_SET(N) && FLAG_SET(V)) || (FLAG(N) == FLAG(V));
+	case ARM7TDMI_CONDITION_LT:	return (FLAG_UNSET(N) && FLAG_SET(V)) || (FLAG_SET(N) && FLAG_UNSET(V));
+	case ARM7TDMI_CONDITION_GT:	return FLAG_UNSET(Z) && ((FLAG_SET(N) && FLAG_SET(V)) || (FLAG(N) == FLAG(V)));
+	case ARM7TDMI_CONDITION_LE:	return FLAG_SET(Z) || !((FLAG_SET(N) && FLAG_SET(V)) || (FLAG(N) == FLAG(V)));
+	case ARM7TDMI_CONDITION_AL:	return true;
 	case ARM7TDMI_CONDITION_NV:
 	default:
 		return false;
@@ -118,32 +106,38 @@ void Arm7tdmi::wReg(u8 reg, u32 value) {
 	}
 
 	else {
-		switch (CURRENT_MODE) {
-		case ARM7TDMI_MODE_USER:
-		case ARM7TDMI_MODE_SYS:
-			r[reg] = value;
-			break;
-		case ARM7TDMI_MODE_FIQ:
-			(reg >= 15) ? r[15] = value : rFiq[reg - 13] = value;
-			break;
-		case ARM7TDMI_MODE_SVC:
-			((reg == 13) || (reg == 14)) ? rSvc[reg - 13] = value : r[reg] = value;
-			break;
-		case ARM7TDMI_MODE_ABT:
-			((reg == 13) || (reg == 14)) ? rAbt[reg - 13] = value : r[reg] = value;
-			break;
-		case ARM7TDMI_MODE_IRQ:
-			((reg == 13) || (reg == 14)) ? rIrq[reg - 13] = value : r[reg] = value;
-			break;
-		case ARM7TDMI_MODE_UND:
-			((reg == 13) || (reg == 14)) ? rUnd[reg - 13] = value : r[reg] = value;
-			break;
+		if (reg == 15) {
+			r[15] = (value & 0xFFFFFFFE);
+		} else{
+
+			switch (CURRENT_MODE) {
+
+			case ARM7TDMI_MODE_USER:
+			case ARM7TDMI_MODE_SYS:
+				r[reg] = value;
+				break;
+			case ARM7TDMI_MODE_FIQ:
+				 rFiq[reg - 13] = value;
+				break;
+			case ARM7TDMI_MODE_SVC:
+				((reg == 13) || (reg == 14)) ? rSvc[reg - 13] = value : r[reg] = value;
+				break;
+			case ARM7TDMI_MODE_ABT:
+				((reg == 13) || (reg == 14)) ? rAbt[reg - 13] = value : r[reg] = value;
+				break;
+			case ARM7TDMI_MODE_IRQ:
+				((reg == 13) || (reg == 14)) ? rIrq[reg - 13] = value : r[reg] = value;
+				break;
+			case ARM7TDMI_MODE_UND:
+				((reg == 13) || (reg == 14)) ? rUnd[reg - 13] = value : r[reg] = value;
+				break;
+			}
 		}
 	}
 }
 
 void Arm7tdmi::SWI(u32 op) {
-	printf("SWI : op: %08x\n", op);
+	printf("ARM SWI : op: %08x\n", op);
 	rSvc[1] = r[15] - 4;
 	spsr[2] = cpsr;
 	cpsr &= ~(ARM7TDMI_MODE_MASK | BIT(5)  | BIT(9));
@@ -196,7 +190,7 @@ void Arm7tdmi::evaluateArm(u32 op) {
 		SWI(op);
 	}
 	else if (IS_UNDEFINED(op)) {
-		printf("undefined OP: %08x\n", op);
+		printf("OP is of the UNDEFINED format: %08x\n", op);
 		exit(2);
 	}
 	else if (IS_SINGLE_DATA_TRANSFER(op)) {
@@ -225,25 +219,13 @@ void Arm7tdmi::evaluateArm(u32 op) {
 			STR2(op);
 		}
 	}
-	else if (IS_HALFWORD_DAT_TRANS_IMM(op)) {
-		// Halfword Data Transfer ( immediate OR register offset )
-		if (IS_LOAD_INSTRUCTION(op)) {
-			LDR2(op);
-		}
-		else
-		{
-			STR2(op);
-		}
+	else if (IS_HALFWORD_DAT_TRANS_IMM(op)) {		// Halfword Data Transfer ( immediate OR register offset )
+		if (IS_LOAD_INSTRUCTION(op)) { LDR2(op); }
+		else { STR2(op); }
 	}
 	else if (IS_SINGLE_DATA_SWAP(op)) {
-		if (IS_BYTE_TRANFER_INSTRUCTION(op)) {
-			printf("SWPB : op: %08x\n", op);
-			SWPB(op);
-		}
-		else {
-			printf("SWP : op: %08x\n", op);
-			SWP(op);
-		}
+		if (IS_BYTE_TRANFER_INSTRUCTION(op)) { SWPB(op); }
+		else { SWP(op); }
 	}
 	else if (IS_DATA_PROCESSING(op)) {
 
@@ -273,7 +255,7 @@ void Arm7tdmi::evaluateArm(u32 op) {
 		}
 	}
 	else {
-		printf("UNDEFINED : op: %08x\n", op);
+		printf("UNRECOGNIZED op: %08x\n", op);
 		exit(1);
 	}
 }
@@ -294,29 +276,29 @@ Arm7tdmi::Arm7tdmi(Bus* bus) : bus(bus), cpsr(0), spsr{ 0 }, r{ 0 }, rFiq{ 0 }, 
 
 void Arm7tdmi::tick() {
 	static u32 step = 0;
-	if (this->cpsr & T) { // Thumb mode
-		u16 op = bus->read16(r[15]-4);
+		if (this->cpsr & T) { // Thumb mode
+			u16 op = bus->read16(r[15] - 4);
 #ifdef DEBUG
-		printf("PC: %08x\n", r[15]);
-		printf("op: %04x\n", op);
+			printf("PC: %08x\n", r[15]);
+			printf("op: %04x\n", op);
 #endif
-		this->evaluateThumb(op);
-		this->r[15] += 2;
-	}
-	else { // ARM mode
-		u32 op = bus->read32(r[15]-8);
-		while (op == 0) {
-			printf("r15: %08x\n", r[15]);
-		
+			this->evaluateThumb(op);
+			this->r[15] += 2;
 		}
+		else { // ARM mode
+			u32 op = bus->read32(r[15] - 8);
+			while (op == 0) {
+				printf("r15: %08x\n", r[15]);
+
+			}
 #ifdef DEBUG
-		printf("PC: %08x\n", r[15]);
-		printf("op: %08x\n", op);
+			printf("PC: %08x\n", r[15]);
+			printf("op: %08x\n", op);
 #endif
-		
-		this->evaluateArm(op);
-		this->r[15] += 4;
-	}
+
+			this->evaluateArm(op);
+			this->r[15] += 4;
+		}
 	step++;
 	static u64 nbShots = 0;
 	if ((step % 4) == 0) {

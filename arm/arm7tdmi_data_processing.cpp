@@ -234,7 +234,7 @@ void Arm7tdmi::SUB(u32 op) {
 		cpsr |= (result & BIT(31)) ? N : 0;
 		cpsr |= (result == 0) ? Z : 0;
 		cpsr |= (rnVal >= shifterOperand) ? C : 0;
-		cpsr |=  ((rnVal ^ shifterOperand) & (rnVal ^ result) & BIT(31)) ? V : 0;
+		cpsr |= ((rnVal ^ shifterOperand) & (rnVal ^ result) & BIT(31)) ? V : 0;
 	}
 }
 
@@ -328,7 +328,13 @@ void Arm7tdmi::ORR(u32 op) {
 void Arm7tdmi::MOV(u32 op) {
 	u8 carryOut;
 	u32 result = operand2(this, op, cpsr, &carryOut);
-	wReg(RD(op), result);
+	if (RD(op) == 15) {
+		wReg(RD(op), result + 4);
+	}
+	else {
+		wReg(RD(op), result);
+	}
+	
 	checkCPSR_DP(op, carryOut);
 }
 

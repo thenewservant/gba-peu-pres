@@ -31,12 +31,23 @@ void Arm7tdmi::TB_HIGH_REG_OPERATION(u16 op) {
 	u8 rd = MSB_RD(op) ? (RD_LOW(op) | 0x8) : RD_LOW(op);
 	u8 rm = (op>>3) & (MSB_RM(op) ? 0xF : 0x7);
 	u32 rmVal = rReg(rm);
+	if (rd == 15) {
+		rmVal += 2;
+	}
 	switch ((op >> 8) & 0x3) {
 	case TB_HR_ADD:
 		wReg(rd, rReg(rd) + rmVal);
 		break;
 	case TB_HR_CMP:
-		exit(159);
+	{
+		u32 rdVal = rReg(rd);
+		u32 result = rdVal - rmVal;
+		cpsr = (cpsr & ~N) | ((result & (1 << (31))) ? N : 0);
+		cpsr = (cpsr & ~Z) | ((result > 0) ? 0 : Z);
+		cpsr = (cpsr & ~C) | ((rdVal >= rmVal) ? C : 0); // unsafe
+		cpsr = (cpsr & ~V) | (((((rdVal ^ result) & (rmVal ^ result)) >> 31) & 1) ? V : 0);
+	}
+
 		break;
 	case TB_HR_MOV:
 		wReg(rd, rmVal);
@@ -54,19 +65,41 @@ void Arm7tdmi::TB_LDRPC(u16 op) {
 	u32 address = (rReg(15) & 0xFFFFFFFC) + ((op & 0xFF) * 4);
 	wReg(RD_HIGH(op), bus->read32(address));
 }
+
+enum LDR_STR_RELATIVE_OPCODE {
+	TB_REL_STR = 0,
+	TB_REL_STRB,
+	TB_REL_LDR,
+	TB_REL_LDRB
+};
 //THUMB.07
 void Arm7tdmi::TB_LDR_STR_RELATIVE(u16 op) {
-	u32 rnVal = rReg(RN(op));
-	u32 rmVal = rReg(RO(op));
+	u32 rnVal = rReg(RB(op));
+	u32 rmVal = rReg((op>>6)&0x7);
 	u32 address = rnVal + rmVal;
-
-	if (op & BIT(11)) { //LDR
-		u32 data = bus->read32(address);
-		wReg(RD_LOW(op), data);
-	}
-	else { //STR
-		u32 data = rReg(RD_LOW(op));
-		bus->write32(address, data);
+	printf("address: %08x\n", address);
+	u8 data = 0;
+	u8 opcode = (op >> 10) & 0x3;
+	switch (opcode) {
+	case TB_REL_STR:
+		bus->write32(address, rReg(RD_LOW(op)));
+		break;
+	case TB_REL_STRB:
+		data = (u8)rReg(RD_LOW(op));
+		bus->write8(address, data);
+		printf("written: %02x, back read: %08x\n",data, bus->read32(address));
+		break;
+	case TB_REL_LDR:
+		printf("reading from: %08x\n", address);
+		printf("read: %08x\n", bus->read32(address));
+		wReg(RD_LOW(op), bus->read32(address));
+		printf("reg: %08x\n", rReg(RD_LOW(op)));
+		break;
+	case TB_REL_LDRB:
+		wReg(RD_LOW(op), bus->read8(address));
+		break;
+	default:
+		break;
 	}
 }
 
@@ -110,25 +143,27 @@ enum LDR_STR_IMMEDIATE_OPCODE {
 	TB_LDRB_IMM
 };
 //THUMB.09
+//immediate offset
 void Arm7tdmi::TB_LDR_STR_IMMEDIATE(u16 op) {
+	u32 rnVal = rReg((op >> 3) & 0x7);
 	u8 rd = RD_LOW(op);
 	u32 address = 0;
 	u8 immed5 = (((op >> 6) & 0x1F));
 	switch ((op >> 11) & 0x3) {
 	case TB_STR_IMM:
-		address = rReg(RN(op)) + immed5 * 4;
+		address = rnVal + immed5 * 4;
 		bus->write32(address, rReg(rd));
 		break;
 	case TB_LDR_IMM:
-		address = rReg(RN(op)) + immed5 * 4;
+		address = rnVal + immed5 * 4;
 		wReg(rd, bus->read32(address));
 		break;
 	case TB_STRB_IMM:
-		address = rReg(RN(op)) + immed5;
+		address = rnVal + immed5;
 		bus->write8(address, (u8)rReg(rd));
 		break;
 	case TB_LDRB_IMM:
-		address = rReg(RN(op)) + immed5;
+		address = rnVal + immed5;
 		wReg(rd, bus->read8(address));
 		break;
 	default:

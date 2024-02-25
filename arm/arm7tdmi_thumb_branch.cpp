@@ -43,7 +43,7 @@ void Arm7tdmi::TB_COND_BRANCH(u16 op) {
 }
 
 void Arm7tdmi::TB_UNCOND_BRANCH(u16 op) {
-	s32 sOffSet =(s32)( op & 0x7ff);
+    s32 sOffSet = ((s32)(s16)((op & 0x7FF) << 5))>>5;
     TEST_BRANCH(true);
 }
 
