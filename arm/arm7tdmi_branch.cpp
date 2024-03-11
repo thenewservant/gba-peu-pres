@@ -13,7 +13,8 @@ void Arm7tdmi::B_BL(u32 op) {
 }
 
 void Arm7tdmi::BX(u32 op) {
+    u32 destRegVal = (RM(op) == 14) ? rReg(14) -4 : rReg(RM(op));
     cpsr &= ~T;
-    cpsr |= (rReg(RM(op)) & 0x1) ? T : 0; // Set T bit to bit 0 of Rm
-    r[15] = (rReg(RM(op)) & 0xFFFFFFFE) + ((cpsr & T) ? 0 : 4); // Clear the bottom two bits of the address
+    cpsr |= (destRegVal & 0x1) ? T : 0; // Set T bit to bit 0 of Rm
+    r[15] = (destRegVal & 0xFFFFFFFE) + ((cpsr & T) ? 0 : 4); // Clear the bottom two bits of the address
 }
