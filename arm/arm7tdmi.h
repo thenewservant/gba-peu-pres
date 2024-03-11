@@ -85,7 +85,9 @@ class Arm7tdmi{
         // reads register reg of the current mode
         u32 rReg(u8 reg); 
         // reads register reg of the specified mode
-        u32 rRegMode(u8 reg, u8 mode); 
+        u32 rRegMode(u8 reg, u8 mode);
+        void wRegMode(u8 reg, u32 data, u8 mode);
+
 
 
         // writes value to register reg of the current mode

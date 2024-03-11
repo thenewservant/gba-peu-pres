@@ -89,16 +89,52 @@ u32 Arm7tdmi::rReg(u8 reg) {
 }
 
 u32 Arm7tdmi::rRegMode(u8 reg, u8 mode) {
+	if (reg == 15) {
+		return r[15];
+	}
 	switch (mode) {
 	case ARM7TDMI_MODE_USER:
 	case ARM7TDMI_MODE_SYS:
-		if (reg == 15){
-			return r[15];
-		}
 		return r[reg];
+	case ARM7TDMI_MODE_FIQ:
+		return rFiq[reg - 8];
+	case ARM7TDMI_MODE_SVC:
+		return ((reg >= 13)) ? rSvc[reg - 13] : r[reg];
+	case ARM7TDMI_MODE_ABT:
+		return ((reg >= 13)) ? rAbt[reg - 13] : r[reg];
+	case ARM7TDMI_MODE_UND:
+		return ((reg >= 13)) ? rUnd[reg - 13] : r[reg];
 	default: return 0;
 	}
 }
+
+void Arm7tdmi::wRegMode(u8 reg, u32 data, u8 mode) {
+	if (reg == 15) {
+		r[15] = data;
+	}
+	else {
+		switch (mode) {
+		case ARM7TDMI_MODE_USER:
+		case ARM7TDMI_MODE_SYS:
+			r[reg] = data;
+			break;
+		case ARM7TDMI_MODE_FIQ:
+			rFiq[reg - 8] = data;
+			break;
+		case ARM7TDMI_MODE_SVC:
+			((reg >= 13)) ? rSvc[reg - 13] = data : r[reg] = data;
+			break;
+		case ARM7TDMI_MODE_ABT:
+			((reg >= 13)) ? rAbt[reg - 13] = data : r[reg] = data;
+			break;
+		case ARM7TDMI_MODE_UND:
+			((reg >= 13)) ? rUnd[reg - 13] = data : r[reg] = data;
+			break;
+		default: break;
+		}
+	}
+}
+
 
 void Arm7tdmi::wReg(u8 reg, u32 value) {
 	if (reg < 8) {
@@ -117,7 +153,7 @@ void Arm7tdmi::wReg(u8 reg, u32 value) {
 				r[reg] = value;
 				break;
 			case ARM7TDMI_MODE_FIQ:
-				 rFiq[reg - 13] = value;
+				 rFiq[reg - 8] = value;
 				break;
 			case ARM7TDMI_MODE_SVC:
 				((reg == 13) || (reg == 14)) ? rSvc[reg - 13] = value : r[reg] = value;

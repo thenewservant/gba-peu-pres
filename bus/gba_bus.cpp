@@ -24,6 +24,14 @@ inline u8* Bus::ioAccess(u32 add) {
 		printf("accessed dma %d\n", dmaNb);
 		return (u8*)dmaArray[dmaNb].readIO((add & 0xFF) - 0xB0 - 0xC * dmaNb);
 	}
+	else if (add == 0x4000130) {
+		potHole = 0;
+		return (u8*)&potHole;
+	}
+	else if (add == 0x4000134) {
+		potHole = 0;
+		return (u8*)&potHole;
+	}
 	else if (add >=0x4000200) {
 		u16 addr = add & 0xF00;
 		if (addr == 0x200) {
@@ -38,6 +46,7 @@ inline u8* Bus::ioAccess(u32 add) {
 		else if ((addr & 0x0F00FFFF) == 0x04000800) {
 			return (u8*)&internalMemoryControl;
 		}
+		
 		
 	}
 	printf("IO Access not implemented yet: %08x\n", add);
@@ -113,7 +122,7 @@ u32 Bus::read32(u32 addr) {
 #ifdef DEBUG
 	printf("Reading 32 bits from %08x\n", addr);
 #endif
-	return *(u32*)(getMemoryChunkFromAddress(addr));
+	return *(u32*)(getMemoryChunkFromAddress(addr - (addr % 4)));
 }
 
 void Bus::write8(u32 addr, u8 data) {
@@ -127,14 +136,14 @@ void Bus::write16(u32 addr, u16 data) {
 #ifdef DEBUG
 	printf("Writing %04x (16 bits) to %08x\n", data, addr);
 #endif
-	*(u16*)(getMemoryChunkFromAddress(addr)) = data;
+	*(u16*)(getMemoryChunkFromAddress(addr - (addr %2))) = data;
 }
 
 void Bus::write32(u32 addr, u32 data) {
 #ifdef DEBUG
 	printf("Writing %08x (32 bits) to %08x\n", data, addr);
 #endif
-	*(u32*)(getMemoryChunkFromAddress(addr)) = data;
+	*(u32*)(getMemoryChunkFromAddress(addr - (addr % 4))) = data;
 }
 
 void Bus::loadGamePack(const char* filename) {

@@ -77,7 +77,6 @@ void Arm7tdmi::TB_LDR_STR_RELATIVE(u16 op) {
 	u32 rnVal = rReg(RB(op));
 	u32 rmVal = rReg((op>>6)&0x7);
 	u32 address = rnVal + rmVal;
-	printf("address: %08x\n", address);
 	u8 data = 0;
 	u8 opcode = (op >> 10) & 0x3;
 	switch (opcode) {
@@ -87,15 +86,14 @@ void Arm7tdmi::TB_LDR_STR_RELATIVE(u16 op) {
 	case TB_REL_STRB:
 		data = (u8)rReg(RD_LOW(op));
 		bus->write8(address, data);
-		printf("written: %02x, back read: %08x\n",data, bus->read32(address));
+		printf("THUMB STRB - @%08x: written: %02x, back read: %08x\n", address, data, bus->read32(address));
 		break;
 	case TB_REL_LDR:
-		printf("reading from: %08x\n", address);
-		printf("read: %08x\n", bus->read32(address));
+		printf("THUMB LDR - reading from: %08x\n", address);
 		wReg(RD_LOW(op), bus->read32(address));
-		printf("reg: %08x\n", rReg(RD_LOW(op)));
 		break;
 	case TB_REL_LDRB:
+		printf("THUMB LDRB - reading from: %08x = %02x\n", address, bus->read8(address));
 		wReg(RD_LOW(op), bus->read8(address));
 		break;
 	default:
