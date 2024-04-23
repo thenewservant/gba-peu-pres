@@ -68,7 +68,7 @@ u32 Arm7tdmi::rReg(u8 reg) {
 		return r[reg];
 	}
 	if (reg == 15) {
-		return r[15];
+		return r[15] + 8;
 	}
 	switch (CURRENT_MODE) {
 	case ARM7TDMI_MODE_USER:
@@ -88,9 +88,18 @@ u32 Arm7tdmi::rReg(u8 reg) {
 	return 0;
 }
 
+u32 Arm7tdmi::rRegThumb(u8 reg) {
+	if (reg == 15) {
+		return r[15] + 4;
+	}
+	else {
+		return rReg(reg);
+	}
+}
+
 u32 Arm7tdmi::rRegMode(u8 reg, u8 mode) {
 	if (reg == 15) {
-		return r[15];
+		return r[15] + 8;
 	}
 	switch (mode) {
 	case ARM7TDMI_MODE_USER:
@@ -144,6 +153,7 @@ void Arm7tdmi::wReg(u8 reg, u32 value) {
 	else {
 		if (reg == 15) {
 			r[15] = (value & 0xFFFFFFFE);
+			pcHasChanged = true;
 		} else{
 
 			switch (CURRENT_MODE) {
@@ -174,12 +184,12 @@ void Arm7tdmi::wReg(u8 reg, u32 value) {
 
 void Arm7tdmi::SWI(u32 op) {
 	printf("ARM SWI : op: %08x\n", op);
-	rSvc[1] = r[15] - 4;
+	rSvc[1] = r[15] + 4;
 	spsr[2] = cpsr;
 	cpsr &= ~(ARM7TDMI_MODE_MASK | BIT(5)  | BIT(9));
 	cpsr |= BIT(7);
 	cpsr |= ARM7TDMI_MODE_SVC;
-	r[15] = 0x8 + 4;
+	wReg(15, 0x8);
 }
 
 u32 Arm7tdmi::getSPSRValue() {
@@ -300,41 +310,48 @@ void Arm7tdmi::setPPU(Ppu* ppu) {
 	this->ppu = ppu;
 }
 
-Arm7tdmi::Arm7tdmi(Bus* bus) : bus(bus), cpsr(0), spsr{ 0 }, r{ 0 }, rFiq{ 0 }, rSvc{ 0 }, rAbt{ 0 }, rIrq{ 0 }
+Arm7tdmi::Arm7tdmi(Bus* bus) : bus(bus), cpsr(0), spsr{ 0 }, r{ 0 }, rFiq{ 0 }, rSvc{ 0 }, rAbt{ 0 }, rIrq{ 0 }, pcHasChanged{ false}
 {
 	r[13] = BOOT_SP_USR;
 	rSvc[0] = BOOT_SP_SVC;
 	rIrq[0] = BOOT_SP_IRQ;
 	this->ppu = ppu;
-	r[15] = 0x08000000 + 8;
+	r[15] = 0x08000000;
 	cpsr = 0x0000005f;
 }
 
 void Arm7tdmi::tick() {
 	static u32 step = 0;
-		if (this->cpsr & T) { // Thumb mode
-			u16 op = bus->read16(r[15] - 4);
+	if (this->cpsr & T) { // Thumb mode
+		u16 op = bus->read16(r[15] - 4);
 #ifdef DEBUG
-			printf("PC: %08x\n", r[15]);
-			printf("op: %04x\n", op);
+		printf("PC: %08x\n", r[15]);
+		printf("op: %04x\n", op);
 #endif
-			this->evaluateThumb(op);
-			this->r[15] += 2;
+		this->evaluateThumb(op);
+		this->r[15] += 2;
+	}
+	else { // ARM mode
+		u32 op = bus->read32(r[15]);
+		while (op == 0) {
+			printf("FATAL: OPCODE 0 @ r15 = %08x\n", r[15]);
+
 		}
-		else { // ARM mode
-			u32 op = bus->read32(r[15] - 8);
-			while (op == 0) {
-				printf("r15: %08x\n", r[15]);
-
-			}
 #ifdef DEBUG
-			printf("PC: %08x\n", r[15]);
-			printf("op: %08x\n", op);
+		printf("PC: %08x\n", r[15]);
+		printf("op: %08x\n", op);
 #endif
 
-			this->evaluateArm(op);
+		this->evaluateArm(op);
+		if (!pcHasChanged) {
 			this->r[15] += 4;
 		}
+#ifdef DEBUG
+		printf("pcHascChanged? %s\n", pcHasChanged ? "true" : "false");
+#endif
+		
+		pcHasChanged = false;
+	}
 	step++;
 	static u64 nbShots = 0;
 	if ((step % 4) == 0) {
@@ -346,9 +363,10 @@ void Arm7tdmi::tick() {
 
 void Arm7tdmi::printRegsUserMode() {
 	printf("\n");
-	for (int i = 0; i < 16; i++) {
+	for (int i = 0; i < 15; i++) {
 		if (rReg(i))printf("r%02d: %08x\n", i, rReg(i));
 	}
+	printf("fake PC: %08x\nreal PC: %08x\n", rReg(15), r[15]);
 	printf("\n");
 	printf("cpsr: %08x\n", cpsr);
 }

@@ -78,12 +78,15 @@ class Arm7tdmi{
         u32 cpsr; // Current Program Status Register
         u32 spsr[5]; // FIQ, IRQ, SVC, ABT, UND
 
+        bool pcHasChanged;
         Arm7tdmi(Bus* bus);
         void setPPU(Ppu* ppu);
         void tick();
 
         // reads register reg of the current mode
-        u32 rReg(u8 reg); 
+        u32 rReg(u8 reg);
+        u32 rRegThumb(u8 reg);
+
         // reads register reg of the specified mode
         u32 rRegMode(u8 reg, u8 mode);
         void wRegMode(u8 reg, u32 data, u8 mode);

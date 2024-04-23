@@ -4,9 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-//#define DEBUG
 #pragma warning(disable : 4996)
-
+//#define DEBUG 1
 #ifdef _WIN32
 	#include <direct.h>
 	#include <windows.h>

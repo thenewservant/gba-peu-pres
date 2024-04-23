@@ -23,7 +23,7 @@ enum THUMB_MOVE_SHIFTED_REGISTER_OPCODES {
 
 //THUMB.01
 void Arm7tdmi::TB_MOVE_SHIFTED_REG(u16 op) { //MOV(2)
-	u32 rmVal = rReg(RS(op));
+	u32 rmVal = rRegThumb(RS(op));
 	u8 rd = RD(op);
 	u32 immed5 = (op >> 6) & 0x1F;
 	u32 result = 0;
@@ -89,8 +89,8 @@ enum THUMB_ALU_OPCODE {
 
 void Arm7tdmi::TB_ALU_OP(u16 op) {
 	u8 rd = RD(op);
-	u32 rdVal = rReg(rd);
-	u32 rsVal = rReg(RS(op));
+	u32 rdVal = rRegThumb(rd);
+	u32 rsVal = rRegThumb(RS(op));
 	u32 result = 0;
 
 	switch (ALU_OPCODE(op)) {
@@ -267,7 +267,7 @@ enum THUMB_IMMEDIATE_OPCODE {
 
 void Arm7tdmi::TB_IMMEDIATE_OPERATION(u16 op) {
 	u8 rd = (op >> 8) & 0x7;
-	u32 rdVal = rReg(rd);
+	u32 rdVal = rRegThumb(rd);
 	u8 immed8 = op & 0xFF;
 	u32 result = 0;
 	switch ((op >> 11) & 0x3) {
@@ -288,19 +288,19 @@ void Arm7tdmi::TB_IMMEDIATE_OPERATION(u16 op) {
 	}
 		return;
 	case TB_IMM_ADD:
-		result = rReg(rd) + immed8;
+		result = rRegThumb(rd) + immed8;
 		cpsr = (cpsr & ~N) | ((result & (1 << (31))) ? N : 0); cpsr = (cpsr & ~Z) | ((result == 0) ? Z : 0);
-		cpsr = (cpsr & ~C) | ((rReg(rd) >= immed8) ? C : 0); // unsafe
-		cpsr = (cpsr & ~V) | ((result & (1 << (31))) != (immed8 & (1 << (31))) && (rReg(rd) & (1 << (31))) != (result & (1 << (31))) ? V : 0);
+		cpsr = (cpsr & ~C) | ((rRegThumb(rd) >= immed8) ? C : 0); // unsafe
+		cpsr = (cpsr & ~V) | ((result & (1 << (31))) != (immed8 & (1 << (31))) && (rRegThumb(rd) & (1 << (31))) != (result & (1 << (31))) ? V : 0);
 		break;
 	case TB_IMM_SUB:
 	{
 		u32 imm8_32 = ~(u32)immed8 + 1;
-		result = rReg(rd) + imm8_32;
+		result = rRegThumb(rd) + imm8_32;
 		cpsr = (cpsr & ~N) | ((result & (1 << (31))) ? N : 0);
 		cpsr = (cpsr & ~Z) | ((result == 0) ? Z : 0);
-		cpsr = (cpsr & ~C) | ((rReg(rd) >= immed8) ? C : 0); // unsafe
-		cpsr = (cpsr & ~V) | (((imm8_32 ^ result) & (rReg(rd) ^ result) & BIT(31)) ? V : 0);
+		cpsr = (cpsr & ~C) | ((rRegThumb(rd) >= immed8) ? C : 0); // unsafe
+		cpsr = (cpsr & ~V) | (((imm8_32 ^ result) & (rRegThumb(rd) ^ result) & BIT(31)) ? V : 0);
 	}
 
 	break;
@@ -312,8 +312,8 @@ void Arm7tdmi::TB_IMMEDIATE_OPERATION(u16 op) {
 
 void Arm7tdmi::TB_ADD_SUBSTRACT(u16 op) {
 	u8 rd = RD(op);
-	u32 rsVal = rReg(RS(op));
-	u32 stuffToAdd = (op & BIT(10)) ? (op >> 6) & 0x7 : rReg((op >> 6) & 0x7);
+	u32 rsVal = rRegThumb(RS(op));
+	u32 stuffToAdd = (op & BIT(10)) ? (op >> 6) & 0x7 : rRegThumb((op >> 6) & 0x7);
 	u32 result = 0;
 
 	if (op & BIT(9)) { //subtract

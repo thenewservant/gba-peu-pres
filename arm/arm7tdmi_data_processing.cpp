@@ -328,12 +328,7 @@ void Arm7tdmi::ORR(u32 op) {
 void Arm7tdmi::MOV(u32 op) {
 	u8 carryOut;
 	u32 result = operand2(this, op, cpsr, &carryOut);
-	if (RD(op) == 15) {
-		wReg(RD(op), result + 4);
-	}
-	else {
-		wReg(RD(op), result);
-	}
+	wReg(RD(op), result);
 	
 	checkCPSR_DP(op, carryOut);
 }
