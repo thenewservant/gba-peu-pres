@@ -1,7 +1,7 @@
 #include "arm7tdmi.h"
 
 #define GET_BRANCH_OPCODE(op) ((op >> 8) & 0xF)
-#define TEST_BRANCH(cond) if(cond){wReg(15, ((s32)rReg(15) + (s32)(sOffSet << 1)) + 2);}
+#define TEST_BRANCH(cond) if(cond){wReg(15, ((s32)rRegThumb(15) + (s32)(sOffSet << 1)) + 2);}
 
 enum THUMB_BRANCH {
     TB_BEQ = 0x0, // Z set
@@ -51,13 +51,13 @@ void Arm7tdmi::TB_BL(u16 op) {
     u16 offset11 = op & 0x7ff;
     if (op & BIT(11)) {
         printf("BL11\n");
-        u32 oldPc = rReg(15) - 2;
-        r[15] = rReg(14)+2 + (offset11 << 1);
+        u32 oldPc = rRegThumb(15) - 2;
+        r[15] = rRegThumb(14)+2 + (offset11 << 1);
         r[14] = oldPc | 1;
     }
     else {
         printf("BL10\n");
         s16 signExtendedOffset =( offset11 & BIT(10)) ? offset11 | 0xF800 : offset11;
-        r[14] = rReg(15) + (signExtendedOffset<<12);
+        r[14] = rRegThumb(15) + (signExtendedOffset<<12);
     }
 }
