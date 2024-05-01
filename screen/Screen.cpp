@@ -35,6 +35,7 @@ Screen::Screen(u8 scaleFact, Arm7tdmi* cpu) {
 	this->cpu = cpu;
 	status = 0;
 	ScreenScaleFactor = scaleFact;
+	keysStatus = 0xFFFF;
 	initSDLScreen();
 }
 
@@ -57,7 +58,15 @@ void Screen::updateScreen() {
 void Screen::checkPressKey(SDL_Event event) {
 	switch (event.key.keysym.sym) {
 	case SDLK_y:
-		status |= 0b100000000;
+		printf("Y pressed\n");
+		keysStatus &= ~8;
+		break;
+	case SDLK_DOWN:
+		keysStatus &= ~0x80;
+		break;
+	case SDLK_UP:
+		keysStatus &= ~0x40;
+		break;
 	case SDLK_F10:
 		advance();
 		break;
@@ -84,12 +93,19 @@ void Screen::checkRaiseKey( SDL_Event event) {
 	switch (event.key.keysym.sym) {
 
 	case SDLK_y:
-		status &= ~0b100000000;
+		keysStatus |= 8;
+		break;
+	case SDLK_DOWN:
+		keysStatus |= 0x80;
+		break;
+	case SDLK_UP:
+		keysStatus |= 0x40;
 		break;
 	default:
 		break;
 	}
 }
+
 
 u8 Screen::listener() {
 
@@ -97,9 +113,13 @@ u8 Screen::listener() {
 		switch (keyEvent.type) {
 		case SDL_KEYDOWN:
 			checkPressKey(keyEvent);
+			cpu->bus->setKeysStatus(keysStatus);
+			printf("Key pressed: %d\n", keysStatus);
 			break;
 		case SDL_KEYUP:
 			checkRaiseKey(keyEvent);
+			cpu->bus->setKeysStatus(keysStatus);
+			printf("Key released: %d\n", keysStatus);
 			break;
 		case SDL_DROPFILE:
 			printf("File dropped: %s\n", keyEvent.drop.file);

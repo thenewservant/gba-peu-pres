@@ -59,7 +59,7 @@ private:
 
 	u8 sram[0x10000]; //0E000000 - 0E00FFFF GamePak SRAM 64KB
 	u32 potHole; // if invalid write is attempted (wrong width), write there instead
-
+	u16 keysStatus;
 	u32 internalMemoryControl; // at 0x4000804 (undocumented)
 private:
 	inline u8* getMemoryChunkFromAddress(u32 add);
@@ -80,6 +80,9 @@ public:
 
 	void loadGamePack(const char* filename);
 	void loadBios(const char* filename);
+	void setKeysStatus(u16 keys) {
+		keysStatus = keys;
+	}
 	Bus();
 };
 

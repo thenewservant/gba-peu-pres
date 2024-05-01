@@ -3,6 +3,7 @@
 #include <SDL.h>
 #include "../common/types.h"
 #include "../arm/arm7tdmi.h"
+#include "../bus/gba_bus.h"
 
 #define SCREEN_WIDTH 240
 #define SCREEN_HEIGHT 160
@@ -11,7 +12,7 @@
 
 class Screen {
 private:
-	
+	u16 keysStatus;
 	Arm7tdmi* cpu;
 	char title[150];
 	SDL_Window* window;
@@ -39,6 +40,7 @@ public:
 	SDL_Window* getWindow();
 	void writePixel(u32 where, u32 what);
 	char* getFilePath();
+	
 };
 
 #endif
