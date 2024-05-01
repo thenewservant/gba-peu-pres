@@ -24,11 +24,8 @@
 #define IS_LOAD_INSTRUCTION(op)				      (op & BIT(20))
 #define IS_BYTE_TRANFER_INSTRUCTION(op)			  (op & BIT(22))
 
-#define FLAG_SET(x) ((cpsr & x) > 0)
-#define FLAG_UNSET(x) ((cpsr & x) == 0)
-
 bool evalCondition(u32 cpsr, u32 op) {
-	switch (op & 0xF0000000) {
+	switch ((op & 0xF0000000)>>28) {
 	case ARM7TDMI_CONDITION_EQ:	return FLAG_SET(Z);
 	case ARM7TDMI_CONDITION_NE:	return FLAG_UNSET(Z);
 	case ARM7TDMI_CONDITION_CS:	return FLAG_SET(C);
@@ -39,9 +36,9 @@ bool evalCondition(u32 cpsr, u32 op) {
 	case ARM7TDMI_CONDITION_VC:	return FLAG_UNSET(V);
 	case ARM7TDMI_CONDITION_HI:	return FLAG_SET(C) && FLAG_UNSET(Z);
 	case ARM7TDMI_CONDITION_LS:	return FLAG_UNSET(C) || FLAG_SET(Z);
-	case ARM7TDMI_CONDITION_GE:	return (FLAG_SET(N) && FLAG_SET(V)) || (FLAG(N) == FLAG(V));
+	case ARM7TDMI_CONDITION_GE:	return ((FLAG_SET(N) && FLAG_SET(V)) || (FLAG_UNSET(N) && FLAG_UNSET(V)));
 	case ARM7TDMI_CONDITION_LT:	return (FLAG_UNSET(N) && FLAG_SET(V)) || (FLAG_SET(N) && FLAG_UNSET(V));
-	case ARM7TDMI_CONDITION_GT:	return FLAG_UNSET(Z) && ((FLAG_SET(N) && FLAG_SET(V)) || (FLAG(N) == FLAG(V)));
+	case ARM7TDMI_CONDITION_GT:	return FLAG_UNSET(Z) && ((FLAG_SET(N) && FLAG_SET(V)) || (FLAG_UNSET(N) && FLAG_UNSET(V)));
 	case ARM7TDMI_CONDITION_LE:	return FLAG_SET(Z) || !((FLAG_SET(N) && FLAG_SET(V)) || (FLAG(N) == FLAG(V)));
 	case ARM7TDMI_CONDITION_AL:	return true;
 	case ARM7TDMI_CONDITION_NV:
@@ -117,9 +114,20 @@ u32 Arm7tdmi::rRegMode(u8 reg, u8 mode) {
 	}
 }
 
+void Arm7tdmi::wRegThumb(u8 reg, u32 data) {
+	if (reg == 15) {
+		r[15] = data;
+		pcHasChanged = true;
+	}
+	else {
+		r[reg] = data;
+	}
+}
+
 void Arm7tdmi::wRegMode(u8 reg, u32 data, u8 mode) {
 	if (reg == 15) {
 		r[15] = data;
+		pcHasChanged = true;
 	}
 	else {
 		switch (mode) {
@@ -323,13 +331,20 @@ Arm7tdmi::Arm7tdmi(Bus* bus) : bus(bus), cpsr(0), spsr{ 0 }, r{ 0 }, rFiq{ 0 }, 
 void Arm7tdmi::tick() {
 	static u32 step = 0;
 	if (this->cpsr & T) { // Thumb mode
-		u16 op = bus->read16(r[15] - 4);
+		u16 op = bus->read16(r[15]);
 #ifdef DEBUG
 		printf("PC: %08x\n", r[15]);
 		printf("op: %04x\n", op);
 #endif
 		this->evaluateThumb(op);
-		this->r[15] += 2;
+		while (op == 0) {
+			printf("FATAL: OPCODE 0 @ r15 = %08x\n", r[15]);
+
+		}
+		if (!pcHasChanged) {
+			this->r[15] += 2;
+		}
+		pcHasChanged = false;
 	}
 	else { // ARM mode
 		u32 op = bus->read32(r[15]);

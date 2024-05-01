@@ -1,42 +1,26 @@
 #include "arm7tdmi.h"
 
 #define GET_BRANCH_OPCODE(op) ((op >> 8) & 0xF)
-#define TEST_BRANCH(cond) if(cond){wReg(15, ((s32)rRegThumb(15) + (s32)(sOffSet << 1)) + 2);}
+#define TEST_BRANCH(cond) if(cond){wReg(15, (rRegThumb(15) + (s32)(sOffSet << 1)));}
 
-enum THUMB_BRANCH {
-    TB_BEQ = 0x0, // Z set
-    TB_BNE = 0x1, // Z clear
-    TB_BCS = 0x2, // C set
-    TB_BCC = 0x3, // C clear
-    TB_BMI = 0x4, // N set
-    TB_BPL = 0x5, // N clear
-    TB_BVS = 0x6, // V set
-    TB_BVC = 0x7, // V clear
-    TB_BHI = 0x8, // C set and Z clear
-    TB_BLS = 0x9, // C clear or Z set
-    TB_BGE = 0xA, // N equals V
-    TB_BLT = 0xB, // N not equal to V
-    TB_BGT = 0xC, // Z clear, and either N equals V, or N set and V clear
-    TB_BLE = 0xD, // Z set, or N != V
-};
 
 void Arm7tdmi::TB_COND_BRANCH(u16 op) {
     s32 sOffSet = (s32)(s8)(op & 0xff);
     switch (GET_BRANCH_OPCODE(op)) {
-    case TB_BEQ:TEST_BRANCH(cpsr & Z); break;
-    case TB_BNE:TEST_BRANCH(!(cpsr & Z)); break;
-    case TB_BCS:TEST_BRANCH(cpsr & C); break;
-    case TB_BCC:TEST_BRANCH(!(cpsr & C)); break;
-    case TB_BMI:TEST_BRANCH(cpsr & N); break;
-    case TB_BPL:TEST_BRANCH(!(cpsr & N)); break;
-    case TB_BVS:TEST_BRANCH(cpsr & V); break;
-    case TB_BVC:TEST_BRANCH(!(cpsr & V)); break;
-    case TB_BHI:TEST_BRANCH((cpsr & C) && !(cpsr & Z)); break;
-    case TB_BLS:TEST_BRANCH(!(cpsr & C) || (cpsr & Z)); break;
-    case TB_BGE:TEST_BRANCH((cpsr & N) == (cpsr & V)); break;
-    case TB_BLT:TEST_BRANCH((cpsr & N) != (cpsr & V)); break;
-    case TB_BGT:TEST_BRANCH(!(cpsr & Z) && ((cpsr & N) == (cpsr & V))); break;
-    case TB_BLE:TEST_BRANCH((cpsr & Z) || ((cpsr & N) != (cpsr & V))); break;
+    case ARM7TDMI_CONDITION_EQ:	TEST_BRANCH(FLAG_SET(Z)); break;
+    case ARM7TDMI_CONDITION_NE:	TEST_BRANCH(FLAG_UNSET(Z)); break;
+    case ARM7TDMI_CONDITION_CS:	TEST_BRANCH(FLAG_SET(C)); break;
+    case ARM7TDMI_CONDITION_CC:	TEST_BRANCH(FLAG_UNSET(C)); break;
+    case ARM7TDMI_CONDITION_MI:	TEST_BRANCH(FLAG_SET(N)); break;
+    case ARM7TDMI_CONDITION_PL:	TEST_BRANCH(FLAG_UNSET(N)); break;
+    case ARM7TDMI_CONDITION_VS:	TEST_BRANCH(FLAG_SET(V)); break;
+    case ARM7TDMI_CONDITION_VC:	TEST_BRANCH(FLAG_UNSET(V)); break;
+    case ARM7TDMI_CONDITION_HI:	TEST_BRANCH(FLAG_SET(C) && FLAG_UNSET(Z)); break;
+    case ARM7TDMI_CONDITION_LS:	TEST_BRANCH(FLAG_UNSET(C) || FLAG_SET(Z)); break;
+    case ARM7TDMI_CONDITION_GE:	TEST_BRANCH(((FLAG_SET(N) && FLAG_SET(V)) || (FLAG_UNSET(N) && FLAG_UNSET(V)))); break;
+    case ARM7TDMI_CONDITION_LT:	TEST_BRANCH((FLAG_UNSET(N) && FLAG_SET(V)) || (FLAG_SET(N) && FLAG_UNSET(V))); break;
+    case ARM7TDMI_CONDITION_GT:	TEST_BRANCH(FLAG_UNSET(Z) && ((FLAG_SET(N) && FLAG_SET(V)) || (FLAG_UNSET(N) && FLAG_UNSET(V)))); break;
+    case ARM7TDMI_CONDITION_LE:	TEST_BRANCH(FLAG_SET(Z) || !((FLAG_SET(N) && FLAG_SET(V)) || (FLAG(N) == FLAG(V)))); break;
     default:
         break;
     }
@@ -51,9 +35,9 @@ void Arm7tdmi::TB_BL(u16 op) {
     u16 offset11 = op & 0x7ff;
     if (op & BIT(11)) {
         printf("BL11\n");
-        u32 oldPc = rRegThumb(15) - 2;
-        r[15] = rRegThumb(14)+2 + (offset11 << 1);
-        r[14] = oldPc | 1;
+        u32 oldPc = r[15] + 2;
+        wRegThumb(15, rRegThumb(14) + (offset11 << 1));
+        r[14] = (oldPc + 2) | 1;
     }
     else {
         printf("BL10\n");

@@ -68,6 +68,13 @@ void Screen::checkPressKey(SDL_Event event) {
 		}
 		
 		break;
+	case SDLK_F12:
+		printf("1000 ticks at a time\n");
+		for (int i = 0; i < 1000; i++) {
+			advance();
+		}
+
+		break;
 	default:
 		break;
 	}

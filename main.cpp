@@ -45,6 +45,7 @@ int main(int argc, char* argv[]) {
 	cpu->setPPU(ppu);
 	bus->setPPU(ppu);
 #ifdef TEST
+	//test_LDM_IA_DB(new Arm7tdmi(new Bus()));
 	//testSequence1(new Arm7tdmi(new Bus()));
 	testWriteToEWRAM(new Arm7tdmi(new Bus()));
 #else 

@@ -280,7 +280,6 @@ void Arm7tdmi::TB_IMMEDIATE_OPERATION(u16 op) {
 	{
 		u32 rsVal = immed8;
 		result = rdVal - rsVal;
-		printf( "rdVal: %08x, rsVal: %08x, result: %08x\n", rdVal, rsVal, result);
 		cpsr = (cpsr & ~N) | ((result & (1 << (31))) ? N : 0);
 		cpsr = (cpsr & ~Z) | ((result > 0) ? 0 : Z);
 		cpsr = (cpsr & ~C) | ((rdVal >= rsVal) ? C : 0); // unsafe

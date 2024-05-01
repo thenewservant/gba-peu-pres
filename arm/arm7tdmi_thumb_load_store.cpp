@@ -31,9 +31,6 @@ void Arm7tdmi::TB_HIGH_REG_OPERATION(u16 op) {
 	u8 rd = MSB_RD(op) ? (RD_LOW(op) | 0x8) : RD_LOW(op);
 	u8 rm = (op >> 3) & (MSB_RM(op) ? 0xF : 0x7);
 	u32 rmVal = rRegThumb(rm);
-	if (rd == 15) {
-		rmVal += 2;
-	}
 	switch ((op >> 8) & 0x3) {
 	case TB_HR_ADD:
 		wReg(rd, rRegThumb(rd) + rmVal);
@@ -220,13 +217,14 @@ void Arm7tdmi::TB_LDMIA_STMIA(u16 op) {
 
 //THUMB.12
 void Arm7tdmi::TB_GET_REL_ADDR(u16 op) {
-	u8 offset = op & 0xFF;
+	s8 off = op & 0xFF;
+	s32 offset = ((s32)off) *4;
 	u8 rd = RD_HIGH(op);
 	if (!(op & BIT(11))) { // ADD (5)
-		wReg(rd, (r[15] & 0xFFFFFFFC) + (offset << 2));
+		wReg(rd, (rRegThumb(15) & 0xFFFFFFFC) + offset);
 	}
 	else { // ADD(6)
-		wReg(rd, rRegThumb(13) + (offset << 2));
+		wReg(rd, rRegThumb(13) + (off << 2));
 	}
 
 }
