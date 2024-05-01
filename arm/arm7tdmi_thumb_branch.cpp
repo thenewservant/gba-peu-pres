@@ -34,13 +34,11 @@ void Arm7tdmi::TB_UNCOND_BRANCH(u16 op) {
 void Arm7tdmi::TB_BL(u16 op) {
     u16 offset11 = op & 0x7ff;
     if (op & BIT(11)) {
-        printf("BL11\n");
         u32 oldPc = r[15] + 2;
         wRegThumb(15, rRegThumb(14) + (offset11 << 1));
-        r[14] = (oldPc + 2) | 1;
+        r[14] = (oldPc) | 1;
     }
     else {
-        printf("BL10\n");
         s16 signExtendedOffset =( offset11 & BIT(10)) ? offset11 | 0xF800 : offset11;
         r[14] = rRegThumb(15) + (signExtendedOffset<<12);
     }

@@ -238,7 +238,9 @@ void Arm7tdmi::LDR(u32 op) { //LDR { , T, B, BT} (mode 2 or mode 2 P)
 	}
 	else { // LDR
 		u32 data = bus->read32(address);
-		wReg(RD(op), data);
+		if (address%4)printf("address: %08x, data: %08x\n", address, data);
+		u32 final = data >> (8 * (address & 0x3)) | data << (32 - (8 * (address & 0x3)));
+		wReg(RD(op), final);
 		if (RD(op) == 15) {
 			exit(55);
 		}

@@ -12,6 +12,7 @@ Bus::Bus() {
 		dmaArray[i] = Dma();
 		dmaArray[i].setBus(this);
 	}
+	keysStatus = 0xFFFF;
 }
 
 
@@ -25,8 +26,7 @@ inline u8* Bus::ioAccess(u32 add) {
 		return (u8*)dmaArray[dmaNb].readIO((add & 0xFF) - 0xB0 - 0xC * dmaNb);
 	}
 	else if (add == 0x4000130) {
-		potHole = 0xFFFFFFFF;
-		return (u8*)&potHole;
+		return (u8*)&keysStatus;
 	}
 	else if (add == 0x4000134) {
 		potHole = 0;
