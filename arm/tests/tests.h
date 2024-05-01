@@ -250,17 +250,18 @@ void test_LDM_IA_DB(Arm7tdmi* cpu) {
     assert(cpu->rReg(1) == 0x9abcdef0);
 
     // Réinitialiser le registre et la mémoire
-    cpu->wReg(1, 0x1008); // Adresse de la mémoire
-    cpu->bus->write32(0x1004, 0xabcdef12);
-    cpu->bus->write32(0x1008, 0x3456789a);
+    cpu->wReg(0, 1);
+    cpu->wReg(1, 0x0300001C); // Adresse de la mémoire
+    cpu->bus->write32(0x03000014, 0xabcdef12);
+    cpu->bus->write32(0x03000018, 0x3456789a);
 
     // Exécuter l'instruction LDM en mode DB
     cpu->evaluateArm(0xE9110003); // LDMDB R1!, {R0, R1}
 
     cpu->printRegsUserMode();
     // Vérifier que les valeurs ont été correctement chargées
-    assert(cpu->rReg(0) == 0x3456789a);
-    assert(cpu->rReg(1) == 0xabcdef12 );
+    assert(cpu->rReg(0) == 0xabcdef12);
+    assert(cpu->rReg(1) == 0x3456789a);
 }
 
 void test_STRBT(Arm7tdmi* cpu) {

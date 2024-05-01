@@ -58,7 +58,16 @@ u32 operand2(Arm7tdmi* cpu, u32 op, u32 cpsr, u8* carryOut) {
 		u8 shiftType = (op >> 5) & 0x3;
 		u8 shiftAmount = (op >> 7) & 0x1F;
 		u8 rm = op & 0xF;
-		u32 rmVal = cpu->rReg(rm);
+		u8 strategy = ((op >> 4) & 0x7);
+		
+		u32 rmVal ;
+
+		if ((strategy & 1) && (rm == 15)) {
+			rmVal = cpu->rReg(rm) + 4;
+		}
+		else {
+			rmVal = cpu->rReg(rm);
+		}
 
 		u32 cpsrVal = cpsr;
 		if (((op >> 4) & 0xFF) == 0) { //Data-processing operands - Register
@@ -362,7 +371,7 @@ void Arm7tdmi::MSR(u32 operand, u32 op) {
 		(mask & 8 ? 0xFF000000 : 0);
 	u32 finalMask = 0;
 	if (!BIT_R(op)) {
-		if (true) {//in a privilege mode
+		if (CURRENT_MODE != ARM7TDMI_MODE_USER) {//in a privilege mode
 			finalMask = byteMask & (PSR_USER_MASK | PSR_PRIV_MASK);
 		}
 		else {
@@ -371,18 +380,15 @@ void Arm7tdmi::MSR(u32 operand, u32 op) {
 		cpsr = (cpsr & ~finalMask) | (operand & finalMask);
 	}
 	else {
-		if (currentModeHasSPSR()) {
+		if (currentModeHasSPSR() || true) { // else: unpredictable
 			finalMask = byteMask & (PSR_USER_MASK | PSR_PRIV_MASK | PSR_STATE_MASK);
-			setSPSRValue(getSPSRValue() & ~finalMask | (op & finalMask));
-		}
-		else {
-			
+			setSPSRValue(getSPSRValue() & ~finalMask | (op & operand));
 		}
 	}
 }
 
 void Arm7tdmi::MSR_IMM(u32 op) {
-	u32 operand = ((op & 0xFF) >> (2 * MSR_IMM_ROTATE_IMM(op))) | ((op & 0xFF) << (32 - 2 * MSR_IMM_ROTATE_IMM(op)));//rotated by 2*rotate_imm
+	u32 operand = ((op & 0xFF) >> (2 * MSR_IMM_ROTATE_IMM(op))) | ((op & 0xFF) << (32 - 2 * MSR_IMM_ROTATE_IMM(op)));//rotated by 2*rotate_im
 	MSR(operand, op);
 }
 

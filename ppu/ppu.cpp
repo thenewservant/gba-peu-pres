@@ -79,7 +79,7 @@ void Ppu::tick() {
 		case 0x0://printf("Mode 0\n");break;
 		case 0x1://printf("Mode 1\n");break;
 		case 0x2://printf("Mode 2\n");break;
-		case 0x3:mode3(); break;
+		case 0x3://mode3(); break;
 		case 0x4:mode4();break;
 		case 0x5:mode5();break;
 		default:break; // not supposed to happen

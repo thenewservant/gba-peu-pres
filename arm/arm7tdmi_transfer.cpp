@@ -7,6 +7,9 @@
 #define RM(op) (op & 0xF)
 #define BIT_W(op) (op & BIT(21))
 #define BIT_U(op) (op & BIT(23))
+#define BIT_P(op) (op & BIT(24))
+#define BIT_B(op) (op & BIT(22))
+#define EVAL_CONDITION true
 
 //to be used ONLY to distinguish LDRB(T) from LDR(B) 
 // Reference : Arm Architecture Ref Manual, A5.2.9
@@ -20,29 +23,17 @@
 											}
 
 //increment after
-#define IA(sa, op)		sa = rReg(RN(op));\
-						if (BIT_W(op)){\
-								wReg(RN(op), sa + (countSetBits(op&0xFFFF) * 4));\
-						}
+#define IA(sa, op)		sa = rReg(RN(op));
 
 // increment before
-#define IB(sa, op)		sa = rReg(RN(op)) + 4;\
-						if (BIT_W(op)){\
-								wReg(RN(op), sa - 4 + (countSetBits(op&0xFFFF) * 4));\
-						}
+#define IB(sa, op)		sa = rReg(RN(op)) + 4;
 
 //decrement after
-#define DA(sa, op)		sa = rReg(RN(op)) - (countSetBits(op) * 4) + 4;\
-						if (BIT_W(op)){\
-								wReg(RN(op), rReg(RN(op)) - (countSetBits(op&0xFFFF) * 4));\
-						}
-
+#define DA(sa, op)		sa = rReg(RN(op)) - (countSetBits(op) * 4) + 4;
+						
 //decrement before
-#define DB(sa, op)		sa = rReg(RN(op)) - (countSetBits(op) * 4);\
-						if (BIT_W(op)){\
-								wReg(RN(op), rReg(RN(op)) - (countSetBits(op&0xFFFF) * 4));\
-						}
-
+#define DB(sa, op)		sa = rReg(RN(op)) - (countSetBits(op) * 4);
+						
 static u8 countSetBits(u32 n) {
 	n = n & 0xFFFF; //16 least significant bits
 	u8 count = 0;
@@ -101,7 +92,7 @@ void Arm7tdmi::LDM(u32 op) {
 			cpsr = getSPSRValue();
 		}
 		u32 value = bus->read32(start_adress);
-		wReg(15, value+4);
+		wReg(15, value);
 	}
 	else { // LDM (2)
 		for (u8 i = 0; i < 15; i++) {
@@ -109,6 +100,16 @@ void Arm7tdmi::LDM(u32 op) {
 				wRegMode(i, bus->read32(start_adress), ARM7TDMI_MODE_USER);
 				start_adress += 4;
 			}
+		}
+	}
+	if (BIT_U(op)) {
+		if (BIT_W(op)) {
+				wReg(RN(op), rReg(RN(op)) + (countSetBits(op) * 4)); 
+		}
+	}
+	else {
+		if (BIT_W(op)) {
+				wReg(RN(op), rReg(RN(op)) - (countSetBits(op) * 4)); \
 		}
 	}
 }
@@ -140,15 +141,22 @@ void Arm7tdmi::STM(u32 op) {
 		}
 	}
 	if (op & BIT(15)) {
-		bus->write32(start_adress, rReg(15) + 4);
+		bus->write32(start_adress, rReg(15));
 		start_adress += 4;
+	}
+	if (BIT_U(op)) {
+		if (BIT_W(op)) {
+			wReg(RN(op), rReg(RN(op)) + (countSetBits(op) * 4));
+		}
+	}
+	else {
+		if (BIT_W(op)) {
+			wReg(RN(op), rReg(RN(op)) - (countSetBits(op) * 4)); \
+		}
 	}
 }
 
-#define BIT_P(op) (op & BIT(24))
-#define BIT_U(op) (op & BIT(23))
-#define BIT_B(op) (op & BIT(22))
-#define EVAL_CONDITION true
+
 
 enum SHIFT_TYPE {
 	LSL = 0,

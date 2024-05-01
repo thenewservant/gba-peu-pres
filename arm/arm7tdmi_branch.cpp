@@ -3,7 +3,6 @@
 #define L_BIT_SET(op) (BIT(24) & op)
 #define RM(op) (op & 0xF)
 void Arm7tdmi::B_BL(u32 op) {
-
     if (L_BIT_SET(op)) {
         wReg(14, r[15] + 4); // address of the instruction after the branch instruction
     }
@@ -19,5 +18,5 @@ void Arm7tdmi::BX(u32 op) {
     printf("BX CALLED: %d\n", destRegVal & 0x1);
     cpsr &= ~T;
     cpsr |= (destRegVal & 0x1) ? T : 0; // Set T bit to bit 0 of Rm
-    r[15] = (destRegVal & 0xFFFFFFFE); // Clear the bottom two bits of the address
+    wReg(15, destRegVal & 0xFFFFFFFE); // Clear the bottom two bits of the address
 }

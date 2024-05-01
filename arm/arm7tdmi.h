@@ -33,23 +33,26 @@ enum ARM7TDMI_MODE{
 #define BOOT_SP_IRQ 0x03007FA0
 #define BOOT_SP_USR 0x03007F00
 
-enum ARM7TDMI_CONDITION{
-    ARM7TDMI_CONDITION_EQ = 0x0<<28, // Z set
-    ARM7TDMI_CONDITION_NE = 0x1<<28, // Z clear
-    ARM7TDMI_CONDITION_CS = 0x2<<28, // C set
-    ARM7TDMI_CONDITION_CC = 0x3<<28, // C clear
-    ARM7TDMI_CONDITION_MI = 0x4<<28, // N set
-    ARM7TDMI_CONDITION_PL = 0x5<<28, // N clear
-    ARM7TDMI_CONDITION_VS = 0x6<<28, // V set
-    ARM7TDMI_CONDITION_VC = 0x7<<28, // V clear
-    ARM7TDMI_CONDITION_HI = 0x8<<28, // C set and Z clear
-    ARM7TDMI_CONDITION_LS = 0x9<<28, // C clear or Z set
-    ARM7TDMI_CONDITION_GE = 0xA<<28, // N equals V
-    ARM7TDMI_CONDITION_LT = 0xB<<28, // N not equal to V
-    ARM7TDMI_CONDITION_GT = 0xC<<28, // Z clear, and either N equals V, or N set and V clear
-    ARM7TDMI_CONDITION_LE = 0xD<<28, // Z set, or N not equal to V
-    ARM7TDMI_CONDITION_AL = 0xE<<28, // Always (unconditional)
-    ARM7TDMI_CONDITION_NV = 0xF<<28  // never (ARMv1,v2 only) (Reserved ARMv3 and up)
+#define FLAG_SET(x) ((cpsr & x) > 0)
+#define FLAG_UNSET(x) ((cpsr & x) == 0)
+
+enum ARM7TDMI_CONDITION {
+    ARM7TDMI_CONDITION_EQ = 0x0, // Z set
+    ARM7TDMI_CONDITION_NE = 0x1, // Z clear
+    ARM7TDMI_CONDITION_CS = 0x2, // C set
+    ARM7TDMI_CONDITION_CC = 0x3, // C clear
+    ARM7TDMI_CONDITION_MI = 0x4, // N set
+    ARM7TDMI_CONDITION_PL = 0x5, // N clear
+    ARM7TDMI_CONDITION_VS = 0x6, // V set
+    ARM7TDMI_CONDITION_VC = 0x7, // V clear
+    ARM7TDMI_CONDITION_HI = 0x8, // C set and Z clear
+    ARM7TDMI_CONDITION_LS = 0x9, // C clear or Z set
+    ARM7TDMI_CONDITION_GE = 0xA, // N equals V
+    ARM7TDMI_CONDITION_LT = 0xB, // N not equal to V
+    ARM7TDMI_CONDITION_GT = 0xC, // Z clear, and either N equals V, or N set and V clear
+    ARM7TDMI_CONDITION_LE = 0xD, // Z set, or N not equal to V
+    ARM7TDMI_CONDITION_AL = 0xE, // Always (unconditional)
+    ARM7TDMI_CONDITION_NV = 0xF  // never (ARMv1,v2 only) (Reserved ARMv3 and up)
 };
 
 enum CPSR_FLAGS{
@@ -89,6 +92,7 @@ class Arm7tdmi{
 
         // reads register reg of the specified mode
         u32 rRegMode(u8 reg, u8 mode);
+        void wRegThumb(u8 reg, u32 data);
         void wRegMode(u8 reg, u32 data, u8 mode);
 
 
