@@ -7,6 +7,7 @@
 #define NN(op) ((op >> 6) & 0x1F) // for thumb 10 only
 #define RO(op) NN(op)
 
+#define LDR_ALIGN (data = data >> (8 * (address & 0x3)) | data << (32 - (8 * (address & 0x3)))); //rotation-based alignment
 static u8 countSetBits(u32 n) {
 	n = n & 0xFFFF; //16 least significant bits
 	u8 count = 0;
@@ -82,14 +83,16 @@ void Arm7tdmi::TB_LDR_STR_RELATIVE(u16 op) {
 	case TB_REL_STRB:
 		data = (u8)rRegThumb(RD_LOW(op));
 		bus->write8(address, data);
-		printf("THUMB STRB - @%08x: written: %02x, back read: %08x\n", address, data, bus->read32(address));
 		break;
 	case TB_REL_LDR:
-		printf("THUMB LDR - reading from: %08x\n", address);
-		wReg(RD_LOW(op), bus->read32(address));
-		break;
+	{
+		u32 data = bus->read32(address);
+		data = data >> (8 * (address & 0x3)) | data << (32 - (8 * (address & 0x3))); //rotation-based alignment
+		wReg(RD_LOW(op), data);
+
+	}
+	break;
 	case TB_REL_LDRB:
-		printf("THUMB LDRB - reading from: %08x = %02x\n", address, bus->read8(address));
 		wReg(RD_LOW(op), bus->read8(address));
 		break;
 	default:
@@ -131,7 +134,7 @@ void Arm7tdmi::TB_LDR_STR_SE_HW(u16 op) {
 }
 
 enum LDR_STR_IMMEDIATE_OPCODE {
-	TB_STR_IMM =0,
+	TB_STR_IMM = 0,
 	TB_LDR_IMM,
 	TB_STRB_IMM,
 	TB_LDRB_IMM
@@ -149,8 +152,12 @@ void Arm7tdmi::TB_LDR_STR_IMMEDIATE(u16 op) {
 		bus->write32(address, rRegThumb(rd));
 		break;
 	case TB_LDR_IMM:
+	{
 		address = rnVal + immed5 * 4;
-		wReg(rd, bus->read32(address));
+		u32 data = bus->read32(address);
+		LDR_ALIGN;
+		wReg(rd, data);
+	}
 		break;
 	case TB_STRB_IMM:
 		address = rnVal + immed5;
@@ -218,7 +225,7 @@ void Arm7tdmi::TB_LDMIA_STMIA(u16 op) {
 //THUMB.12
 void Arm7tdmi::TB_GET_REL_ADDR(u16 op) {
 	s8 off = op & 0xFF;
-	s32 offset = ((s32)off) *4;
+	s32 offset = ((s32)off) * 4;
 	u8 rd = RD_HIGH(op);
 	if (!(op & BIT(11))) { // ADD (5)
 		wReg(rd, (rRegThumb(15) & 0xFFFFFFFC) + offset);

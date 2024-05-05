@@ -67,7 +67,7 @@ inline u8* Bus::getMemoryChunkFromAddress(u32 add) {
 	case 0x05000000:
 		return palette_ram + (add & 0x000003FF);
 	case 0x06000000:
-		return vram + (add & 0x00017FFF);
+		return vram + (add & 0x0001FFFF);//TODO: check mirroring 
 	case 0x07000000:
 		return oam + (add & 0x000003FF);
 	case 0x08000000:
