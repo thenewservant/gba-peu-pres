@@ -249,8 +249,22 @@ void Arm7tdmi::SUB(u32 op) {
 
 void Arm7tdmi::RSB(u32 op) {
 	u8 carryOut;
-	wReg(RD(op), operand2(this, op, cpsr, &carryOut) - rReg(RN(op)));
-	CHECKCPSR_WITH_V_FLAG;
+	u32 rnVal = operand2(this, op, cpsr, &carryOut);
+	u32 shifterOperand =  rReg(RN(op));
+	u32 result = rnVal - shifterOperand;
+	wReg(RD(op), result);
+	if (BIT_S(op) && (RD(op) == 15)) {
+		if (CURRENT_MODE_HAS_SPSR) {
+			cpsr = getSPSRValue();
+		}
+	}
+	else if (BIT_S(op)) {
+		cpsr &= ~N & ~Z & ~C & ~V;
+		cpsr |= (result & BIT(31)) ? N : 0;
+		cpsr |= (result == 0) ? Z : 0;
+		cpsr |= (rnVal >= shifterOperand) ? C : 0;
+		cpsr |= ((rnVal ^ shifterOperand) & (rnVal ^ result) & BIT(31)) ? V : 0;
+	}
 }
 
 void Arm7tdmi::ADD(u32 op) {

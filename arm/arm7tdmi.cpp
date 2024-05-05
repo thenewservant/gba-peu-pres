@@ -309,7 +309,7 @@ void Arm7tdmi::evaluateArm(u32 op) {
 		}
 	}
 	else {
-		printf("UNRECOGNIZED op: %08x\n", op);
+		printf("UNRECOGNIZED op: %08x\n at PC= %08x\n", op, r[15]);
 		exit(1);
 	}
 }
@@ -356,7 +356,6 @@ void Arm7tdmi::tick() {
 		printf("PC: %08x\n", r[15]);
 		printf("op: %08x\n", op);
 #endif
-
 		this->evaluateArm(op);
 		if (!pcHasChanged) {
 			this->r[15] += 4;
