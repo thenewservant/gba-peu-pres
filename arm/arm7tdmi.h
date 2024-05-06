@@ -107,7 +107,7 @@ public:
 
 	// returns the value of the SPSR register of the current mode.
 	// (CPSR if no SPSR in current mode)
-	u32 getSPSRValue();
+	u32 getSPSRValue() const;
 	void setSPSRValue(u32 value);
 	bool currentModeHasSPSR();
 

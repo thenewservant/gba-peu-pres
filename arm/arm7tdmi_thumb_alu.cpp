@@ -88,7 +88,7 @@ enum THUMB_ALU_OPCODE {
 };
 
 void Arm7tdmi::TB_ALU_OP(u16 op) {
-	u8 rd = RD(op);
+	u8 rd =  RD(op);
 	u32 rdVal = rRegThumb(rd);
 	u32 rsVal = rRegThumb(RS(op));
 	u32 result = 0;
@@ -96,7 +96,9 @@ void Arm7tdmi::TB_ALU_OP(u16 op) {
 	switch (ALU_OPCODE(op)) {
 	case TB_ALU_AND:
 		result = rdVal & rsVal;
-		ASSIGN_TO_REG_NZ;
+		wReg(rd, result);
+		cpsr = (cpsr & ~N) | ((result & BIT(31)) ? N : 0);
+		cpsr = (cpsr & ~Z) | ((result == 0) ? Z : 0);
 		break;
 	case TB_ALU_EOR:
 		result = rdVal ^ rsVal;

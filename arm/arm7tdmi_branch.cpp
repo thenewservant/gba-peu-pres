@@ -15,7 +15,6 @@ void Arm7tdmi::B_BL(u32 op) {
 void Arm7tdmi::BX(u32 op) {
     
     u32 destRegVal = rReg(RM(op));
-    printf("BX CALLED: %d\n", destRegVal & 0x1);
     cpsr &= ~T;
     cpsr |= (destRegVal & 0x1) ? T : 0; // Set T bit to bit 0 of Rm
     wReg(15, destRegVal & 0xFFFFFFFE); // Clear the bottom two bits of the address

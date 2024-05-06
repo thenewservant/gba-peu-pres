@@ -25,7 +25,7 @@
 #define IS_BYTE_TRANFER_INSTRUCTION(op)			  (op & BIT(22))
 
 bool evalCondition(u32 cpsr, u32 op) {
-	switch ((op & 0xF0000000)>>28) {
+	switch ((op & 0xF0000000) >> 28) {
 	case ARM7TDMI_CONDITION_EQ:	return FLAG_SET(Z);
 	case ARM7TDMI_CONDITION_NE:	return FLAG_UNSET(Z);
 	case ARM7TDMI_CONDITION_CS:	return FLAG_SET(C);
@@ -162,16 +162,15 @@ void Arm7tdmi::wReg(u8 reg, u32 value) {
 		if (reg == 15) {
 			r[15] = (value & 0xFFFFFFFE);
 			pcHasChanged = true;
-		} else{
-
+		}
+		else {
 			switch (CURRENT_MODE) {
-
 			case ARM7TDMI_MODE_USER:
 			case ARM7TDMI_MODE_SYS:
 				r[reg] = value;
 				break;
 			case ARM7TDMI_MODE_FIQ:
-				 rFiq[reg - 8] = value;
+				rFiq[reg - 8] = value;
 				break;
 			case ARM7TDMI_MODE_SVC:
 				((reg == 13) || (reg == 14)) ? rSvc[reg - 13] = value : r[reg] = value;
@@ -194,13 +193,13 @@ void Arm7tdmi::SWI(u32 op) {
 	printf("ARM SWI : op: %08x\n", op);
 	rSvc[1] = r[15] + 4;
 	spsr[2] = cpsr;
-	cpsr &= ~(ARM7TDMI_MODE_MASK | BIT(5)  | BIT(9));
+	cpsr &= ~(ARM7TDMI_MODE_MASK | BIT(5) | BIT(9));
 	cpsr |= BIT(7);
 	cpsr |= ARM7TDMI_MODE_SVC;
 	wReg(15, 0x8);
 }
 
-u32 Arm7tdmi::getSPSRValue() {
+u32 Arm7tdmi::getSPSRValue() const {
 	switch (CURRENT_MODE) {
 	case ARM7TDMI_MODE_FIQ:return spsr[0];
 	case ARM7TDMI_MODE_IRQ:return spsr[1];
@@ -318,7 +317,7 @@ void Arm7tdmi::setPPU(Ppu* ppu) {
 	this->ppu = ppu;
 }
 
-Arm7tdmi::Arm7tdmi(Bus* bus) : bus(bus), cpsr(0), spsr{ 0 }, r{ 0 }, rFiq{ 0 }, rSvc{ 0 }, rAbt{ 0 }, rIrq{ 0 }, pcHasChanged{ false}
+Arm7tdmi::Arm7tdmi(Bus* bus) : bus(bus), cpsr(0), spsr{ 0 }, r{ 0 }, rFiq{ 0 }, rSvc{ 0 }, rAbt{ 0 }, rIrq{ 0 }, pcHasChanged{ false }
 {
 	r[13] = BOOT_SP_USR;
 	rSvc[0] = BOOT_SP_SVC;
@@ -348,9 +347,9 @@ void Arm7tdmi::tick() {
 	}
 	else { // ARM mode
 		u32 op = bus->read32(r[15]);
-		while (op == 0) {
+		if (op == 0) {
 			printf("FATAL: OPCODE 0 @ r15 = %08x\n", r[15]);
-
+			exit(1);
 		}
 #ifdef DEBUG
 		printf("PC: %08x\n", r[15]);
@@ -363,11 +362,12 @@ void Arm7tdmi::tick() {
 #ifdef DEBUG
 		printf("pcHascChanged? %s\n", pcHasChanged ? "true" : "false");
 #endif
-		
+
 		pcHasChanged = false;
 	}
 	step++;
 	static u64 nbShots = 0;
+
 	if ((step % 4) == 0) {
 		//printf("nbShots: %lld\n", nbShots++);
 		ppu->tick();

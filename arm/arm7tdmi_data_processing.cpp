@@ -249,8 +249,8 @@ void Arm7tdmi::SUB(u32 op) {
 
 void Arm7tdmi::RSB(u32 op) {
 	u8 carryOut;
+	u32 shifterOperand = rReg(RN(op));
 	u32 rnVal = operand2(this, op, cpsr, &carryOut);
-	u32 shifterOperand =  rReg(RN(op));
 	u32 result = rnVal - shifterOperand;
 	wReg(RD(op), result);
 	if (BIT_S(op) && (RD(op) == 15)) {
@@ -385,7 +385,7 @@ void Arm7tdmi::MSR(u32 operand, u32 op) {
 		(mask & 8 ? 0xFF000000 : 0);
 	u32 finalMask = 0;
 	if (!BIT_R(op)) {
-		if (CURRENT_MODE != ARM7TDMI_MODE_USER) {//in a privilege mode
+		if (CURRENT_MODE != ARM7TDMI_MODE_USER) {//in a privileged mode
 			finalMask = byteMask & (PSR_USER_MASK | PSR_PRIV_MASK);
 		}
 		else {
@@ -396,7 +396,7 @@ void Arm7tdmi::MSR(u32 operand, u32 op) {
 	else {
 		if (currentModeHasSPSR() || true) { // else: unpredictable
 			finalMask = byteMask & (PSR_USER_MASK | PSR_PRIV_MASK | PSR_STATE_MASK);
-			setSPSRValue(getSPSRValue() & ~finalMask | (op & operand));
+			setSPSRValue(getSPSRValue() & ~finalMask | (finalMask & operand));
 		}
 	}
 }
