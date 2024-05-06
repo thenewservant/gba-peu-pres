@@ -60,6 +60,7 @@ void Arm7tdmi::SWPB(u32 op) {
 
 void Arm7tdmi::LDM(u32 op) {
 	u32 start_adress;
+	bool allowWriteback = true;
 	switch ((op & (BIT(24) | BIT(23))) >> 23) {
 	case 0: DA(start_adress, op); break;
 	case 1: IA(start_adress, op); break;
@@ -73,7 +74,7 @@ void Arm7tdmi::LDM(u32 op) {
 				wReg(i, bus->read32(start_adress));
 				start_adress += 4;
 				if (RN(op) == i && BIT_W(op)) {
-					printf("AH");
+					allowWriteback = false;
 				}
 			}
 		}
@@ -81,25 +82,15 @@ void Arm7tdmi::LDM(u32 op) {
 			u32 value = bus->read32(start_adress);
 			wReg(15, (value & 0xFFFFFFFC));
 		}
-
-		if (BIT_U(op)) {
-			if (BIT_W(op)) {
-				wReg(RN(op), rReg(RN(op)) + (countSetBits(op) * 4));
-			}
-		}
-		else {
-			if (BIT_W(op)) {
-				wReg(RN(op), rReg(RN(op)) - (countSetBits(op) * 4));
-			}
-		}
-
 	}
 	else if (op & BIT(15)) { // LDM (3)
-		u32 oldRn = rReg(RN(op));
 		for (u8 i = 0; i < 15; i++) {
 			if (op & BIT(i)) {
 				wReg(i, bus->read32(start_adress));
 				start_adress += 4;
+				if (RN(op) == i && BIT_W(op)) {
+					allowWriteback = false;
+				}
 			}
 		}
 		if (currentModeHasSPSR()) {
@@ -107,50 +98,41 @@ void Arm7tdmi::LDM(u32 op) {
 		}
 		u32 value = bus->read32(start_adress);
 		wReg(15, value);
-		if (BIT_U(op)) {
-			if (BIT_W(op)) {
-				wReg(RN(op), oldRn + (countSetBits(op) * 4));
-			}
-		}
-		else {
-			if (BIT_W(op)) {
-				wReg(RN(op), oldRn - (countSetBits(op) * 4));
-			}
-		}
+		
 	}
 	else { // LDM (2)
 		for (u8 i = 0; i < 15; i++) {
 			if (op & BIT(i)) {
 				wRegMode(i, bus->read32(start_adress), ARM7TDMI_MODE_USER);
 				start_adress += 4;
-			}
-		}
-		if (BIT_U(op)) {
-			if (BIT_W(op)) {
-				wReg(RN(op), rReg(RN(op)) + (countSetBits(op) * 4));
-			}
-		}
-		else {
-			if (BIT_W(op)) {
-				wReg(RN(op), rReg(RN(op)) - (countSetBits(op) * 4));
+				if (RN(op) == i && BIT_W(op)) {
+					allowWriteback = false;
+				}
 			}
 		}
 	}
-	
+
+	if (BIT_W(op) && allowWriteback) {
+		if (BIT_U(op)) {
+			wReg(RN(op), rReg(RN(op)) + (countSetBits(op) * 4));
+		}
+		else {
+			wReg(RN(op), rReg(RN(op)) - (countSetBits(op) * 4));
+		}
+	}
 }
 
 void Arm7tdmi::STM(u32 op) {
 	u32 start_adress = 0;
-	u32 end_adress = 0;
+	
 	switch ((op & (BIT(24) | BIT(23))) >> 23) {
 	case 0: DA(start_adress, op); break;
 	case 1: IA(start_adress, op); break;
 	case 2: DB(start_adress, op); break;
 	case 3: default: IB(start_adress, op); break;
 	}
-	int i = 0;
 	if ((op & BIT(22)) == 0) {//STM (1)
-		for (i = 0; i < 15; i++) {
+		for (u8 i = 0; i < 15; i++) {
 			if (op & BIT(i)) {
 				bus->write32(start_adress, rReg(i));
 				start_adress += 4;
@@ -158,7 +140,7 @@ void Arm7tdmi::STM(u32 op) {
 		}
 	}
 	else { //STM (2)
-		for (i = 0; i < 15; i++) {
+		for (u8 i = 0; i < 15; i++) {
 			if (op & BIT(i)) {
 				bus->write32(start_adress, rRegMode(i, ARM7TDMI_MODE_USER));
 				start_adress += 4;
@@ -169,13 +151,11 @@ void Arm7tdmi::STM(u32 op) {
 		bus->write32(start_adress, rReg(15));
 		start_adress += 4;
 	}
-	if (BIT_U(op)) {
-		if (BIT_W(op)) {
+	if (BIT_W(op)) {
+		if (BIT_U(op)) {
 			wReg(RN(op), rReg(RN(op)) + (countSetBits(op) * 4));
 		}
-	}
-	else {
-		if (BIT_W(op)) {
+		else {
 			wReg(RN(op), rReg(RN(op)) - (countSetBits(op) * 4));
 		}
 	}
