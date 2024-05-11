@@ -50,7 +50,12 @@ u32 operand2(Arm7tdmi* cpu, u32 op, u32 cpsr, u8* carryOut) {
 		u8 imm = op & 0xFF;
 
 		u32 result = (imm >> (2 * rotateImm)) | (imm << (32 - 2 * rotateImm));
-		*carryOut = ((result) ? (result & BIT(31)) : (cpsr & C)) ? 1 :0;
+		if (rotateImm) {
+			*carryOut = (result & BIT(31)) ? 1 : 0;
+		}
+		else {
+			*carryOut = (cpsr & C) ? 1 : 0;
+		}
 		return result;
 	}
 	else { // Register as 2nd operand
