@@ -1,9 +1,6 @@
 #ifndef ARM7TDMI_H
 #define ARM7TDMI_H
 
-#include <cstdio>
-#include <cstdlib>
-#include <cstdint>
 #include "../common/types.h"
 #include "../bus/gba_bus.h"
 
@@ -95,15 +92,9 @@ public:
 	void wRegThumb(u8 reg, u32 data);
 	void wRegMode(u8 reg, u32 data, u8 mode);
 
-
-
 	// writes value to register reg of the current mode
 	void wReg(u8 reg, u32 value);
 	void SWI(u32 op);
-
-
-	u16 rRegTb(u8 reg); // read register in THUMB mode
-	void wRegTb(u8 reg, u16 value); // write register in THUMB mode
 
 	// returns the value of the SPSR register of the current mode.
 	// (CPSR if no SPSR in current mode)
@@ -166,7 +157,7 @@ public:
 
 	void MRS(u32 op);
 
-	void checkCPSR_DP(u32& op, const u8& shifterCarryOut);
+	void checkCPSR_DP(u32& op, const u8 shifterCarryOut);
 	void TB_COND_BRANCH(u16 op);
 	void TB_UNCOND_BRANCH(u16 op);
 	void TB_BL(u16 op);

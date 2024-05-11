@@ -28,7 +28,6 @@
 
 void Arm7tdmi::evaluateThumb(u16 op) {
 	if (IS_TB_SOFTWARE_INTERRUPT(op)) {
-		printf("THUMB SWI : op: %08x at PC= %08x\n", op, r[15]);
 		rSvc[1] = r[15] + 2 ;
 		spsr[2] = cpsr;
 		cpsr &= ~(ARM7TDMI_MODE_MASK | BIT(5) | BIT(9));

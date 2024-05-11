@@ -4,6 +4,16 @@
 #include "../screen/screen.h"
 #include "../bus/gba_bus.h"
 
+#define BG0_ON ((lcd.regs.dispcnt & 0x100) != 0)
+#define BG1_ON ((lcd.regs.dispcnt & 0x200) != 0)
+#define BG2_ON ((lcd.regs.dispcnt & 0x400) != 0)
+#define BG3_ON ((lcd.regs.dispcnt & 0x800) != 0)
+
+#define WIN0_ON ((lcd.regs.dispcnt & 0x1000) != 0)
+#define WIN1_ON ((lcd.regs.dispcnt & 0x2000) != 0)
+
+#define WINOBJ_ON ((lcd.regs.dispcnt & 0x4000) != 0)
+
 PACK(struct lcdIORegs_t {
 	u16 dispcnt;
 	u16 padding1;
@@ -63,10 +73,12 @@ public:
 	Ppu(Screen* screen, Bus* bus);
 	u8* readIO(u32 addr);
 	void updateDipstat();
+	void mode0();
 	void mode3();
 	void mode4();
 	void mode5();
 	void tick();
+	void obj();
 };
 
 #endif
