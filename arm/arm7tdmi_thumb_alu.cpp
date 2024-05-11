@@ -50,7 +50,7 @@ void Arm7tdmi::TB_MOVE_SHIFTED_REG(u16 op) { //MOV(2)
 		break;
 	case TB_MOVE_ASR:
 		if (immed5) {
-			result = (s32)rmVal >> immed5;
+			result = ((s32)rmVal) >> immed5;
 			cpsr = (cpsr & ~C) | ((rmVal & BIT(immed5 - 1)) ? C : 0);
 		}
 		else {
@@ -130,7 +130,7 @@ void Arm7tdmi::TB_ALU_OP(u16 op) {
 		result = rdVal;
 		u8 rsVal8 = (u8)rsVal;
 		if (rsVal8 > 0 && rsVal < 32) {
-			cpsr = (cpsr & ~C) | ((rsVal8 - 1) ? C : 0);
+			cpsr = (cpsr & ~C) | (rdVal & BIT(rsVal8 - 1) ? C : 0);
 			result = rdVal >> rsVal8;
 		}
 		else if (rsVal8 == 32) {
@@ -151,7 +151,7 @@ void Arm7tdmi::TB_ALU_OP(u16 op) {
 		result = rdVal;
 		u8 rsVal8 = (u8)rsVal;
 		if (rsVal8 > 0 && rsVal < 32) {
-			cpsr = (cpsr & ~C) | ((rsVal8 - 1) ? C : 0);
+			cpsr = (cpsr & ~C) | ((rdVal & BIT(rsVal8 - 1)) ? C : 0);
 			result = (s32)rdVal >> rsVal8;
 		}
 		else if (rsVal8 >= 32) {
@@ -199,7 +199,7 @@ void Arm7tdmi::TB_ALU_OP(u16 op) {
 			cpsr = (cpsr & ~C) | ((rdVal & BIT(31)) ? C : 0);
 		}
 		else {
-			cpsr = (cpsr & ~C) | ((rdVal & BIT((rsVal8 & 0xF) - 1)) ? C : 0);
+			cpsr = (cpsr & ~C) | ((rdVal & BIT((rsVal8 & 0x1F) - 1)) ? C : 0);
 			result = (rdVal >> (rsVal8 & 0x1F)) | (rdVal << (32 - (rsVal8 & 0x1F)));
 		}
 
@@ -214,11 +214,12 @@ void Arm7tdmi::TB_ALU_OP(u16 op) {
 		break;
 	case TB_ALU_NEG:
 	{
-		u64 result = ~rsVal + 1;
+		rdVal = 0;
+		u64 result = (u64)rdVal - rsVal;
 		cpsr = (cpsr & ~N) | (((u32)result & BIT(31)) ? N : 0);
 		cpsr = (cpsr & ~Z) | (((u32)result == 0) ? 0 : 0);
 		cpsr = (cpsr & ~C) | ((result > 0xFFFFFFFF) ? C : 0); // unsafe
-		cpsr = (cpsr & ~V) | (((((rdVal ^ result) & (rsVal ^ result)) >> 31) & 1) ? V : 0);
+		cpsr = (cpsr & ~V) | (((((rdVal ^ result) & (rdVal ^ rsVal)) >> 31) & 1) ? V : 0);
 		wReg(rd, result);
 	}
 	break;
@@ -227,11 +228,11 @@ void Arm7tdmi::TB_ALU_OP(u16 op) {
 		cpsr = (cpsr & ~N) | ((result & (1 << (31))) ? N : 0);
 		cpsr = (cpsr & ~Z) | ((result > 0) ? 0 : Z);
 		cpsr = (cpsr & ~C) | ((rdVal >= rsVal) ? C : 0); // unsafe
-		cpsr = (cpsr & ~V) | (((((rdVal ^ result) & (rsVal ^ result)) >> 31) & 1) ? V : 0);
+		cpsr = (cpsr & ~V) | (((((rdVal ^ result) & (rsVal ^ rdVal)) >> 31) & 1) ? V : 0);
 		break;
 	case TB_ALU_CMN:
 	{
-		result = rdVal + rsVal;
+		u64 result = (u64)rdVal + rsVal;
 		cpsr = (cpsr & ~N) | (((u32)result & BIT(31)) ? N : 0);
 		cpsr = (cpsr & ~Z) | (((u32)result == 0) ? Z : 0);
 		cpsr = (cpsr & ~C) | ((result > 0xFFFFFFFF) ? C : 0); // unsafe
@@ -322,17 +323,21 @@ void Arm7tdmi::TB_ADD_SUBSTRACT(u16 op) {
 	u64 rsVal = rRegThumb(RS(op));
 	u32 operand = (op & BIT(10)) ? (op >> 6) & 0x7 : rRegThumb((op >> 6) & 0x7);
 	u64 result = 0;
-
+	cpsr &= ~N & ~Z & ~C & ~V;
 	if (op & BIT(9)) { //subtract
 		result = rsVal - operand;
+		cpsr |= ((((rsVal ^ operand) & (rsVal ^ result)) >> 31) & 1) ? V : 0;
+		cpsr |= (result > 0xFFFFFFFF) ? 0 : C;
 	}
 	else { // add
 		result = rsVal + operand;
+		cpsr |= (((~(rsVal ^ operand) & (rsVal ^ result)) >> 31) & 1) ? V : 0;
+		cpsr |= (result > 0xFFFFFFFF) ? C : 0;
 	}
 	wReg(rd, result);
-	cpsr &= ~N & ~Z & ~C & ~V;
+	
 	cpsr |= ((u32)result & BIT(31)) ? N : 0;
 	cpsr |= ((u32)result == 0) ? Z : 0;
-	cpsr |= (result > 0xFFFFFFFF) ? C : 0;
-	cpsr |= ((((rsVal ^ result) & (operand ^ result)) >> 31) & 1) ? V : 0;
+	
+	
 }

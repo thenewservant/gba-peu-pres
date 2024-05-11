@@ -9,7 +9,7 @@
 
 
 void Arm7tdmi::MUL(u32 op) {
-	u32 result = (rReg(RM(op)) * rReg(RS(op))) & MASK_32BIT;
+	u32 result = (rReg(RM(op)) * rReg(RS(op))) ;
 	wReg(RD(op), result);
 	if (op & BIT(20)) {
 		cpsr &= ~N & ~Z;
@@ -19,7 +19,7 @@ void Arm7tdmi::MUL(u32 op) {
 }
 
 void Arm7tdmi::MLA(u32 op) {
-	u32 result = (u32) (rReg(RM(op)) * rReg(RS(op)) + rReg(RN(op))) ;
+	u32 result = (rReg(RM(op)) * rReg(RS(op)) + rReg(RN(op))) ;
 	wReg(RD(op), result);
 	if (op & BIT(20)) {
 		cpsr &= ~N & ~Z;
@@ -31,7 +31,7 @@ void Arm7tdmi::MLA(u32 op) {
 void Arm7tdmi::UMULL(u32 op) {
 	u64 result = ((u64)rReg(RM(op)) * (u64)rReg(RS(op)));
 	u32 highPart = (u32)(result >> 32);
-	wReg(RDLO(op), result & MASK_32BIT);
+	wReg(RDLO(op), (u32)result);
 	wReg(RDHI(op), highPart);
 	if (op & BIT(20)) {
 		cpsr &= ~N & ~Z;
@@ -41,10 +41,10 @@ void Arm7tdmi::UMULL(u32 op) {
 }
 
 void Arm7tdmi::UMLAL(u32 op) {
-	u64 result = ((u64)rReg(RM(op)) * (u64)rReg(RS(op))) + ((u64)r[RDHI(op)] << 32) + r[RDLO(op)];
-	u32 highPart = (result >> 32) & MASK_32BIT;
-	wReg(RDLO(op), result & MASK_32BIT);
-	wReg(RDHI(op), (result >> 32) & MASK_32BIT);
+	u64 result = ((u64)rReg(RM(op)) * (u64)rReg(RS(op))) + ((u64)rReg(RDHI(op)) << 32) + rReg(RDLO(op));
+	u32 highPart = (result >> 32);
+	wReg(RDLO(op), (u32)result);
+	wReg(RDHI(op), (u32)(result >> 32));
 	if (op & BIT(20)) {
 		cpsr &= ~N & ~Z;
 		cpsr |= (highPart & BIT(31)) ? N : 0;
@@ -54,9 +54,9 @@ void Arm7tdmi::UMLAL(u32 op) {
 
 void Arm7tdmi::SMULL(u32 op) {
 	s64 result = (s64)((s32)rReg(RM(op))) * (s64)((s32)rReg(RS(op)));
-	u32 highPart = (result >> 32) & MASK_32BIT;
-	wReg(RDLO(op), result & MASK_32BIT);
-	wReg(RDHI(op), (result >> 32) & MASK_32BIT);
+	u32 highPart = (u32)(result >> 32);
+	wReg(RDLO(op), (u32)result);
+	wReg(RDHI(op), (u32)(result >> 32));
 	if (op & BIT(20)) {
 		cpsr &= ~N & ~Z;
 		cpsr |= (highPart & BIT(31)) ? N : 0;
@@ -65,10 +65,10 @@ void Arm7tdmi::SMULL(u32 op) {
 }
 
 void Arm7tdmi::SMLAL(u32 op) {
-	s64 result = (s64)((s32)rReg(RM(op))) * (s64)((s32)rReg(RS(op))) + ((s64)r[RDHI(op)] << 32) + r[RDLO(op)];
-	u32 highPart = (result >> 32) & MASK_32BIT;
-	wReg(RDLO(op), result & MASK_32BIT);
-	wReg(RDHI(op), (result >> 32) & MASK_32BIT);
+	s64 result = (s64)((s32)rReg(RM(op))) * (s64)((s32)rReg(RS(op))) + ((s64)rReg(RDHI(op)) << 32) + rReg(RDLO(op));
+	u32 highPart = (u32)(result >> 32);
+	wReg(RDLO(op), (u32)result);
+	wReg(RDHI(op), (u32)(result >> 32));
 	if (op & BIT(20)) {
 		cpsr &= ~N & ~Z;
 		cpsr |= (highPart & BIT(31)) ? N : 0;

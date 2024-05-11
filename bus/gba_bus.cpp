@@ -15,8 +15,7 @@ Bus::Bus() {
 	keysStatus = 0xFFFF;
 }
 
-
-inline u8* Bus::ioAccess(u32 add) {
+u8* Bus::ioAccess(u32 add) {
 	if (add <= 0x04000056) {
 		return ppu->readIO(add);
 	}
@@ -46,15 +45,13 @@ inline u8* Bus::ioAccess(u32 add) {
 		else if ((addr & 0x0F00FFFF) == 0x04000800) {
 			return (u8*)&internalMemoryControl;
 		}
-		
-		
 	}
 	printf("IO Access not implemented yet: %08x\n", add);
 	exit(1);
 	return nullptr;
 }
 
-inline u8* Bus::getMemoryChunkFromAddress(u32 add) {
+u8* Bus::getMemoryChunkFromAddress(u32 add) {
 	switch (add & 0x0F000000) {
 	case 0x00000000:
 		return bios + add;
@@ -83,11 +80,25 @@ inline u8* Bus::getMemoryChunkFromAddress(u32 add) {
 	case 0x0F000000:
 		return sram + (add & 0x0000FFFF); // GamePak SRAM
 	default:
+		printf("Invalid memory access: %08x\n", add);
 		return nullptr;
 	}
 }
 
-inline u8* Bus::get8bitWritableChunk(u32 add) {
+u16 Bus::read16OAM(u32 addr) {
+	return *(u16*)(oam + (addr & 0x000003FF));
+}
+
+u8 Bus::read8VRAM(u32 addr) {
+	return *(vram + (addr & 0x0001FFFF));
+}
+
+u16 Bus::read16Palette(u32 addr) {
+	return *(u16*)(palette_ram + (addr & 0x000003FF));
+}
+
+
+u8* Bus::get8bitWritableChunk(u32 add) {
 	switch (add & 0x0F000000) {
 	case 0x02000000:
 		return ewram + (add & 0x0003FFFF);
@@ -99,7 +110,8 @@ inline u8* Bus::get8bitWritableChunk(u32 add) {
 	case 0x0F000000:
 		return sram + (add & 0x0000FFFF); // GamePak SRAM
 	default:
-		return (u8*)&potHole;
+		printf("Invalid memory access: %08x\n", add);
+		return nullptr;
 	}
 }
 
@@ -115,7 +127,7 @@ u16 Bus::read16(u32 addr) {
 #ifdef DEBUG
 	printf("Reading 16 bits from %08x\n", addr);
 #endif
-	return *(u16*)(getMemoryChunkFromAddress(addr));
+	return *(u16*)(getMemoryChunkFromAddress(addr ));
 }
 
 u32 Bus::read32(u32 addr) {
@@ -172,4 +184,3 @@ void Bus::loadBios(const char* filename) {
 		fread(bios + cursor++, sizeof(u8), 1, fp);
 	}
 }
-

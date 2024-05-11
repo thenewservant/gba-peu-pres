@@ -6,9 +6,10 @@
 #include "screen/screen.h"
 #include <fstream>
 #include <iostream>
-#include <string>
-
 #include <thread>
+
+#define DISPLAY_MULTIPLIER 4
+
 //#define TEST
 void cpuRun(Arm7tdmi* cpu) {
 	static int i = 0;
@@ -40,13 +41,13 @@ int main(int argc, char* argv[]) {
 	}
 	Arm7tdmi* cpu = new Arm7tdmi(bus);
 
-	Screen* screen = new Screen(5, cpu);
+	Screen* screen = new Screen(DISPLAY_MULTIPLIER, cpu);
 	Ppu* ppu = new Ppu(screen, bus);
 	cpu->setPPU(ppu);
 	bus->setPPU(ppu);
 #ifdef TEST
 	//test_LDM_IA_DB(new Arm7tdmi(new Bus()));
-	//testSequence1(new Arm7tdmi(new Bus()));
+	testSequence1(new Arm7tdmi(new Bus()));
 	testWriteToEWRAM(new Arm7tdmi(new Bus()));
 #else 
 #ifndef DEBUG

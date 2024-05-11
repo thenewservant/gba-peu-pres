@@ -42,7 +42,6 @@ static u8 countSetBits(u32 n) {
 	return count;
 }
 
-//WRONG. Needs to be fixed
 void Arm7tdmi::SWP(u32 op) {
 	u32 address = rReg(RN(op));
 	u32 tmp = bus->read32(address);
@@ -254,7 +253,6 @@ void Arm7tdmi::STR(u32 op) {
 	u32 rnVal = rReg(RN(op));
 	u32 offset = 0;
 	getAddressMode2(op, address, rnVal, offset);
-
 	u32 data;
 	if (RD(op) == 15) {
 		data = rReg(RD(op)) + 4;
@@ -302,7 +300,6 @@ void Arm7tdmi::STR2(u32 op) { //STRH
 
 	else if (!BIT_W(op) && !BIT_P(op)) { // post indexed
 		address = rnVal;
-
 	}
 
 	bus->write16(address, rReg(RD(op)));
@@ -361,8 +358,9 @@ void Arm7tdmi::LDR2(u32 op) {//LDRSB, LDRH, LDRSH
 		break;
 	case OP_SH:
 		wReg(RD(op), (s32)(s16)bus->read16(address));// LDRSH
+		break;
+	default:
+		printf("Invalid LDR2 opcode\n");
+		exit(1);
 	}
-
-
-
 }

@@ -269,15 +269,15 @@ void test_STRBT(Arm7tdmi* cpu) {
 
     // Initialiser le registre et la mémoire
     cpu->wReg(1, 0x12345678);
-    cpu->wReg(2, 0x1000); // Adresse de la mémoire
-    cpu->bus->write8(0x1000, 0x00);
+    cpu->wReg(2, 0x03000000); // Adresse de la mémoire
+    cpu->bus->write8(0x03000000, 0x00);
 
     // Exécuter l'instruction STRBT
     cpu->evaluateArm(0xe4e21000); // STRBT R1, [R2]
 
     // Vérifier que la valeur a été correctement stockée
     
-    assert(cpu->bus->read8(0x1000) == 0x78);
+    assert(cpu->bus->read8(0x03000000) == 0x78);
 }
 
 void test_STRBT_post_indexed(Arm7tdmi* cpu) {

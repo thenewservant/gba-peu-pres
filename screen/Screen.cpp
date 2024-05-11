@@ -7,7 +7,7 @@ void Screen::initSDLScreen() {
 	window = SDL_CreateWindow("gbapeupres", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, screenW, screenH, SDL_WINDOW_SHOWN | 0 * SDL_WINDOW_RESIZABLE);
 	
 	//SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
-	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | 1*SDL_RENDERER_PRESENTVSYNC);
 	
 	// Create SDL texture
 	texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBX8888, SDL_TEXTUREACCESS_STREAMING, SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -57,8 +57,10 @@ void Screen::updateScreen() {
 
 void Screen::checkPressKey(SDL_Event event) {
 	switch (event.key.keysym.sym) {
-	case SDLK_y:
-		printf("Y pressed\n");
+	case SDLK_i:
+		cpu->printRegsUserMode();
+		break;
+	case SDLK_RETURN:
 		keysStatus &= ~8;
 		break;
 	case SDLK_DOWN:
@@ -66,6 +68,27 @@ void Screen::checkPressKey(SDL_Event event) {
 		break;
 	case SDLK_UP:
 		keysStatus &= ~0x40;
+		break;
+	case SDLK_LEFT:
+		keysStatus &= ~0x20;
+		break;
+	case SDLK_RIGHT:
+		keysStatus &= ~0x10;
+		break;
+	case SDLK_a://L1 key
+		keysStatus &= ~0x200;
+		break;
+	case SDLK_e://R1 key
+		keysStatus &= ~0x100;
+		break;
+	case SDLK_k:
+		keysStatus &= ~0x2;
+		break;
+	case SDLK_l:
+		keysStatus &= ~0x1;
+		break;
+	case SDLK_RSHIFT://select
+		keysStatus &= ~0x4;
 		break;
 	case SDLK_F10:
 		advance();
@@ -92,7 +115,7 @@ void Screen::checkPressKey(SDL_Event event) {
 void Screen::checkRaiseKey( SDL_Event event) {
 	switch (event.key.keysym.sym) {
 
-	case SDLK_y:
+	case SDLK_RETURN:
 		keysStatus |= 8;
 		break;
 	case SDLK_DOWN:
@@ -100,6 +123,27 @@ void Screen::checkRaiseKey( SDL_Event event) {
 		break;
 	case SDLK_UP:
 		keysStatus |= 0x40;
+		break;
+	case SDLK_LEFT:
+		keysStatus |= 0x20;
+		break;
+	case SDLK_RIGHT:
+		keysStatus |= 0x10;
+		break;
+	case SDLK_a://L1 key
+		keysStatus |= 0x200;
+		break;
+	case SDLK_e:
+		keysStatus |= 0x100;
+		break;
+	case SDLK_l://A key
+		keysStatus |= 0x1;
+		break;
+	case SDLK_k://B key
+		keysStatus |= 0x2;
+		break;
+	case SDLK_RSHIFT://select
+		keysStatus |= 0x4;
 		break;
 	default:
 		break;
@@ -114,12 +158,10 @@ u8 Screen::listener() {
 		case SDL_KEYDOWN:
 			checkPressKey(keyEvent);
 			cpu->bus->setKeysStatus(keysStatus);
-			printf("Key pressed: %d\n", keysStatus);
 			break;
 		case SDL_KEYUP:
 			checkRaiseKey(keyEvent);
 			cpu->bus->setKeysStatus(keysStatus);
-			printf("Key released: %d\n", keysStatus);
 			break;
 		case SDL_DROPFILE:
 			printf("File dropped: %s\n", keyEvent.drop.file);
@@ -133,7 +175,6 @@ u8 Screen::listener() {
 				exit(0);
 			case SDL_WINDOWEVENT_RESIZED:
 				printf("Window resized\n");
-				//resizeWindow();
 				break;
 			default:
 				break;
@@ -143,7 +184,7 @@ u8 Screen::listener() {
 		}
 	}
 
-	SDL_Delay(1);
+	SDL_Delay(2);
 	return 0;
 }
 

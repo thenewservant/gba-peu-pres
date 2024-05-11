@@ -1,9 +1,9 @@
 #ifndef TYPES_H
 #define TYPES_H
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #pragma warning(disable : 4996)
 //#define DEBUG 1
 #ifdef _WIN32

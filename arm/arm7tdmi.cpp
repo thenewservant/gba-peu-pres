@@ -15,7 +15,7 @@
 #define IS_DATA_PROCESSING(op)        ((op & 0x0C000000) == 0x00000000)
 #define IS_HALFWORD_DAT_TRANS_REG(op) ((op & 0x0E400F90) == 0x00000090)
 #define IS_HALFWORD_DAT_TRANS_IMM(op) ((op & 0x0E400090) == 0x00400090)
-#define IS_SINGLE_DATA_SWAP(op)       ((op & 0x0FB00FF0) == 0x01000090)
+#define IS_SINGLE_DATA_SWAP(op)       ((op & 0x0FB000F0) == 0x01000090)
 #define IS_MULTIPLY(op)               ((op & 0x0F0000F0) == 0x00000090)
 #define IS_MRS(op)                    ((op & 0x0FBF0FFF) == 0x010F0000)
 #define IS_MSR_IMM(op)                ((op & 0x0FB0F000) == 0x0320F000)
@@ -25,7 +25,7 @@
 #define IS_BYTE_TRANFER_INSTRUCTION(op)			  (op & BIT(22))
 
 bool evalCondition(u32 cpsr, u32 op) {
-	switch ((op & 0xF0000000) >> 28) {
+	switch ((op >> 28) & 0xF) {
 	case ARM7TDMI_CONDITION_EQ:	return FLAG_SET(Z);
 	case ARM7TDMI_CONDITION_NE:	return FLAG_UNSET(Z);
 	case ARM7TDMI_CONDITION_CS:	return FLAG_SET(C);
@@ -254,15 +254,15 @@ void Arm7tdmi::evaluateArm(u32 op) {
 			STR(op);
 		}
 	}
-	else if (IS_MRS(op)) {
-		MRS(op);
+	else if (IS_SINGLE_DATA_SWAP(op)) {
+		if (IS_BYTE_TRANFER_INSTRUCTION(op)) { SWPB(op); }
+		else { SWP(op); }
 	}
-	else if (IS_MSR_REG(op)) {
-		MSR_REG(op);
-	}
+
 	else if (IS_MULTIPLY(op)) {
 		execMultiply(op);
 	}
+
 	else if (IS_HALFWORD_DAT_TRANS_REG(op)) {
 		if (IS_LOAD_INSTRUCTION(op)) {
 			LDR2(op);
@@ -276,10 +276,13 @@ void Arm7tdmi::evaluateArm(u32 op) {
 		if (IS_LOAD_INSTRUCTION(op)) { LDR2(op); }
 		else { STR2(op); }
 	}
-	else if (IS_SINGLE_DATA_SWAP(op)) {
-		if (IS_BYTE_TRANFER_INSTRUCTION(op)) { SWPB(op); }
-		else { SWP(op); }
+	else if (IS_MRS(op)) {
+		MRS(op);
 	}
+	else if (IS_MSR_REG(op)) {
+		MSR_REG(op);
+	}
+
 	else if (IS_DATA_PROCESSING(op)) {
 
 		if (IS_MSR_IMM(op)) {
@@ -372,6 +375,7 @@ void Arm7tdmi::tick() {
 		//printf("nbShots: %lld\n", nbShots++);
 		ppu->tick();
 		step = 0;
+		nbShots++;
 	}
 }
 
