@@ -196,7 +196,7 @@ void Arm7tdmi::SWI(u32 op) {
 	cpsr &= ~(ARM7TDMI_MODE_MASK | BIT(5) | BIT(9));
 	cpsr |= BIT(7);
 	cpsr |= ARM7TDMI_MODE_SVC;
-	wReg(15, 0x8);
+	wReg(15, SWI_HANDLER_VECTOR);
 }
 
 u32 Arm7tdmi::getSPSRValue() const {

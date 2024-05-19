@@ -3,9 +3,6 @@
 #define IN_VDRAW_AREA ((cycle < SCREEN_WIDTH) && (scanline < SCREEN_HEIGHT))
 
 constexpr u32 VRAM_BASE = 0x06000000;
-constexpr u32 BG0CNT = 0x04000008;
-constexpr u32 BG0HOFS = 0x04000010;
-constexpr u32 BG0VOFS = 0x04000012;
 
 #define PALETTE_BASE 0x05000000
 #define BG_OFFSET_MASK 0x1FF
@@ -26,12 +23,12 @@ void Ppu::mode0() {
 	//Starting with BG0
 
 	//BGCNT data
-	u32 screenBaseBlock = (bus->read16(BG0CNT) >> 8) & 0x1F; //Base block of the BG0 (tile map)fF
+	u32 screenBaseBlock = (lcd.regs.bg0cnt >> 8) & 0x1F; //Base block of the BG0 (tile map)fF
 	
 	screenBaseBlock *= 0x800; //Each block is 2KB
 	screenBaseBlock += VRAM_BASE;
 
-	u32 charBaseBlock = ((bus->read16(BG0CNT)>> 2) &3) * 0x4000; //Base block of the BG0 (tile data)
+	u32 charBaseBlock = ((lcd.regs.bg0cnt >> 2) &3) * 0x4000; //Base block of the BG0 (tile data)
 
 	u16 scrollX = lcd.regs.bg0hofs & BG_OFFSET_MASK;//X Position of the first BG0 pixel
 	u16 scrollY = lcd.regs.bg0vofs & BG_OFFSET_MASK;//Y Position of the first BG0 pixel

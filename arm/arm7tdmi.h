@@ -30,6 +30,8 @@ enum ARM7TDMI_MODE {
 #define BOOT_SP_IRQ 0x03007FA0
 #define BOOT_SP_USR 0x03007F00
 
+#define SWI_HANDLER_VECTOR 0x08
+
 #define FLAG_SET(x) ((cpsr & x) > 0)
 #define FLAG_UNSET(x) ((cpsr & x) == 0)
 
@@ -107,13 +109,13 @@ public:
 
 	void printRegsUserMode();
 	void execMultiply(u32 op);
-	void MUL(u32 op);
+	void MULT_SHORT(u32 op);
 	void SMULL(u32 op);
-	void MLA(u32 op);
 	void UMULL(u32 op);
 	void UMLAL(u32 op);
 
 	void SMLAL(u32 op);
+	void MULT_LONG(u32 op);
 	void evaluateArm(u32 op);
 
 	void evaluateThumb(u16 op);

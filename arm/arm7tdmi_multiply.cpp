@@ -7,9 +7,11 @@
 #define RDHI(op) RD(op)
 #define RDLO(op) RN(op)
 
-
-void Arm7tdmi::MUL(u32 op) {
+void Arm7tdmi::MULT_SHORT(u32 op) {
 	u32 result = (rReg(RM(op)) * rReg(RS(op))) ;
+	if (op & BIT(21)) {//Accumulate
+		result += rReg(RN(op));
+	}
 	wReg(RD(op), result);
 	if (op & BIT(20)) {
 		cpsr &= ~N & ~Z;
@@ -18,18 +20,17 @@ void Arm7tdmi::MUL(u32 op) {
 	}
 }
 
-void Arm7tdmi::MLA(u32 op) {
-	u32 result = (rReg(RM(op)) * rReg(RS(op)) + rReg(RN(op))) ;
-	wReg(RD(op), result);
-	if (op & BIT(20)) {
-		cpsr &= ~N & ~Z;
-		cpsr |= (result & BIT(31)) ? N : 0;
-		cpsr |= (result == 0) ? Z : 0;
+void Arm7tdmi::MULT_LONG(u32 op) {
+	u64 result;
+	if (op & BIT(22)) { // Signed
+		result = (s64)((s32)rReg(RM(op))) * (s64)((s32)rReg(RS(op)));
 	}
-}
-
-void Arm7tdmi::UMULL(u32 op) {
-	u64 result = ((u64)rReg(RM(op)) * (u64)rReg(RS(op)));
+	else { // Unsigned
+		result = (u64)rReg(RM(op)) * (u64)rReg(RS(op));
+	}
+	if (op & BIT(21)) {//Accumulate
+		result += ((u64)rReg(RDHI(op)) << 32) + rReg(RDLO(op));
+	}
 	u32 highPart = (u32)(result >> 32);
 	wReg(RDLO(op), (u32)result);
 	wReg(RDHI(op), highPart);
@@ -40,68 +41,11 @@ void Arm7tdmi::UMULL(u32 op) {
 	}
 }
 
-void Arm7tdmi::UMLAL(u32 op) {
-	u64 result = ((u64)rReg(RM(op)) * (u64)rReg(RS(op))) + ((u64)rReg(RDHI(op)) << 32) + rReg(RDLO(op));
-	u32 highPart = (result >> 32);
-	wReg(RDLO(op), (u32)result);
-	wReg(RDHI(op), (u32)(result >> 32));
-	if (op & BIT(20)) {
-		cpsr &= ~N & ~Z;
-		cpsr |= (highPart & BIT(31)) ? N : 0;
-		cpsr |= (result == 0) ? Z : 0;
-	}
-}
-
-void Arm7tdmi::SMULL(u32 op) {
-	s64 result = (s64)((s32)rReg(RM(op))) * (s64)((s32)rReg(RS(op)));
-	u32 highPart = (u32)(result >> 32);
-	wReg(RDLO(op), (u32)result);
-	wReg(RDHI(op), (u32)(result >> 32));
-	if (op & BIT(20)) {
-		cpsr &= ~N & ~Z;
-		cpsr |= (highPart & BIT(31)) ? N : 0;
-		cpsr |= (result == 0) ? Z : 0;
-	}
-}
-
-void Arm7tdmi::SMLAL(u32 op) {
-	s64 result = (s64)((s32)rReg(RM(op))) * (s64)((s32)rReg(RS(op))) + ((s64)rReg(RDHI(op)) << 32) + rReg(RDLO(op));
-	u32 highPart = (u32)(result >> 32);
-	wReg(RDLO(op), (u32)result);
-	wReg(RDHI(op), (u32)(result >> 32));
-	if (op & BIT(20)) {
-		cpsr &= ~N & ~Z;
-		cpsr |= (highPart & BIT(31)) ? N : 0;
-		cpsr |= (result == 0) ? Z : 0;
-	}
-}
-
-//TO BE OPTIMIZED!!
 void Arm7tdmi::execMultiply(u32 op) {
-	if (op & BIT(23)) { // Multiply long
-		if (op & BIT(22)) { // Signed
-			if (op & BIT(21)) { // Accumulate
-				SMLAL(op);
-			}
-			else { // No accumulate
-				SMULL(op);
-			}
-		}
-		else { // Unsigned
-			if (op & BIT(21)) { // Accumulate
-				UMLAL(op);
-			}
-			else { // No accumulate
-				UMULL(op);
-			}
-		}
+	if (op & BIT(23)) {
+		MULT_LONG(op);
 	}
 	else {
-		if (op & BIT(21)) { // Accumulate
-			MLA(op);
-		}
-		else { // No accumulate
-			MUL(op);
-		}
+		MULT_SHORT(op);
 	}
 }
