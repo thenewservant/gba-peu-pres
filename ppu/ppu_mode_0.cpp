@@ -1,19 +1,59 @@
 #include "ppu.h"
 
+#define IN_VDRAW_AREA ((cycle < SCREEN_WIDTH) && (scanline < SCREEN_HEIGHT))
 
-//LCD VRAM Character Data
-//
-//Each character(tile) consists of 8x8 dots(64 dots in total).The color depth may be either 4bit or 8bit(see BG0CNT - BG3CNT).
-//
-//4bit depth(16 colors, 16 palettes)
-//Each tile occupies 32 bytes of memory, the first 4 bytes for the topmost row of the tile, and so on.Each byte representing two dots, the lower 4 bits define the color for the left(!) dot, the upper 4 bits the color for the right dot.
-//
-//8bit depth(256 colors, 1 palette)
-//Each tile occupies 64 bytes of memory, the first 8 bytes for the topmost row of the tile, and so on.Each byte selects the palette entry for each dot.
+constexpr u32 VRAM_BASE = 0x06000000;
+constexpr u32 BG0CNT = 0x04000008;
+constexpr u32 BG0HOFS = 0x04000010;
+constexpr u32 BG0VOFS = 0x04000012;
 
+#define PALETTE_BASE 0x05000000
+#define BG_OFFSET_MASK 0x1FF
+#define BG_SQUARE_SIZE 256
+#define SCREEN_ENTRY_SIZE 2
+#define BG_ROW_SIZE 32 * SCREEN_ENTRY_SIZE
 
-void Ppu::mode0() { //line-based strat
+#define TILE_NUMBER_MASK 0x3FF
+
+static u32 getRgbFromPaletteAdress(u32 address) {
+	u32 r = (address & 0x1F) << 3;
+	u32 g = ((address & 0x3E0) >> 5) << 3;
+	u32 b = ((address & 0x7C00) >> 10) << 3;
+	return (r << 24) | (g << 16) | (b << 8);
+}
+
+void Ppu::mode0() {
 	//Starting with BG0
 
+	//BGCNT data
+	u32 screenBaseBlock = (bus->read16(BG0CNT) >> 8) & 0x1F; //Base block of the BG0 (tile map)fF
 	
+	screenBaseBlock *= 0x800; //Each block is 2KB
+	screenBaseBlock += VRAM_BASE;
+
+	u32 charBaseBlock = ((bus->read16(BG0CNT)>> 2) &3) * 0x4000; //Base block of the BG0 (tile data)
+
+	u16 scrollX = lcd.regs.bg0hofs & BG_OFFSET_MASK;//X Position of the first BG0 pixel
+	u16 scrollY = lcd.regs.bg0vofs & BG_OFFSET_MASK;//Y Position of the first BG0 pixel
+
+	u32 currentTileOffset =  (scanline / 8) * BG_ROW_SIZE + (cycle / 8) * SCREEN_ENTRY_SIZE; //Offset used along with BG_HOFS and VOFS. Depends on current pixel of the screen
+
+	//TILE-specific data
+	
+	u16 tileData = bus->read16(screenBaseBlock + currentTileOffset);
+
+	//if (scanline==154 && cycle == 154)printf("screenbaseblock: %08x\n", screenBaseBlock);
+	
+	//if paletteMode isn't 256
+	u8 paletteNumber = (tileData >> 12) & 0xF;
+	u16 currentTileIndex = tileData & TILE_NUMBER_MASK;
+	//Contains the byte (2pixels in 4bpp mode) for this pixel.
+	u32 currentByteForThisPixel = bus->read16(VRAM_BASE + charBaseBlock + 32 * currentTileIndex + ((cycle%8)/2) + (scanline%8) * 4);
+
+	//Most significant nibble of a byte is the left pixel, least significant is the right pixel.
+	//Hence (cycle) % 2)*4
+	u32 currentPixelPaletteId = ((currentByteForThisPixel >> ((cycle) % 2)*4) & 0xF);
+	u32 finalColor = getRgbFromPaletteAdress(bus->read16(PALETTE_BASE + paletteNumber * 16 * 2 + currentPixelPaletteId * 2));
+	
+	screen->getPixels()[scanline * SCREEN_WIDTH + cycle] = finalColor;
 }

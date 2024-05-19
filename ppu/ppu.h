@@ -72,7 +72,9 @@ public:
 	LcdUnion lcd; // union containing all the lcd registers
 	Ppu(Screen* screen, Bus* bus);
 	u8* readIO(u32 addr);
-	void updateDipstat();
+	void raiseHBlankIrqIfNeeded();
+	void raiseVBlankIrqIfNeeded();
+	void updateDipstatAndVCount();
 	void mode0();
 	void mode3();
 	void mode4();

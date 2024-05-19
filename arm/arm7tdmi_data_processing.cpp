@@ -65,7 +65,10 @@ u32 operand2(Arm7tdmi* cpu, u32 op, u32 cpsr, u8* carryOut) {
 		}
 
 		u32 cpsrVal = cpsr;
-		if		(((op >> 4) & 0x7) == LSL_IMM) { // Logical shift left by immediate
+		
+		switch (strategy) {
+		case LSL_IMM:
+		{ // Logical shift left by immediate
 			if (shiftAmount) {
 				*carryOut = (rmVal & BIT(32 - shiftAmount)) ? 1 : 0;
 				return rmVal << shiftAmount;
@@ -75,7 +78,8 @@ u32 operand2(Arm7tdmi* cpu, u32 op, u32 cpsr, u8* carryOut) {
 				return rmVal;
 			}
 		}
-		else if (((op >> 4) & 0x7) == LSL_REG) {
+		case LSL_REG:
+		{
 			u32 rsVal = cpu->rReg((op >> 8) & 0xF);
 			u8 rsVal8 = (u8)rsVal;
 			if (!rsVal8) {
@@ -95,7 +99,8 @@ u32 operand2(Arm7tdmi* cpu, u32 op, u32 cpsr, u8* carryOut) {
 				return 0;
 			}
 		}
-		else if (((op >> 4) & 0x7) == LSR_IMM) {
+		case LSR_IMM:
+		{
 			if (shiftAmount) {
 				*carryOut = (rmVal & BIT(shiftAmount - 1)) ? 1 : 0;
 				return rmVal >> shiftAmount;
@@ -105,7 +110,8 @@ u32 operand2(Arm7tdmi* cpu, u32 op, u32 cpsr, u8* carryOut) {
 				return 0;
 			}
 		}
-		else if (((op >> 4) & 0x7) == LSR_REG) {
+		case LSR_REG:
+		{
 			u32 rsVal = cpu->rReg((op >> 8) & 0xF);
 			u8 rsVal8 = (u8)rsVal;
 			if (!rsVal8) {
@@ -125,7 +131,8 @@ u32 operand2(Arm7tdmi* cpu, u32 op, u32 cpsr, u8* carryOut) {
 				return 0;
 			}
 		}
-		else if (((op >> 4) & 0x7) == ASR_IMM) {
+		case ASR_IMM:
+		{
 			if (shiftAmount) {
 				*carryOut = (rmVal & BIT(shiftAmount - 1)) ? 1 : 0;
 				return ((s32)rmVal) >> shiftAmount;
@@ -138,7 +145,8 @@ u32 operand2(Arm7tdmi* cpu, u32 op, u32 cpsr, u8* carryOut) {
 				return 0;
 			}
 		}
-		else if (((op >> 4) & 0x7) == ASR_REG) {
+		case ASR_REG:
+		{
 			u32 rsVal = cpu->rReg((op >> 8) & 0xF);
 			u8 rsVal8 = (u8)rsVal;
 			if (!rsVal8) {
@@ -157,7 +165,8 @@ u32 operand2(Arm7tdmi* cpu, u32 op, u32 cpsr, u8* carryOut) {
 				return 0;
 			}
 		}
-		else if (((op >> 4) & 0x7) == ROR_IMM) {
+		case ROR_IMM:
+		{
 			if (!shiftAmount) {
 				*carryOut = rmVal & 1;
 				return ((cpsrVal & C) ? BIT(31) : 0) | (rmVal >> 1);
@@ -167,7 +176,8 @@ u32 operand2(Arm7tdmi* cpu, u32 op, u32 cpsr, u8* carryOut) {
 				return (rmVal >> shiftAmount) | (rmVal << (32 - shiftAmount));
 			}
 		}
-		else if (((op >> 4) & 0x7) == ROR_REG) {
+		case ROR_REG:
+		{
 			u32 rsVal = cpu->rReg((op >> 8) & 0xF);
 			u8 rsVal8 = (u8)rsVal;
 			u8 rsVal4 = rsVal8 & 0x1F;
@@ -185,6 +195,21 @@ u32 operand2(Arm7tdmi* cpu, u32 op, u32 cpsr, u8* carryOut) {
 				return (rotatedValue | (rmVal << (32 - rsVal4)));
 			}
 		}
+		}
+		
+	}
+}
+
+
+// if RN is PC, and strategy is REG-based operand2, PC+12 is used
+u32 Arm7tdmi::aluReadRn(u32 op) {
+	u8 strategy = ((op >> 4) & 0x7);
+	if ((strategy & 1) && (RN(op) == 15) && !BIT_I(op)) {
+		return rReg(RN(op))+4;
+	}
+	else {
+		return rReg(RN(op));
+
 	}
 }
 
@@ -205,20 +230,20 @@ void Arm7tdmi::checkCPSR_DP(u32& op, const u8 shifterCarryOut) {
 
 void Arm7tdmi::AND(u32 op) {
 	u8 carryOut;
-	wReg(RD(op), rReg(RN(op)) & operand2(this, op, cpsr, &carryOut));
+	wReg(RD(op), aluReadRn(op) & operand2(this, op, cpsr, &carryOut));
 	checkCPSR_DP(op, carryOut);
 }
 
 void Arm7tdmi::EOR(u32 op) {
 	u8 carryOut;
 	u32 op2 = operand2(this, op, cpsr, &carryOut);
-	wReg(RD(op), rReg(RN(op)) ^ op2);
+	wReg(RD(op), aluReadRn(op) ^ op2);
 	checkCPSR_DP(op, carryOut);
 }
 
 void Arm7tdmi::SUB(u32 op) {
 	u8 carryOut;
-	u32 rnVal = rReg(RN(op));
+	u32 rnVal = aluReadRn(op);
 	u32 shifterOperand = operand2(this, op, cpsr, &carryOut);
 	u32 result = rnVal - shifterOperand;
 	wReg(RD(op), result);
@@ -238,7 +263,7 @@ void Arm7tdmi::SUB(u32 op) {
 
 void Arm7tdmi::RSB(u32 op) {
 	u8 carryOut;
-	u32 shifterOperand = rReg(RN(op));
+	u32 shifterOperand = aluReadRn(op);
 	u32 rnVal = operand2(this, op, cpsr, &carryOut);
 	u32 result = rnVal - shifterOperand;
 	wReg(RD(op), result);
@@ -258,16 +283,16 @@ void Arm7tdmi::RSB(u32 op) {
 
 void Arm7tdmi::ADD(u32 op) {
 	u8 carryOut;
-	u32 rnVal = rReg(RN(op));
+	u32 rnVal = aluReadRn(op);
 	u32 operand2Val = operand2(this, op, cpsr, &carryOut);
-	u64 result = (u64)rReg(RN(op)) + operand2Val;
+	u64 result = (u64)aluReadRn(op) + operand2Val;
 	wReg(RD(op), (u32)result);
 	CPSR_UPDATE;
 }
 
 void Arm7tdmi::ADC(u32 op) {
 	u8 carryOut;
-	u32 rnVal = rReg(RN(op));
+	u32 rnVal = aluReadRn(op);
 	u32 operand2Val = operand2(this, op, cpsr, &carryOut);
 	u64 result = (u64)rnVal + operand2Val + (u64)((cpsr & C) > 0);
 	wReg(RD(op), (u32)result);
@@ -276,9 +301,9 @@ void Arm7tdmi::ADC(u32 op) {
 
 void Arm7tdmi::SBC(u32 op) {
 	u8 carryOut;
-	u32 rnVal = rReg(RN(op));
+	u32 rnVal = aluReadRn(op);
 	u32 operand2Val = ~operand2(this, op, cpsr, &carryOut);
-	u64 result = (u64)rnVal + operand2Val + (u64)((cpsr & C) > 0) ;
+	u64 result = (u64)rnVal + operand2Val + (u64)((cpsr & C) > 0);
 	wReg(RD(op), (u32)result);
 	CPSR_UPDATE;
 }
@@ -286,7 +311,7 @@ void Arm7tdmi::SBC(u32 op) {
 void Arm7tdmi::RSC(u32 op) {
 	u8 carryOut;
 	u32 op1 = operand2(this, op, cpsr, &carryOut);
-	u32 op2 = rReg(RN(op)) + ((cpsr & C) == 0);
+	u32 op2 = aluReadRn(op) + ((cpsr & C) == 0);
 	u32 result = op1 - op2;
 	wReg(RD(op), result);
 	CHECK_SPSR
@@ -296,32 +321,32 @@ void Arm7tdmi::RSC(u32 op) {
 		cpsr |= (result == 0) ? Z : 0;
 		cpsr |= (op1 < op2) ? 0 : C;
 		SUB_V_FLAG;
-	}
+		}
 }
 
 void Arm7tdmi::CMP(u32 op) {
 	u8 carryOut;
-	u32 op1 = rReg(RN(op));
+	u32 op1 = aluReadRn(op);
 	u32 op2 = operand2(this, op, cpsr, &carryOut);
-	u32 result = op1 -op2;
+	u32 result = op1 - op2;
 	if (BIT_S(op) && (RD(op) == 15)) {
-			if (CURRENT_MODE_HAS_SPSR) {
-					cpsr = getSPSRValue(); 
-			}
+		if (CURRENT_MODE_HAS_SPSR) {
+			cpsr = getSPSRValue();
+		}
 	}
 	else if (BIT_S(op)) {
-			cpsr &= ~N & ~Z & ~C & ~V;
-			cpsr |= (result & BIT(31)) ? N : 0;
-			cpsr |= (result == 0) ? Z : 0;
-			cpsr |= (op1 < op2) ? 0 : C;
-			SUB_V_FLAG;
+		cpsr &= ~N & ~Z & ~C & ~V;
+		cpsr |= (result & BIT(31)) ? N : 0;
+		cpsr |= (result == 0) ? Z : 0;
+		cpsr |= (op1 < op2) ? 0 : C;
+		SUB_V_FLAG;
 	}
 }
 
 void Arm7tdmi::CMN(u32 op) {
 	u8 carryOut;
 	u32 op2 = operand2(this, op, cpsr, &carryOut);
-	u32 op1 = rReg(RN(op));
+	u32 op1 = aluReadRn(op);
 	u64 result = (u64)op1 + op2;
 	cpsr &= ~N & ~Z & ~C & ~V;
 	cpsr |= ((u32)result & BIT(31)) ? N : 0;
@@ -332,7 +357,7 @@ void Arm7tdmi::CMN(u32 op) {
 
 void Arm7tdmi::TST(u32 op) {
 	u8 carryOut;
-	u32 result = rReg(RN(op)) & operand2(this, op, cpsr, &carryOut);
+	u32 result = aluReadRn(op) & operand2(this, op, cpsr, &carryOut);
 	cpsr &= ~N & ~Z & ~C;
 	cpsr |= (result & BIT(31)) ? N : 0;
 	cpsr |= (result == 0) ? Z : 0;
@@ -341,7 +366,7 @@ void Arm7tdmi::TST(u32 op) {
 
 void Arm7tdmi::TEQ(u32 op) {
 	u8 carryOut;
-	u32 result = rReg(RN(op)) ^ operand2(this, op, cpsr, &carryOut);
+	u32 result = aluReadRn(op) ^ operand2(this, op, cpsr, &carryOut);
 	cpsr &= ~N & ~Z & ~C;
 	cpsr |= (result & BIT(31)) ? N : 0;
 	cpsr |= (result == 0) ? Z : 0;
@@ -350,7 +375,7 @@ void Arm7tdmi::TEQ(u32 op) {
 
 void Arm7tdmi::ORR(u32 op) {
 	u8 carryOut;
-	wReg(RD(op), rReg(RN(op)) | operand2(this, op, cpsr, &carryOut));
+	wReg(RD(op), aluReadRn(op) | operand2(this, op, cpsr, &carryOut));
 	checkCPSR_DP(op, carryOut);
 }
 
@@ -364,10 +389,9 @@ void Arm7tdmi::MOV(u32 op) {
 
 void Arm7tdmi::BIC(u32 op) {
 	u8 carryOut;
-	wReg(RD(op), rReg(RN(op)) & ~operand2(this, op, cpsr, &carryOut));
+	wReg(RD(op), aluReadRn(op) & ~operand2(this, op, cpsr, &carryOut));
 	checkCPSR_DP(op, carryOut);
 }
-
 void Arm7tdmi::MVN(u32 op) {
 	u8 carryOut;
 	wReg(RD(op), ~operand2(this, op, cpsr, &carryOut));
