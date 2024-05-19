@@ -21,13 +21,30 @@ u8* Ppu::readIO(u32 addr) {
 	return (lcd.array + (addr & 0xFF));
 }
 
-void Ppu::updateDipstat() {
+void Ppu::raiseHBlankIrqIfNeeded() {
+	if (lcd.regs.dispstat & DIPSTAT_HBLANK_FLAG) {
+		if (lcd.regs.dispstat & 0x0010) {
+			bus->intCtrl.regs.if_ |= 0x0002;
+		}
+	}
+}
+
+void Ppu::raiseVBlankIrqIfNeeded() {
+	if (lcd.regs.dispstat & DIPSTAT_VBLANK_FLAG) {
+		if (lcd.regs.dispstat & 0x0008) {
+			bus->intCtrl.regs.if_ |= 0x0001;
+		}
+	}
+}
+
+void Ppu::updateDipstatAndVCount() {
 
 	u32 dipstatAndVcount = 0;
 
 	//printf("cycle: %04x\n", cycle);
 	if (cycle > (LINE_SIZE_IN_DRAWN_PX - 1)) {
 		dipstatAndVcount |= DIPSTAT_HBLANK_FLAG;
+		raiseHBlankIrqIfNeeded();
 	}
 	else {
 		dipstatAndVcount &= ~DIPSTAT_HBLANK_FLAG;
@@ -35,6 +52,7 @@ void Ppu::updateDipstat() {
 
 	if (scanline > (NUMBER_OF_DRAWN_LINES - 1)) {
 		dipstatAndVcount |= DIPSTAT_VBLANK_FLAG;
+		raiseVBlankIrqIfNeeded();
 	}
 	else {
 		dipstatAndVcount &= ~DIPSTAT_VBLANK_FLAG;
@@ -45,7 +63,6 @@ void Ppu::updateDipstat() {
 
 	lcd.regs.dispstat = dipstatAndVcount;
 }
-
 
 
 void Ppu::mode3()
@@ -80,7 +97,7 @@ void Ppu::mode5()
 void Ppu::tick() {
 	if (IN_VDRAW_AREA) {
 		switch (lcd.regs.dispcnt & DISPCNT_MODE_MASK) {
-		case 0x0://printf("Mode 0\n");break;
+		case 0x0:mode0(); break;
 		case 0x1://printf("Mode 1\n");break;
 		case 0x2://printf("Mode 2\n");break;
 		case 0x3:mode3();break;
@@ -100,9 +117,8 @@ void Ppu::tick() {
 		lcd.regs.vcount = 0;
 		screen->updateScreen();
 		scanline = 0;
-		//printf("Hscroll: %04x, Vscroll: %04x\n", lcd.regs.bg0hofs%511, lcd.regs.bg0vofs%511);
 	}
 	
-	updateDipstat();
+	updateDipstatAndVCount();
 }
 

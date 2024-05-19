@@ -171,7 +171,8 @@ void Arm7tdmi::TB_ALU_OP(u16 op) {
 	break;
 	case TB_ALU_ADC:
 	{
-		u64 result = (u64)rdVal + rsVal + (u64)((cpsr & C) > 0);
+		u64 op2 = rsVal + (u64)((cpsr & C) > 0);
+		u64 result = (u64)rdVal + op2;
 		cpsr = (cpsr & ~N) | (((u32)result & BIT(31)) ? N : 0);
 		cpsr = (cpsr & ~Z) | (((u32)result == 0) ? Z : 0);
 		cpsr = (cpsr & ~C) | ((result > 0xFFFFFFFF) ? C : 0); // unsafe
@@ -236,7 +237,7 @@ void Arm7tdmi::TB_ALU_OP(u16 op) {
 		cpsr = (cpsr & ~N) | (((u32)result & BIT(31)) ? N : 0);
 		cpsr = (cpsr & ~Z) | (((u32)result == 0) ? Z : 0);
 		cpsr = (cpsr & ~C) | ((result > 0xFFFFFFFF) ? C : 0); // unsafe
-		cpsr = (cpsr & ~V) | (((((rdVal ^ result) & (rsVal ^ result)) >> 31) & 1) ? V : 0);
+		cpsr = (cpsr & ~V) | (((~(rdVal ^ rsVal) & (rsVal ^ result)) & BIT(31)) ? V : 0);
 	}
 	break;
 	case TB_ALU_ORR:

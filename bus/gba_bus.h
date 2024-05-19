@@ -8,15 +8,17 @@
 #include "../dma/dma.h"
 #include "../common/types.h"
 
+PACK(struct intCtrlRegs_t {
+	u16 ie; // Interrupt enable register
+	u16 if_; // Interrupt request flags / IRQ Acknowledge
+	u16 waitcnt; // Waitstate control
+	u16 padding1;
+	u16 ime; // Interrupt Master Enable
+	u16 padding2;
+});
+
 typedef union _intCtrlUnion_t {
-	PACK(struct regs {
-		u16 ie; // Interrupt enable register
-		u16 if_; // Interrupt request flags / IRQ Acknowledge
-		u16 waitcnt; // Waitstate control
-		u16 padding1;
-		u16 ime; // Interrupt Master Enable
-		u16 padding2;
-	});
+	struct intCtrlRegs_t regs;
 	u8 array[sizeof(regs)]; // Interrupt control registers as an array
 }InterruptControlUnion;
 
@@ -29,12 +31,13 @@ typedef union _pwrStatusUnion_t {
 }PwrStatusUnion;
 
 class Ppu;
+class Arm7tdmi;
 
 class Bus {
 private:
 	Dma dmaArray[4];
+	Arm7tdmi* cpu;
 	Ppu* ppu;
-	InterruptControlUnion intCtrl;
 	PwrStatusUnion pwrStatus;
 private:
 	u32 romSizeInBytes;
@@ -66,6 +69,8 @@ private:
 	inline u8* get8bitWritableChunk(u32 add);
 	inline u8* ioAccess(u32 add);
 public:
+	InterruptControlUnion intCtrl;
+public:
 	void setPPU(Ppu* p) {
 		ppu = p;
 	};
@@ -89,6 +94,7 @@ public:
 		keysStatus = keys;
 	}
 	Bus();
+	u8* writeIo(u32 address, u32 data);
 };
 
 #endif // GBA_BUS_H

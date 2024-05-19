@@ -157,6 +157,8 @@ public:
 
 	void MRS(u32 op);
 
+	u32 aluReadRn(u32 op);
+
 	void checkCPSR_DP(u32& op, const u8 shifterCarryOut);
 	void TB_COND_BRANCH(u16 op);
 	void TB_UNCOND_BRANCH(u16 op);

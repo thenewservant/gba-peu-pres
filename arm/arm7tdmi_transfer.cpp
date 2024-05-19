@@ -1,3 +1,4 @@
+
 #include "arm7tdmi.h"
 
 #define RN(op) ((op >> 16) & 0xF)
@@ -241,9 +242,12 @@ void Arm7tdmi::LDR(u32 op) { //LDR { , T, B, BT} (mode 2 or mode 2 P)
 	else { // LDR
 		u32 data = bus->read32(address);
 		u32 final = data >> (8 * (address & 0x3)) | data << (32 - (8 * (address & 0x3)));
-		wReg(RD(op), final);
+		
 		if (RD(op) == 15) {
-			exit(55);
+			wReg(15, final & 0xFFFFFFFC);
+		}
+		else {
+			wReg(RD(op), final);
 		}
 	}
 }

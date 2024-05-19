@@ -368,11 +368,19 @@ void Arm7tdmi::tick() {
 
 		pcHasChanged = false;
 	}
+	/*if ((bus->intCtrl.regs.if_ & bus->intCtrl.regs.ime ) && (!(this->cpsr & I))) {
+		printf("IRQ!\n");
+		this->cpsr |= I;
+		cpsr &= ~T;
+		cpsr &= ~ARM7TDMI_MODE_MASK;
+		cpsr |= ARM7TDMI_MODE_IRQ;
+		spsr[1] = cpsr;
+		r[15] = 0x18;
+	}*/
 	step++;
 	static u64 nbShots = 0;
 
 	if ((step % 4) == 0) {
-		//printf("nbShots: %lld\n", nbShots++);
 		ppu->tick();
 		step = 0;
 		nbShots++;

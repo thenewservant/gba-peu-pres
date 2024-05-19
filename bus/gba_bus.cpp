@@ -15,6 +15,16 @@ Bus::Bus() {
 	keysStatus = 0xFFFF;
 }
 
+u8* Bus::writeIo(u32 address, u32 data) {
+	if (address == 0x04000202) {
+		intCtrl.regs.if_ &= ~(u16)data;
+		return (u8*)&potHole;
+	}
+	else {
+		return ioAccess(address);
+	}
+}
+
 u8* Bus::ioAccess(u32 add) {
 	if (add <= 0x04000056) {
 		return ppu->readIO(add);
@@ -47,8 +57,8 @@ u8* Bus::ioAccess(u32 add) {
 		}
 	}
 	printf("IO Access not implemented yet: %08x\n", add);
-	exit(1);
-	return nullptr;
+	//exit(1);
+	return (u8*)&potHole;
 }
 
 u8* Bus::getMemoryChunkFromAddress(u32 add) {
@@ -97,7 +107,6 @@ u16 Bus::read16Palette(u32 addr) {
 	return *(u16*)(palette_ram + (addr & 0x000003FF));
 }
 
-
 u8* Bus::get8bitWritableChunk(u32 add) {
 	switch (add & 0x0F000000) {
 	case 0x02000000:
@@ -119,7 +128,37 @@ u8 Bus::read8(u32 addr) {
 #ifdef DEBUG
 	printf("Reading 8 bits from %08x\n", addr);
 #endif
-	return *(getMemoryChunkFromAddress(addr));
+	switch (addr & 0x0F000000) {
+	case 0x00000000:
+		return bios[addr];
+	case 0x02000000:
+		return *(ewram + (addr & 0x0003FFFF));
+	case 0x03000000:
+		return *(iwram + (addr & 0x00007FFF));
+	case 0x04000000:
+		return *(ioAccess(addr));
+	case 0x05000000:
+		return *(palette_ram + (addr & 0x000003FF));
+	case 0x06000000:
+		return *(vram + (addr & 0x0001FFFF)); /*TODO: check mirroring*/
+	case 0x07000000:
+		return *(oam + (addr & 0x000003FF));
+	case 0x08000000:
+	case 0x09000000:
+		return *(rom + addr - 0x08000000); /*wait state 0*/
+	case 0x0A000000:
+	case 0x0B000000:
+		return *(rom + addr - 0x0A000000); /*wait state 1*/
+	case 0x0C000000:
+	case 0x0D000000:
+		return *(rom + addr - 0x0C000000); /*wait state 2*/
+	case 0x0E000000:
+	case 0x0F000000:
+		return *(sram + (addr & 0x0000FFFF)); /*GamePak SRAM*/
+	default:
+		printf("Invalid memory access when reading 8 bits: %08xn", addr);
+		return 0;
+	}
 }
 
 u16 Bus::read16(u32 addr) {
@@ -127,35 +166,152 @@ u16 Bus::read16(u32 addr) {
 #ifdef DEBUG
 	printf("Reading 16 bits from %08x\n", addr);
 #endif
-	return *(u16*)(getMemoryChunkFromAddress(addr ));
+	switch (addr & 0x0F000000) {
+	case 0x00000000:
+		return *(u16*)(bios + addr);
+	case 0x02000000:
+		return *(u16*)(ewram + (addr & 0x0003FFFF));
+	case 0x03000000:
+		return *(u16*)(iwram + (addr & 0x00007FFF));
+	case 0x04000000:
+		return *(u16*)(ioAccess(addr));
+	case 0x05000000:
+		return *(u16*)(palette_ram + (addr & 0x000003FF));
+	case 0x06000000:
+		return *(u16*)(vram + (addr & 0x0001FFFF)); /*TODO: check mirroring*/
+	case 0x07000000:
+		return *(u16*)(oam + (addr & 0x000003FF));
+	case 0x08000000:
+	case 0x09000000:
+		return *(u16*)(rom + addr - 0x08000000); /*wait state 0*/
+	case 0x0A000000:
+	case 0x0B000000:
+		return *(u16*)(rom + addr - 0x0A000000); /*wait state 1*/
+	case 0x0C000000:
+	case 0x0D000000:
+		return *(u16*)(rom + addr - 0x0C000000); /*wait state 2*/
+	default:
+		printf("Invalid memory access when reading 16 bits: %08xn", addr);
+		return 0;
+	}
 }
 
 u32 Bus::read32(u32 addr) {
 #ifdef DEBUG
 	printf("Reading 32 bits from %08x\n", addr);
 #endif
-	return *(u32*)(getMemoryChunkFromAddress(addr - (addr % 4)));
+	addr = addr - (addr % 4);
+	switch (addr & 0x0F000000) {
+	case 0x00000000:
+		return *(u32*)(bios + addr);
+	case 0x02000000:
+		return *(u32*)(ewram + (addr & 0x0003FFFF));
+	case 0x03000000:
+		return *(u32*)(iwram + (addr & 0x00007FFF));
+	case 0x04000000:
+		return *(u32*)(ioAccess(addr));
+	case 0x05000000:
+		return *(u32*)(palette_ram + (addr & 0x000003FF));
+	case 0x06000000:
+		return *(u32*)(vram + (addr & 0x0001FFFF)); /*TODO: check mirroring*/
+	case 0x07000000:
+		return *(u32*)(oam + (addr & 0x000003FF));
+	case 0x08000000:
+	case 0x09000000:
+		return *(u32*)(rom + addr - 0x08000000); /*wait state 0*/
+	case 0x0A000000:
+	case 0x0B000000:
+		return *(u32*)(rom + addr - 0x0A000000); /*wait state 1*/
+	case 0x0C000000:
+	case 0x0D000000:
+		return *(u32*)(rom + addr - 0x0C000000); /*wait state 2*/
+	default:
+		printf("Invalid memory access when reading 32 bits: %08xn", addr);
+		return 0;
+	}
 }
 
 void Bus::write8(u32 addr, u8 data) {
 #ifdef DEBUG
 	printf("Writing 8 bits from %08x\n", addr);
 #endif
-	*(get8bitWritableChunk(addr)) = data;
+	switch (addr & 0x0F000000) {
+	case 0x02000000:
+		ewram[addr & 0x0003FFFF] = data;
+		break;
+	case 0x03000000:
+		iwram[addr & 0x00007FFF] = data;
+		break;
+	case 0x04000000:
+		*(writeIo(addr, data)) = data;
+		break;
+	case 0x0E000000:
+	case 0x0F000000:
+		sram[addr & 0x0000FFFF] = data; /*GamePak SRAM*/
+		break;
+	default:
+		printf("Invalid memory access when writing 8 bits: %08x\n", addr);
+		break;
+	}
 }
 
 void Bus::write16(u32 addr, u16 data) {
 #ifdef DEBUG
 	printf("Writing %04x (16 bits) to %08x\n", data, addr);
 #endif
-	*(u16*)(getMemoryChunkFromAddress(addr - (addr %2))) = data;
+	switch (addr & 0x0F000000) {
+	case 0x02000000:
+		*(u16*)(ewram + (addr & 0x0003FFFF)) = data;
+		break;
+	case 0x03000000:
+		*(u16*)(iwram + (addr & 0x00007FFF)) = data;
+		break;
+	case 0x04000000:
+		*(u16*)(writeIo(addr, data)) = data;
+		break;
+	case 0x05000000:
+		*(u16*)(palette_ram + (addr & 0x000003FF)) = data;
+		break;
+	case 0x06000000:
+		*(u16*)(vram + (addr & 0x0001FFFF)) = data;
+		break;
+	case 0x07000000:
+		*(u16*)(oam + (addr & 0x000003FF)) = data;
+		break;
+	default:
+		printf("Invalid memory access when writing 16 bits: %08x\n", addr);
+		break;
+	}
 }
 
 void Bus::write32(u32 addr, u32 data) {
 #ifdef DEBUG
 	printf("Writing %08x (32 bits) to %08x\n", data, addr);
 #endif
-	*(u32*)(getMemoryChunkFromAddress(addr - (addr % 4))) = data;
+	u32 addr2 = addr - (addr % 4);
+	switch (addr & 0x0F000000) {
+	case 0x02000000:
+		*(u32*)(ewram + (addr2 & 0x0003FFFF)) = data;
+		break;
+	case 0x03000000:
+		*(u32*)(iwram + (addr2 & 0x00007FFF)) = data;
+		break;
+	case 0x04000000:
+		*(u32*)(writeIo(addr2, data)) = data;
+		break;
+	case 0x05000000:
+		*(u32*)(palette_ram + (addr2 & 0x000003FF)) = data;
+		break;
+	case 0x06000000:
+		*(u32*)(vram + (addr2 & 0x0001FFFF)) = data;
+		break;
+	case 0x07000000:
+		*(u32*)(oam + (addr2 & 0x000003FF)) = data;
+		break;
+	default:
+		printf("Invalid memory access when writing 32 bits: %08x\n", addr);
+		break;
+	}
 }
 
 void Bus::loadGamePack(const char* filename) {
