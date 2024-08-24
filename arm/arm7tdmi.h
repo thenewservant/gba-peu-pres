@@ -85,6 +85,8 @@ public:
 	void setPPU(Ppu* ppu);
 	void tick();
 
+	u32 getPCInArmOrThumb();
+
 	// reads register reg of the current mode
 	u32 rReg(u8 reg);
 	u32 rRegThumb(u8 reg);
@@ -141,9 +143,10 @@ public:
 	void MSR(u32 operand, u32 op);
 
 	void LDM(u32 op);
+	u32 getNewBase(u32 op);
 	void STM(u32 op);
 
-	void getAddressMode2(u32& op, u32& address, const u32& rnVal, const u32& offset);
+	bool getAddressMode2(u32& op, u32& adress, const u32& rnVal, const u32& offset, u32* thingToWrite);
 
 	void LDR(u32 op);
 	void STR(u32 op);

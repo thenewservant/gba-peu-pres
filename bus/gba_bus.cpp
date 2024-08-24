@@ -1,27 +1,29 @@
 #include "gba_bus.h"
 #include "../ppu/ppu.h"
 
-
 #pragma warning(disable:4996)
 
 #define DMA_FIRST_MAP_ADDRESS 0x040000B0
 #define DMA_LAST_MAP_ADDRESS 0x040000DE
 
+
 Bus::Bus() {
+	this->timerManager = new TimerManager();
 	for (int i = 0; i < 4; i++) {
-		dmaArray[i] = Dma();
+		enum DMA_NB dmaId = (enum DMA_NB)i;
+		dmaArray[i] = Dma(dmaId);
 		dmaArray[i].setBus(this);
-	}
+	} 
 	keysStatus = 0xFFFF;
 }
 
-u8* Bus::writeIo(u32 address, u32 data) {
-	if (address == 0x04000202) {
+u8* Bus::writeIo(u32 adress, u32 data) {
+	if (adress == 0x04000202) {
 		intCtrl.regs.if_ &= ~(u16)data;
 		return (u8*)&potHole;
 	}
 	else {
-		return ioAccess(address);
+		return ioAccess(adress);
 	}
 }
 
@@ -33,6 +35,10 @@ u8* Bus::ioAccess(u32 add) {
 		u8 dmaNb = Dma::selectDma(add);
 		printf("accessed dma %d\n", dmaNb);
 		return (u8*)dmaArray[dmaNb].readIO((add & 0xFF) - 0xB0 - 0xC * dmaNb);
+	}
+	else if ((add >= TIMER_FIRST_ADRESS) && (add <= TIMER_LAST_ADRESS)) {
+		printf("timer access attempt!\n");
+		return (u8*)&potHole;
 	}
 	else if (add == 0x4000130) {
 		return (u8*)&keysStatus;
@@ -57,7 +63,6 @@ u8* Bus::ioAccess(u32 add) {
 		}
 	}
 	printf("IO Access not implemented yet: %08x\n", add);
-	//exit(1);
 	return (u8*)&potHole;
 }
 
@@ -226,7 +231,7 @@ u32 Bus::read32(u32 addr) {
 	case 0x0D000000:
 		return *(u32*)(rom + addr - 0x0C000000); /*wait state 2*/
 	default:
-		printf("Invalid memory access when reading 32 bits: %08xn", addr);
+		printf("Invalid memory access when reading 32 bits: %08x\n", addr);
 		return 0;
 	}
 }

@@ -41,7 +41,6 @@ Screen::Screen(u8 scaleFact, Arm7tdmi* cpu) {
 
 void Screen::advance() {
 	cpu->tick();
-	cpu->printRegsUserMode();
 }
 
 u32* Screen::getPixels() {
@@ -90,19 +89,21 @@ void Screen::checkPressKey(SDL_Event event) {
 	case SDLK_RSHIFT://select
 		keysStatus &= ~0x4;
 		break;
-	case SDLK_F10:
+	case SDLK_F9:
 		advance();
+		cpu->printRegsUserMode();
 		break;
-	case SDLK_F11:
+	case SDLK_F10:
 		printf("100 ticks at a time\n");
 		for (int i = 0; i < 100; i++){
 			advance();
+			cpu->printRegsUserMode();
 		}
 		
 		break;
-	case SDLK_F12:
-		printf("1000 ticks at a time\n");
-		for (int i = 0; i < 1000; i++) {
+	case SDLK_F11:
+		printf("10000 ticks at a time\n");
+		for (int i = 0; i < 10000; i++) {
 			advance();
 		}
 

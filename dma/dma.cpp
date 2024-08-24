@@ -1,8 +1,38 @@
 #include "dma.h"
 #include "../bus/gba_bus.h"
 
-void notify(u8 signal) {
+void Dma::notify(u8 signal) {
 	// TODO
+}
+
+Dma::Dma(enum DMA_NB dmaId) {
+	this->dmaId = dmaId;
+	switch (dmaId) {
+	case DMA0:
+		this->dmaSource = DMA0SAD;
+		this->dmaDest = DMA0DAD;
+		this->dmaCount = DMA0CNT_L;
+		this->dmaControl = DMA0CNT_H;
+		break;
+	case DMA1:
+		this->dmaSource = DMA1SAD;
+		this->dmaDest = DMA1DAD;
+		this->dmaCount = DMA1CNT_L;
+		this->dmaControl = DMA1CNT_H;
+		break;
+	case DMA2:
+		this->dmaSource = DMA2SAD;
+		this->dmaDest = DMA2DAD;
+		this->dmaCount = DMA2CNT_L;
+		this->dmaControl = DMA2CNT_H;
+		break;
+	case DMA3:
+		this->dmaSource = DMA3SAD;
+		this->dmaDest = DMA3DAD;
+		this->dmaCount = DMA3CNT_L;
+		this->dmaControl = DMA3CNT_H;
+		break;
+	}
 }
 
 enum DMA_NB Dma::selectDma(u32 addr) {
@@ -26,4 +56,12 @@ u8* Dma::readIO(u32 add) {
 
 void Dma::setBus(Bus* bus) {
 	this->bus = bus;
+}
+
+void Dma::transfer() {
+	// time taken: 2N+2(n-1)S+xI
+	// Internal time for DMA processing is 2I (normally), or 4I (if both source and destination are in gamepak memory area).
+	//1N+(n-1)S are read cycles, and the other 1N+(n-1)S are write cycles, actual number of cycles depends on the waitstates and bus-width of the source and destination areas
+
+
 }

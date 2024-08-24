@@ -88,7 +88,7 @@ enum THUMB_ALU_OPCODE {
 };
 
 void Arm7tdmi::TB_ALU_OP(u16 op) {
-	u8 rd =  RD(op);
+	u8 rd = RD(op);
 	u32 rdVal = rRegThumb(rd);
 	u32 rsVal = rRegThumb(RS(op));
 	u32 result = 0;
@@ -300,7 +300,6 @@ void Arm7tdmi::TB_IMMEDIATE_OPERATION(u16 op) { //Will be refactored soon.
 			cpsr = (cpsr & ~C) | ((result2 > 0xFFFFFFFF) ? C : 0); // unsafe
 			cpsr = (cpsr & ~V) | (((immed8 ^ result) & (rdVal ^ result) & BIT(31)) ? V : 0);
 		}
-
 		break;
 	case TB_IMM_SUB:
 	{
@@ -311,7 +310,6 @@ void Arm7tdmi::TB_IMMEDIATE_OPERATION(u16 op) { //Will be refactored soon.
 		cpsr = (cpsr & ~C) | ((rdVal >= immed8) ? C : 0);
 		cpsr = (cpsr & ~V) | (((imm8_32 ^ result) & (rdVal ^ result) & BIT(31)) ? V : 0);
 	}
-
 	break;
 	default:
 		break;
@@ -339,6 +337,4 @@ void Arm7tdmi::TB_ADD_SUBSTRACT(u16 op) {
 	
 	cpsr |= ((u32)result & BIT(31)) ? N : 0;
 	cpsr |= ((u32)result == 0) ? Z : 0;
-	
-	
 }

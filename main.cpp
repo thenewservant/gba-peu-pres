@@ -12,13 +12,8 @@
 
 //#define TEST
 void cpuRun(Arm7tdmi* cpu) {
-	static int i = 0;
-	
 	while (true) {
-		//printf("instruction sprint count (1000): %d\n", i++);
-		for (int i = 0; i < 1000; i++) {
-			cpu->tick();
-		}
+		cpu->tick();
 	}
 }
 

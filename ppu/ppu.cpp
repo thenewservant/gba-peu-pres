@@ -12,7 +12,7 @@
 #define DIPSTAT_HBLANK_FLAG 0x0002
 #define DIPSTAT_VBLANK_FLAG 0x0001
 #define DISPCNT_MODE_MASK 0x0007
-
+#define DIPSTAT_VCOUNT_MATCH_FLAG 0x0004
 #define IN_VDRAW_AREA ((cycle < SCREEN_WIDTH) && (scanline < SCREEN_HEIGHT))
 
 Ppu::Ppu(Screen* s, Bus* bus) : lcd{ 0 }, bus{ bus }, screen{ s } {}
@@ -22,29 +22,46 @@ u8* Ppu::readIO(u32 addr) {
 }
 
 void Ppu::raiseHBlankIrqIfNeeded() {
-	if (lcd.regs.dispstat & DIPSTAT_HBLANK_FLAG) {
+	//if (lcd.regs.dispstat & DIPSTAT_HBLANK_FLAG) {
 		if (lcd.regs.dispstat & 0x0010) {
 			bus->intCtrl.regs.if_ |= 0x0002;
 		}
-	}
+	//}
 }
 
 void Ppu::raiseVBlankIrqIfNeeded() {
-	if (lcd.regs.dispstat & DIPSTAT_VBLANK_FLAG) {
-		if (lcd.regs.dispstat & 0x0008) {
+	//if (lcd.regs.dispstat & DIPSTAT_VBLANK_FLAG) {
+		if ((lcd.regs.dispstat & 0x0008)) {
 			bus->intCtrl.regs.if_ |= 0x0001;
 		}
+	//}
+}
+
+void Ppu::raiseVCountIrqIfNeeded() {
+	if ((lcd.regs.dispstat & 0x0020)) {
+		bus->intCtrl.regs.if_ |= 0x0004; //VCount
 	}
 }
 
 void Ppu::updateDipstatAndVCount() {
 
-	u32 dipstatAndVcount = 0;
-
+	u32 dipstatAndVcount = lcd.regs.dispstat;
+	if (cycle == 0) {
+		if (scanline == (lcd.regs.dispstat >> 8)) {
+			dipstatAndVcount |= DIPSTAT_VCOUNT_MATCH_FLAG;
+			raiseVCountIrqIfNeeded();
+		}
+		else {
+			dipstatAndVcount &= ~DIPSTAT_VCOUNT_MATCH_FLAG;
+		}
+	}
 	//printf("cycle: %04x\n", cycle);
 	if (cycle > (LINE_SIZE_IN_DRAWN_PX - 1)) {
 		dipstatAndVcount |= DIPSTAT_HBLANK_FLAG;
-		raiseHBlankIrqIfNeeded();
+		// no H - Blank interrupts are generated within V - Blank period.
+		if (cycle == LINE_SIZE_IN_DRAWN_PX && (!(lcd.regs.dispstat & DIPSTAT_VBLANK_FLAG))) {
+			raiseHBlankIrqIfNeeded();
+		}
 	}
 	else {
 		dipstatAndVcount &= ~DIPSTAT_HBLANK_FLAG;
@@ -52,7 +69,9 @@ void Ppu::updateDipstatAndVCount() {
 
 	if (scanline > (NUMBER_OF_DRAWN_LINES - 1)) {
 		dipstatAndVcount |= DIPSTAT_VBLANK_FLAG;
-		raiseVBlankIrqIfNeeded();
+		if (scanline == (NUMBER_OF_DRAWN_LINES ) && (cycle == 0)) {
+			raiseVBlankIrqIfNeeded();
+		}
 	}
 	else {
 		dipstatAndVcount &= ~DIPSTAT_VBLANK_FLAG;
@@ -121,4 +140,3 @@ void Ppu::tick() {
 	
 	updateDipstatAndVCount();
 }
-

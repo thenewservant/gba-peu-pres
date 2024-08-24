@@ -195,9 +195,12 @@ u32 operand2(Arm7tdmi* cpu, u32 op, u32 cpsr, u8* carryOut) {
 				return (rotatedValue | (rmVal << (32 - rsVal4)));
 			}
 		}
+		default:
+			break;
 		}
 		
 	}
+	return 0;
 }
 
 
@@ -302,10 +305,21 @@ void Arm7tdmi::ADC(u32 op) {
 void Arm7tdmi::SBC(u32 op) {
 	u8 carryOut;
 	u32 rnVal = aluReadRn(op);
-	u32 operand2Val = ~operand2(this, op, cpsr, &carryOut);
-	u64 result = (u64)rnVal + operand2Val + (u64)((cpsr & C) > 0);
+	u32 operand2Val = operand2(this, op, cpsr, &carryOut) ;
+	u64 result = (u64)rnVal + ~operand2Val + (u64)((cpsr & C) > 0);
 	wReg(RD(op), (u32)result);
-	CPSR_UPDATE;
+	if (BIT_S(op) && (RD(op) == 15)) {
+		if (CURRENT_MODE_HAS_SPSR) {
+			cpsr = getSPSRValue();
+		}
+	}
+	else if (BIT_S(op)) {
+		cpsr &= ~N & ~Z & ~C & ~V;
+		cpsr |= ((u32)result & BIT(31)) ? N : 0;
+		cpsr |= ((u32)result == 0) ? Z : 0;
+		cpsr |= (result > 0xFFFFFFFF) ? C : 0;
+		cpsr |= ((rnVal ^ operand2Val) & (rnVal ^ result) & BIT(31)) ? V : 0;
+	}
 }
 
 void Arm7tdmi::RSC(u32 op) {

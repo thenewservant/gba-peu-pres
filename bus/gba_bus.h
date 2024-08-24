@@ -7,6 +7,7 @@
 
 #include "../dma/dma.h"
 #include "../common/types.h"
+#include "../timer/timermanager.h"
 
 PACK(struct intCtrlRegs_t {
 	u16 ie; // Interrupt enable register
@@ -38,6 +39,7 @@ private:
 	Dma dmaArray[4];
 	Arm7tdmi* cpu;
 	Ppu* ppu;
+	TimerManager* timerManager;
 	PwrStatusUnion pwrStatus;
 private:
 	u32 romSizeInBytes;
@@ -54,7 +56,7 @@ private:
 	/**** Display Mem ****/
 	u8 palette_ram[0x400]; //05000000 - 050003FF Palette RAM 1KB
 	// 05000400-05FFFFFF   Not used
-	u8 vram[0x18000]; //06000000 - 06017FFF VRAM 96KB
+	u8 vram[0x20000]; //06000000 - 06017FFF VRAM 96KB
 	//06018000 - 06FFFFFF   Not used
 	u8 oam[0x400]; //07000000 - 070003FF OAM 1KB
 	// 07000400-07FFFFFF   Not used
@@ -94,7 +96,7 @@ public:
 		keysStatus = keys;
 	}
 	Bus();
-	u8* writeIo(u32 address, u32 data);
+	u8* writeIo(u32 adress, u32 data);
 };
 
 #endif // GBA_BUS_H

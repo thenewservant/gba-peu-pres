@@ -74,6 +74,7 @@ public:
 	u8* readIO(u32 addr);
 	void raiseHBlankIrqIfNeeded();
 	void raiseVBlankIrqIfNeeded();
+	void raiseVCountIrqIfNeeded();
 	void updateDipstatAndVCount();
 	void mode0();
 	void mode3();

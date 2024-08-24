@@ -60,6 +60,18 @@ bool Arm7tdmi::currentModeHasSPSR() {
 	}
 }
 
+/*
+	returns PC + 12 if in ARM mode, PC + 6 if in Thumb mode
+*/
+u32 Arm7tdmi::getPCInArmOrThumb() {
+	if (cpsr & T) {
+		return r[15] + 6;
+	}
+	else {
+		return r[15] + 12;
+	}
+}
+
 u32 Arm7tdmi::rReg(u8 reg) {
 	if (reg < 8) {
 		return r[reg];
@@ -108,6 +120,8 @@ u32 Arm7tdmi::rRegMode(u8 reg, u8 mode) {
 		return ((reg >= 13)) ? rSvc[reg - 13] : r[reg];
 	case ARM7TDMI_MODE_ABT:
 		return ((reg >= 13)) ? rAbt[reg - 13] : r[reg];
+	case ARM7TDMI_MODE_IRQ:
+		return ((reg >= 13)) ? rIrq[reg - 13] : r[reg];
 	case ARM7TDMI_MODE_UND:
 		return ((reg >= 13)) ? rUnd[reg - 13] : r[reg];
 	default: return 0;
@@ -143,6 +157,9 @@ void Arm7tdmi::wRegMode(u8 reg, u32 data, u8 mode) {
 			break;
 		case ARM7TDMI_MODE_ABT:
 			((reg >= 13)) ? rAbt[reg - 13] = data : r[reg] = data;
+			break;
+		case ARM7TDMI_MODE_IRQ:
+			((reg >= 13)) ? rIrq[reg - 13] = data : r[reg] = data;
 			break;
 		case ARM7TDMI_MODE_UND:
 			((reg >= 13)) ? rUnd[reg - 13] = data : r[reg] = data;
@@ -190,7 +207,6 @@ void Arm7tdmi::wReg(u8 reg, u32 value) {
 }
 
 void Arm7tdmi::SWI(u32 op) {
-	printf("ARM SWI : op: %08x\n", op);
 	rSvc[1] = r[15] + 4;
 	spsr[2] = cpsr;
 	cpsr &= ~(ARM7TDMI_MODE_MASK | BIT(5) | BIT(9));
@@ -326,7 +342,7 @@ Arm7tdmi::Arm7tdmi(Bus* bus) : bus(bus), cpsr(0), spsr{ 0 }, r{ 0 }, rFiq{ 0 }, 
 	rSvc[0] = BOOT_SP_SVC;
 	rIrq[0] = BOOT_SP_IRQ;
 	this->ppu = ppu;
-	r[15] = 0x08000000;
+	r[15] =0x08000000;
 	cpsr = 0x0000005f;
 }
 
@@ -368,15 +384,18 @@ void Arm7tdmi::tick() {
 
 		pcHasChanged = false;
 	}
-	/*if ((bus->intCtrl.regs.if_ & bus->intCtrl.regs.ime ) && (!(this->cpsr & I))) {
-		printf("IRQ!\n");
+	if (bus->intCtrl.regs.ime && (bus->intCtrl.regs.if_ & bus->intCtrl.regs.ie ) && (!(this->cpsr & I))) {
+		/*printf("IRQ!");
+		printf(" enabled: %04x", bus->intCtrl.regs.ie);
+		printf(" flags: %04x\n", bus->intCtrl.regs.if_);*/
+		spsr[1] = this->cpsr;
 		this->cpsr |= I;
 		cpsr &= ~T;
 		cpsr &= ~ARM7TDMI_MODE_MASK;
 		cpsr |= ARM7TDMI_MODE_IRQ;
-		spsr[1] = cpsr;
+		rIrq[1] = r[15] + 4;
 		r[15] = 0x18;
-	}*/
+	}
 	step++;
 	static u64 nbShots = 0;
 
@@ -392,7 +411,9 @@ void Arm7tdmi::printRegsUserMode() {
 	for (int i = 0; i < 15; i++) {
 		if (rReg(i))printf("r%02d: %08x\n", i, rReg(i));
 	}
+	
 	printf("fake PC: %08x\nreal PC: %08x\n", rReg(15), r[15]);
-	printf("\n");
 	printf("cpsr: %08x\n", cpsr);
+	printf("OP: %08x\n", bus->read32(r[15]));
+	printf("\n");
 }

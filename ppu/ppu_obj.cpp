@@ -31,4 +31,5 @@ void Ppu::obj() {//pixel based strategy for now.
 			}
 		}
 	}
+	
 }

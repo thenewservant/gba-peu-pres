@@ -12,10 +12,10 @@ constexpr u32 VRAM_BASE = 0x06000000;
 
 #define TILE_NUMBER_MASK 0x3FF
 
-static u32 getRgbFromPaletteAdress(u32 address) {
-	u32 r = (address & 0x1F) << 3;
-	u32 g = ((address & 0x3E0) >> 5) << 3;
-	u32 b = ((address & 0x7C00) >> 10) << 3;
+static u32 getRgbFromPaletteAdress(u32 adress) {
+	u32 r = (adress & 0x1F) << 3;
+	u32 g = ((adress & 0x3E0) >> 5) << 3;
+	u32 b = ((adress & 0x7C00) >> 10) << 3;
 	return (r << 24) | (g << 16) | (b << 8);
 }
 
@@ -39,8 +39,6 @@ void Ppu::mode0() {
 	
 	u16 tileData = bus->read16(screenBaseBlock + currentTileOffset);
 
-	//if (scanline==154 && cycle == 154)printf("screenbaseblock: %08x\n", screenBaseBlock);
-	
 	//if paletteMode isn't 256
 	u8 paletteNumber = (tileData >> 12) & 0xF;
 	u16 currentTileIndex = tileData & TILE_NUMBER_MASK;

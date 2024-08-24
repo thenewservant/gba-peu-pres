@@ -36,10 +36,10 @@ void Arm7tdmi::TB_BL(u16 op) {
     if (op & BIT(11)) {
         u32 oldPc = r[15] + 2;
         wRegThumb(15, rRegThumb(14) + (offset11 << 1));
-        r[14] = (oldPc) | 1;
+        wReg(14,  (oldPc) | 1);
     }
     else {
         s16 signExtendedOffset =( offset11 & BIT(10)) ? offset11 | 0xF800 : offset11;
-        r[14] = rRegThumb(15) + (signExtendedOffset<<12);
+        wReg(14, rRegThumb(15) + (signExtendedOffset<<12));
     }
 }
