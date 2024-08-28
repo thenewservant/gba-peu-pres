@@ -1,8 +1,8 @@
 #ifndef ARM7TDMI_H
 #define ARM7TDMI_H
 
-#include "../common/types.h"
-#include "../bus/gba_bus.h"
+#include "common/types.h"
+#include "bus/gba_bus.h"
 
 enum ARM7TDMI_MODE {
 	ARM7TDMI_MODE_USER = 0x10,

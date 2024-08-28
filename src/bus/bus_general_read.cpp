@@ -1,4 +1,4 @@
-#include "gba_bus.h"
+#include "bus/gba_bus.h"
 
 u8 Bus::read8(u32 addr) {
 #ifdef DEBUG

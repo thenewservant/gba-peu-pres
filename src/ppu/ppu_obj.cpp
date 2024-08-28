@@ -1,4 +1,4 @@
-#include "ppu.h"
+#include "ppu/ppu.h"
 
 #define MAX_OBJECTS 128
 

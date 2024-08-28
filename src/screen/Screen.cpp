@@ -1,4 +1,4 @@
-#include "Screen.h"
+#include "screen/screen.h"
 
 
 void Screen::initSDLScreen() {

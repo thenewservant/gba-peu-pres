@@ -1,8 +1,8 @@
 #ifndef PPU_H
 #define PPU_H
-#include "../common/types.h"
-#include "../screen/screen.h"
-#include "../bus/gba_bus.h"
+#include "common/types.h"
+#include "screen/screen.h"
+#include "bus/gba_bus.h"
 
 #define BG0_ON ((lcd.regs.dispcnt & 0x100) != 0)
 #define BG1_ON ((lcd.regs.dispcnt & 0x200) != 0)

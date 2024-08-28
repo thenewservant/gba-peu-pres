@@ -1,5 +1,5 @@
 
-#include "arm7tdmi.h"
+#include "arm/arm7tdmi.h"
 
 #define RN(op) ((op >> 16) & 0xF)
 #define RD(op) ((op >> 12) & 0xF)

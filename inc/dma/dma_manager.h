@@ -1,7 +1,7 @@
 #ifndef DMA_MANAGER_H
 #define DMA_MANAGER_H
 
-#include "dma.h"
+#include "dma/dma.h"
 
 
 //The most significant address bits are ignored, only the least significant 27 or 28 bits are used

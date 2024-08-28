@@ -1,4 +1,4 @@
-#include "timer.h"
+#include "timer/timer.h"
 
 Timer::Timer(u8 timerId, Timer* nextTimer) {
 	this->nextTimer = nextTimer;

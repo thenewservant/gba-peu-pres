@@ -1,4 +1,4 @@
-#include "ppu.h"
+#include "ppu/ppu.h"
 
 #define IN_VDRAW_AREA ((cycle < SCREEN_WIDTH) && (scanline < SCREEN_HEIGHT))
 

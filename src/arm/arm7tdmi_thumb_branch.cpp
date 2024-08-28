@@ -1,4 +1,4 @@
-#include "arm7tdmi.h"
+#include "arm/arm7tdmi.h"
 
 #define GET_BRANCH_OPCODE(op) ((op >> 8) & 0xF)
 #define TEST_BRANCH(cond) if(cond){wReg(15, (rRegThumb(15) + (s32)(sOffSet << 1)));}

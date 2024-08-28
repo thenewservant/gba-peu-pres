@@ -1,7 +1,7 @@
 #ifndef TIMER_H
 #define TIMER_H
 
-#include "../common/types.h"
+#include "common/types.h"
 
 enum PRESCALE_SELECTOR {
 	F_1 = 0,

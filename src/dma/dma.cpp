@@ -1,5 +1,5 @@
-#include "dma.h"
-#include "../bus/gba_bus.h"
+#include "dma/dma.h"
+#include "bus/gba_bus.h"
 
 void Dma::notify(u8 signal) {
 	// TODO

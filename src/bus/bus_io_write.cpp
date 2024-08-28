@@ -1,5 +1,5 @@
-#include "gba_bus.h"
-#include "../ppu/ppu.h"
+#include "bus/gba_bus.h"
+#include "ppu/ppu.h"
 
 // TODO : check if u8 casts for 32 and 16 bits are adequate
 

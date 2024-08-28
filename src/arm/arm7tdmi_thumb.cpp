@@ -1,4 +1,4 @@
-#include "arm7tdmi.h"
+#include "arm/arm7tdmi.h"
 #define REG_53(x) ((x>>3) & 0x7) // register pointed from bits 5 to 3
 #define REG_20(x) (x & 0x7) // register pointed from bits 2 to 0
 #define REG_10_8(x) ((x>>8) & 0x7) // register pointed from bits 10 to 8

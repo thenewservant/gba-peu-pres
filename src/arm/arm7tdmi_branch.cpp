@@ -1,4 +1,4 @@
-#include "arm7tdmi.h"
+#include "arm/arm7tdmi.h"
 
 #define L_BIT_SET(op) (BIT(24) & op)
 #define RM(op) (op & 0xF)

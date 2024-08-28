@@ -1,5 +1,5 @@
-#include "../common/types.h"
-#include "timer.h"
+#include "common/types.h"
+#include "timer/timer.h"
 
 #define TIMER_FIRST_ADRESS 0x04000100
 #define TIMER_LAST_ADRESS 0x0400010F

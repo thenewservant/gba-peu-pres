@@ -1,9 +1,9 @@
 #ifndef GBA_BUS_H
 #define GBA_BUS_H
 
-#include "../dma/dma.h"
-#include "../common/types.h"
-#include "../timer/timer_manager.h"
+#include "dma/dma.h"
+#include "common/types.h"
+#include "timer/timer_manager.h"
 
 u32 vramMirroredAdress(u32 addr);
 

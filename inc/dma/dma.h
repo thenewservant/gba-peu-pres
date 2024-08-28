@@ -1,7 +1,7 @@
 #ifndef DMA_H
 #define DMA_H
 
-#include "../common/types.h"
+#include "common/types.h"
 
 #define DMA_FIRST_MAP_ADDRESS 0x040000B0
 #define DMA_LAST_MAP_ADDRESS 0x040000DE

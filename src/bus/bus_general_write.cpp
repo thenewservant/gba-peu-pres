@@ -1,4 +1,4 @@
-#include "gba_bus.h"
+#include "bus/gba_bus.h"
 
 void Bus::write8(u32 addr, u8 data) {
 #ifdef DEBUG

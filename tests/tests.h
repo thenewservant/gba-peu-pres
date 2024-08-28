@@ -1,7 +1,7 @@
 #ifndef TESTS_H
 #define TESTS_H
 
-#include "../arm7tdmi.h"
+#include "arm/arm7tdmi.h"
 
 
 
@@ -11,14 +11,14 @@
 void test_SUB() {
     Arm7tdmi cpu = Arm7tdmi(nullptr);
 
-    // Test SUB où le débordement ne se produit pas
+    // Test SUB oï¿½ le dï¿½bordement ne se produit pas
     cpu.wReg(1, 10);
     cpu.wReg(2, 5);
     cpu.SUB(0xE0411002); // SUB R1, R1, R2
     assert(cpu.rReg(1) == 5);
     assert((cpu.cpsr & V) == 0); // V flag should not be set
 
-    // Test SUB où le débordement se produit
+    // Test SUB oï¿½ le dï¿½bordement se produit
     cpu.wReg(1, 0x80000000);
     cpu.wReg(2, 1);
     cpu.SUB(0xE0411002); // SUB R1, R1, R2
@@ -29,14 +29,14 @@ void test_SUB() {
 void test_CMP() {
 	Arm7tdmi cpu = Arm7tdmi(nullptr);
 
-	// Test CMP où le débordement ne se produit pas
+	// Test CMP oï¿½ le dï¿½bordement ne se produit pas
 	cpu.wReg(1, 10);
 	cpu.wReg(2, 5);
 	cpu.CMP(0xE1510002); // CMP R1, R2
 	assert(cpu.rReg(1) == 10);
 	assert((cpu.cpsr & V) == 0); // V flag should not be set
 
-	// Test CMP où le débordement se produit
+	// Test CMP oï¿½ le dï¿½bordement se produit
 	cpu.wReg(1, 0x80000000);
 	cpu.wReg(2, 1);
 	cpu.evaluateArm(0xE1510002); // CMP R1, R2
@@ -56,30 +56,30 @@ void test_CMP() {
 void test_SUB2() {
     Arm7tdmi cpu = Arm7tdmi(nullptr);
 
-    // Test SUB avec un opérande immédiat
+    // Test SUB avec un opï¿½rande immï¿½diat
     cpu.wReg(1, 10);
     cpu.SUB(0xE2411005); // SUB R1, R1, #5
     assert(cpu.rReg(1) == 5);
 
-    // Test SUB avec un opérande de registre
+    // Test SUB avec un opï¿½rande de registre
     cpu.wReg(1, 10);
     cpu.wReg(2, 3);
     cpu.SUB(0xE0411002); // SUB R1, R1, R2
     assert(cpu.rReg(1) == 7);
 
-    // Test SUB avec un décalage logique à gauche
+    // Test SUB avec un dï¿½calage logique ï¿½ gauche
     cpu.wReg(1, 32);
     cpu.wReg(2, 1);
     cpu.SUB(0xE1A012A2); // SUB R1, R1, R2, LSL #5
     assert(cpu.rReg(1) == 0);
 
-    // Test SUB avec un décalage logique à droite
+    // Test SUB avec un dï¿½calage logique ï¿½ droite
     cpu.wReg(1, 32);
     cpu.wReg(2, 64);
     cpu.SUB(0xe04110a2); // SUB R1, R1, R2, LSR #1
     assert(cpu.rReg(1) == 0);
 
-    // Test SUB avec une rotation à droite
+    // Test SUB avec une rotation ï¿½ droite
     cpu.wReg(1, 0x80000000);
     cpu.wReg(2, 0x40000000);
     cpu.SUB(0xe04110e2); // SUB R1, R1, R2, ROR #1
@@ -89,27 +89,27 @@ void test_SUB2() {
 void test_ADD() {
     Arm7tdmi cpu = Arm7tdmi(new Bus());
 
-    // Test ADD avec un opérande immédiat
+    // Test ADD avec un opï¿½rande immï¿½diat
     cpu.wReg(1, 5);
     cpu.ADD(0xE2811007); // ADD R1, R1, #7
     assert(cpu.rReg(1) == 12);
 
-    // Test ADD avec un opérande de registre
+    // Test ADD avec un opï¿½rande de registre
     cpu.wReg(2, 3);
     cpu.ADD(0xE0801002); // ADD R1, R0, R2
     assert(cpu.rReg(1) == 3);
 
-    // Test ADD avec un décalage logique à gauche
+    // Test ADD avec un dï¿½calage logique ï¿½ gauche
     cpu.wReg(2, 1);
     cpu.ADD(0xe0801282); // ADD R1, R0, R2, LSL #5
     assert(cpu.rReg(1) == 32);
 
-    // Test ADD avec un décalage logique à droite
+    // Test ADD avec un dï¿½calage logique ï¿½ droite
     cpu.wReg(2, 32);
     cpu.ADD(0xe08012a2); // ADD R1, R0, R2, LSR #5
     assert(cpu.rReg(1) == 1);
 
-    // Test ADD avec une rotation à droite
+    // Test ADD avec une rotation ï¿½ droite
     cpu.wReg(2, 0x80000000);
     cpu.ADD(0xe08010e2); // ADD R1, R0, R2, ROR #1
     assert(cpu.rReg(1) == 0x40000000);
@@ -223,43 +223,43 @@ void testAddVFLAG(Arm7tdmi* cpu) {
 }
 
 void test_LDM(Arm7tdmi* cpu) {
-    // Initialiser le registre et la mémoire
-    cpu->wReg(1, 0x1000); // Adresse de la mémoire
+    // Initialiser le registre et la mï¿½moire
+    cpu->wReg(1, 0x1000); // Adresse de la mï¿½moire
     cpu->bus->write32(0x1000, 0x12345678);
     cpu->bus->write32(0x1004, 0x9abcdef0);
 
-    // Exécuter l'instruction LDM
+    // Exï¿½cuter l'instruction LDM
     cpu->evaluateArm(0xE8910003); // LDM R1, {R0, R1}
 
-    // Vérifier que les valeurs ont été correctement chargées
+    // Vï¿½rifier que les valeurs ont ï¿½tï¿½ correctement chargï¿½es
     assert(cpu->rReg(0) == 0x12345678);
     assert(cpu->rReg(1) == 0x9abcdef0);
 }
 
 void test_LDM_IA_DB(Arm7tdmi* cpu) {
-    // Initialiser le registre et la mémoire
-    cpu->wReg(1, 0x1000); // Adresse de la mémoire
+    // Initialiser le registre et la mï¿½moire
+    cpu->wReg(1, 0x1000); // Adresse de la mï¿½moire
     cpu->bus->write32(0x1000, 0x12345678);
     cpu->bus->write32(0x1004, 0x9abcdef0);
 
-    // Exécuter l'instruction LDM en mode IA
+    // Exï¿½cuter l'instruction LDM en mode IA
     cpu->evaluateArm(0xE8910003); // LDMIA R1!, {R0, R1}
 
-    // Vérifier que les valeurs ont été correctement chargées
+    // Vï¿½rifier que les valeurs ont ï¿½tï¿½ correctement chargï¿½es
     assert(cpu->rReg(0) == 0x12345678);
     assert(cpu->rReg(1) == 0x9abcdef0);
 
-    // Réinitialiser le registre et la mémoire
+    // Rï¿½initialiser le registre et la mï¿½moire
     cpu->wReg(0, 1);
-    cpu->wReg(1, 0x0300001C); // Adresse de la mémoire
+    cpu->wReg(1, 0x0300001C); // Adresse de la mï¿½moire
     cpu->bus->write32(0x03000014, 0xabcdef12);
     cpu->bus->write32(0x03000018, 0x3456789a);
 
-    // Exécuter l'instruction LDM en mode DB
+    // Exï¿½cuter l'instruction LDM en mode DB
     cpu->evaluateArm(0xE9110003); // LDMDB R1!, {R0, R1}
 
     cpu->printRegsUserMode();
-    // Vérifier que les valeurs ont été correctement chargées
+    // Vï¿½rifier que les valeurs ont ï¿½tï¿½ correctement chargï¿½es
     assert(cpu->rReg(0) == 0xabcdef12);
     assert(cpu->rReg(1) == 0x3456789a);
 }
@@ -267,34 +267,34 @@ void test_LDM_IA_DB(Arm7tdmi* cpu) {
 void test_STRBT(Arm7tdmi* cpu) {
 
 
-    // Initialiser le registre et la mémoire
+    // Initialiser le registre et la mï¿½moire
     cpu->wReg(1, 0x12345678);
-    cpu->wReg(2, 0x03000000); // Adresse de la mémoire
+    cpu->wReg(2, 0x03000000); // Adresse de la mï¿½moire
     cpu->bus->write8(0x03000000, 0x00);
 
-    // Exécuter l'instruction STRBT
+    // Exï¿½cuter l'instruction STRBT
     cpu->evaluateArm(0xe4e21000); // STRBT R1, [R2]
 
-    // Vérifier que la valeur a été correctement stockée
+    // Vï¿½rifier que la valeur a ï¿½tï¿½ correctement stockï¿½e
     
     assert(cpu->bus->read8(0x03000000) == 0x78);
 }
 
 void test_STRBT_post_indexed(Arm7tdmi* cpu) {
     Bus* mem = cpu->bus;
-    // Initialiser le registre et la mémoire
+    // Initialiser le registre et la mï¿½moire
     cpu->wReg(1, 0x12345678);
-    cpu->wReg(2, 0x1000); // Adresse de la mémoire
+    cpu->wReg(2, 0x1000); // Adresse de la mï¿½moire
     cpu->wReg(3, 4); // Offset
     mem->write8(0x1000, 0x00);
 
-    // Exécuter l'instruction STRBT avec adressage post-indexé
+    // Exï¿½cuter l'instruction STRBT avec adressage post-indexï¿½
     cpu->evaluateArm(0xe6e21003); // STRBT R1, [R2], R3
 
-    // Vérifier que la valeur a été correctement stockée
+    // Vï¿½rifier que la valeur a ï¿½tï¿½ correctement stockï¿½e
     assert(mem->read8(0x1004) == 0x78);
 
-    // Vérifier que l'adresse de base a été mise à jour
+    // Vï¿½rifier que l'adresse de base a ï¿½tï¿½ mise ï¿½ jour
     assert(cpu->rReg(2) == 0x1004);
 }
 

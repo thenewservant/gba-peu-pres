@@ -1,4 +1,4 @@
-#include "arm7tdmi.h"
+#include "arm/arm7tdmi.h"
 
 #define RN(op) ((op >> 8) & 0x7)
 #define RD_LOW(op) (op & 0x7)

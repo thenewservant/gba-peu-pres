@@ -1,5 +1,5 @@
-#include "gba_bus.h"
-#include "../ppu/ppu.h"
+#include "bus/gba_bus.h"
+#include "ppu/ppu.h"
 
 u32 Bus::ioRead32(u32 addr) {
 	if (addr <= 0x04000056) {

@@ -1,4 +1,4 @@
-#include "ppu.h"
+#include "ppu/ppu.h"
 
 #define LINE_SIZE_IN_DRAWN_PX SCREEN_WIDTH
 #define NUMBER_OF_DRAWN_LINES SCREEN_HEIGHT

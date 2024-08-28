@@ -1,4 +1,4 @@
-#include "arm7tdmi.h"
+#include "arm/arm7tdmi.h"
 
 /*
 arm7tdmi_thumb_alu.cpp: alu operations, move shifted register,

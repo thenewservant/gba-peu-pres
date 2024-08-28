@@ -1,6 +1,6 @@
-#include "arm7tdmi.h"
+#include "arm/arm7tdmi.h"
 #include <windows.h>
-#include "../ppu/ppu.h"
+#include "ppu/ppu.h"
 
 /* arm7tdmi.cpp
 * General operation, instruction decoding, register access, etc.

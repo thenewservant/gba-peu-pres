@@ -1,5 +1,5 @@
-#include "gba_bus.h"
-#include "../ppu/ppu.h"
+#include "bus/gba_bus.h"
+#include "ppu/ppu.h"
 
 #pragma warning(disable:4996)
 
