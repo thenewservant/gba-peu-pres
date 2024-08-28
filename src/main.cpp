@@ -1,6 +1,5 @@
 #include "arm/arm7tdmi.h"
 #include "ppu/ppu.h"
-#include "arm/tests/tests.h"
 #include "bus/gba_bus.h"
 #include "common/types.h"
 #include "screen/screen.h"
