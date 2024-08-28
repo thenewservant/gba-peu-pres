@@ -6,7 +6,6 @@ constexpr u32 VRAM_BASE = 0x06000000;
 
 #define PALETTE_BASE 0x05000000
 #define BG_OFFSET_MASK 0x1FF
-#define BG_SQUARE_SIZE 256
 #define SCREEN_ENTRY_SIZE 2
 #define BG_ROW_SIZE 32 * SCREEN_ENTRY_SIZE
 
@@ -20,10 +19,12 @@ static u32 getRgbFromPaletteAdress(u32 adress) {
 }
 
 void Ppu::mode0() {
+	static u32 count = 0;
+	count++;
 	//Starting with BG0
 
 	//BGCNT data
-	u32 screenBaseBlock = (lcd.regs.bg0cnt >> 8) & 0x1F; //Base block of the BG0 (tile map)fF
+	u32 screenBaseBlock = ((lcd.regs.bg0cnt >> 8) & 0x1F); //Base block of the BG0 (tile map)
 	
 	screenBaseBlock *= 0x800; //Each block is 2KB
 	screenBaseBlock += VRAM_BASE;
@@ -44,7 +45,9 @@ void Ppu::mode0() {
 	u16 currentTileIndex = tileData & TILE_NUMBER_MASK;
 	//Contains the byte (2pixels in 4bpp mode) for this pixel.
 	u32 currentByteForThisPixel = bus->read16(VRAM_BASE + charBaseBlock + 32 * currentTileIndex + ((cycle%8)/2) + (scanline%8) * 4);
-
+	//if (count == 1 << 20) {
+	//	printf("charData base: %X\n", VRAM_BASE + charBaseBlock);
+	//}
 	//Most significant nibble of a byte is the left pixel, least significant is the right pixel.
 	//Hence (cycle) % 2)*4
 	u32 currentPixelPaletteId = ((currentByteForThisPixel >> ((cycle) % 2)*4) & 0xF);

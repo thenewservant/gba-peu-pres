@@ -396,6 +396,7 @@ void Arm7tdmi::tick() {
 		rIrq[1] = r[15] + 4;
 		r[15] = 0x18;
 	}
+
 	step++;
 	static u64 nbShots = 0;
 
@@ -404,6 +405,7 @@ void Arm7tdmi::tick() {
 		step = 0;
 		nbShots++;
 	}
+	bus->timerManager->tick();
 }
 
 void Arm7tdmi::printRegsUserMode() {

@@ -7,32 +7,6 @@ void Dma::notify(u8 signal) {
 
 Dma::Dma(enum DMA_NB dmaId) {
 	this->dmaId = dmaId;
-	switch (dmaId) {
-	case DMA0:
-		this->dmaSource = DMA0SAD;
-		this->dmaDest = DMA0DAD;
-		this->dmaCount = DMA0CNT_L;
-		this->dmaControl = DMA0CNT_H;
-		break;
-	case DMA1:
-		this->dmaSource = DMA1SAD;
-		this->dmaDest = DMA1DAD;
-		this->dmaCount = DMA1CNT_L;
-		this->dmaControl = DMA1CNT_H;
-		break;
-	case DMA2:
-		this->dmaSource = DMA2SAD;
-		this->dmaDest = DMA2DAD;
-		this->dmaCount = DMA2CNT_L;
-		this->dmaControl = DMA2CNT_H;
-		break;
-	case DMA3:
-		this->dmaSource = DMA3SAD;
-		this->dmaDest = DMA3DAD;
-		this->dmaCount = DMA3CNT_L;
-		this->dmaControl = DMA3CNT_H;
-		break;
-	}
 }
 
 enum DMA_NB Dma::selectDma(u32 addr) {

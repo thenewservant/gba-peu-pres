@@ -1,13 +1,11 @@
 #ifndef GBA_BUS_H
 #define GBA_BUS_H
 
-#include <cstdio>
-#include <cstdlib>
-#include <cstdint>
-
 #include "../dma/dma.h"
 #include "../common/types.h"
-#include "../timer/timermanager.h"
+#include "../timer/timer_manager.h"
+
+u32 vramMirroredAdress(u32 addr);
 
 PACK(struct intCtrlRegs_t {
 	u16 ie; // Interrupt enable register
@@ -39,16 +37,16 @@ private:
 	Dma dmaArray[4];
 	Arm7tdmi* cpu;
 	Ppu* ppu;
-	TimerManager* timerManager;
+	
 	PwrStatusUnion pwrStatus;
 private:
 	u32 romSizeInBytes;
 	/**** Main Mem ****/
 	u8 bios[0x4000]; //00000000-00003FFF
 	// 00004000-01FFFFFF is not used 
-	u8 ewram[0x40000]; //02000000-0203FFFF ( 2 WAIT)
+	u8 ewram[0x40000]; //02000000-0203FFFF ( 2 WAIT)  -On Board Work RAM 256KB
 	// 02040000-02FFFFFF is not used
-	u8 iwram[0x8000]; //03000000-03007FFF
+	u8 iwram[0x8000]; //03000000-03007FFF  - Internal Work RAM 32KB
 	//03008000-03FFFFFF is not used
 	// 04000000 - 040003FE -> IO registers
 	// 04000400-04FFFFFF is not used
@@ -67,10 +65,9 @@ private:
 	u16 keysStatus;
 	u32 internalMemoryControl; // at 0x4000804 (undocumented)
 private:
-	inline u8* getMemoryChunkFromAddress(u32 add);
-	inline u8* get8bitWritableChunk(u32 add);
 	inline u8* ioAccess(u32 add);
 public:
+	TimerManager* timerManager;
 	InterruptControlUnion intCtrl;
 public:
 	void setPPU(Ppu* p) {
@@ -97,6 +94,11 @@ public:
 	}
 	Bus();
 	u8* writeIo(u32 adress, u32 data);
+	void ioWrite32(u32 addr, u32 data);
+	void ioWrite16(u32 addr, u16 data);
+	u32 ioRead32(u32 addr);
+	u16 ioRead16(u32 addr);
+	u8 ioRead8(u32 addr);
 };
 
 #endif // GBA_BUS_H

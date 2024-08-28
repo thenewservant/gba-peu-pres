@@ -9,10 +9,10 @@
 #define REAL_HBLANK_CYCLES (LINE_SIZE_IN_DRAWN_PX + UNDRAWN_COLUMNS)
 #define REAL_VBLANK_CYCLES (NUMBER_OF_DRAWN_LINES + UNDRAWN_LINES)
 
-#define DIPSTAT_HBLANK_FLAG 0x0002
-#define DIPSTAT_VBLANK_FLAG 0x0001
+#define DISPSTAT_HBLANK_FLAG 0x0002
+#define DISPSTAT_VBLANK_FLAG 0x0001
 #define DISPCNT_MODE_MASK 0x0007
-#define DIPSTAT_VCOUNT_MATCH_FLAG 0x0004
+#define DISPSTAT_VCOUNT_MATCH_FLAG 0x0004
 #define IN_VDRAW_AREA ((cycle < SCREEN_WIDTH) && (scanline < SCREEN_HEIGHT))
 
 Ppu::Ppu(Screen* s, Bus* bus) : lcd{ 0 }, bus{ bus }, screen{ s } {}
@@ -21,8 +21,24 @@ u8* Ppu::readIO(u32 addr) {
 	return (lcd.array + (addr & 0xFF));
 }
 
+u8 Ppu::readIOValue(u32 addr) {
+	return lcd.array[addr & 0xFF];
+}
+
+void Ppu::writeIO32(u32 addr, u32 data) {
+	*(u32*)(lcd.array + (addr & 0xFF)) = data;
+}
+
+void Ppu::writeIO16(u32 addr, u16 data) {
+	*(u16*)(lcd.array + (addr & 0xFF)) = data;
+}
+
+void Ppu::writeIO8(u32 addr, u8 data) {
+	*(u8*)(lcd.array + (addr & 0xFF)) = data;
+}
+
 void Ppu::raiseHBlankIrqIfNeeded() {
-	//if (lcd.regs.dispstat & DIPSTAT_HBLANK_FLAG) {
+	//if (lcd.regs.dispstat & DISPSTAT_HBLANK_FLAG) {
 		if (lcd.regs.dispstat & 0x0010) {
 			bus->intCtrl.regs.if_ |= 0x0002;
 		}
@@ -30,7 +46,7 @@ void Ppu::raiseHBlankIrqIfNeeded() {
 }
 
 void Ppu::raiseVBlankIrqIfNeeded() {
-	//if (lcd.regs.dispstat & DIPSTAT_VBLANK_FLAG) {
+	//if (lcd.regs.dispstat & DISPSTAT_VBLANK_FLAG) {
 		if ((lcd.regs.dispstat & 0x0008)) {
 			bus->intCtrl.regs.if_ |= 0x0001;
 		}
@@ -43,44 +59,44 @@ void Ppu::raiseVCountIrqIfNeeded() {
 	}
 }
 
-void Ppu::updateDipstatAndVCount() {
+void Ppu::updateDispstatAndVCount() {
 
-	u32 dipstatAndVcount = lcd.regs.dispstat;
+	u32 dispstatAndVcount = lcd.regs.dispstat;
 	if (cycle == 0) {
 		if (scanline == (lcd.regs.dispstat >> 8)) {
-			dipstatAndVcount |= DIPSTAT_VCOUNT_MATCH_FLAG;
+			dispstatAndVcount |= DISPSTAT_VCOUNT_MATCH_FLAG;
 			raiseVCountIrqIfNeeded();
 		}
 		else {
-			dipstatAndVcount &= ~DIPSTAT_VCOUNT_MATCH_FLAG;
+			dispstatAndVcount &= ~DISPSTAT_VCOUNT_MATCH_FLAG;
 		}
 	}
 	//printf("cycle: %04x\n", cycle);
 	if (cycle > (LINE_SIZE_IN_DRAWN_PX - 1)) {
-		dipstatAndVcount |= DIPSTAT_HBLANK_FLAG;
+		dispstatAndVcount |= DISPSTAT_HBLANK_FLAG;
 		// no H - Blank interrupts are generated within V - Blank period.
-		if (cycle == LINE_SIZE_IN_DRAWN_PX && (!(lcd.regs.dispstat & DIPSTAT_VBLANK_FLAG))) {
+		if (cycle == LINE_SIZE_IN_DRAWN_PX && (!(lcd.regs.dispstat & DISPSTAT_VBLANK_FLAG))) {
 			raiseHBlankIrqIfNeeded();
 		}
 	}
 	else {
-		dipstatAndVcount &= ~DIPSTAT_HBLANK_FLAG;
+		dispstatAndVcount &= ~DISPSTAT_HBLANK_FLAG;
 	}
 
 	if (scanline > (NUMBER_OF_DRAWN_LINES - 1)) {
-		dipstatAndVcount |= DIPSTAT_VBLANK_FLAG;
+		dispstatAndVcount |= DISPSTAT_VBLANK_FLAG;
 		if (scanline == (NUMBER_OF_DRAWN_LINES ) && (cycle == 0)) {
 			raiseVBlankIrqIfNeeded();
 		}
 	}
 	else {
-		dipstatAndVcount &= ~DIPSTAT_VBLANK_FLAG;
+		dispstatAndVcount &= ~DISPSTAT_VBLANK_FLAG;
 	}
 
-	u32 currentScanline = scanline << 16; //to be put in DIPSTAT
-	dipstatAndVcount = (dipstatAndVcount & 0xF0FF) | currentScanline;
+	u32 currentScanline = scanline << 16; //to be put in DISPSTAT
+	dispstatAndVcount = (dispstatAndVcount & 0xF0FF) | currentScanline;
 
-	lcd.regs.dispstat = dipstatAndVcount;
+	lcd.regs.dispstat = dispstatAndVcount;
 }
 
 
@@ -138,5 +154,5 @@ void Ppu::tick() {
 		scanline = 0;
 	}
 	
-	updateDipstatAndVCount();
+	updateDispstatAndVCount();
 }
