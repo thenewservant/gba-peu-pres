@@ -8,6 +8,10 @@
 
 #include <cassert>
 
+void test_STR_same() {
+
+}
+
 void test_SUB() {
     Arm7tdmi cpu = Arm7tdmi(nullptr);
 

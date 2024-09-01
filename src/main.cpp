@@ -3,11 +3,11 @@
 #include "bus/gba_bus.h"
 #include "common/types.h"
 #include "screen/screen.h"
-#include <fstream>
-#include <iostream>
+#include "tests.h"
 #include <thread>
+#include <windows.h>
 
-#define DISPLAY_MULTIPLIER 3
+#define DISPLAY_MULTIPLIER 4
 
 //#define TEST
 void cpuRun(Arm7tdmi* cpu) {

@@ -15,8 +15,6 @@ private:
 	static Timer timers[4];
 
 public:
-	void write(u32 addr, u32 data);
-	u32 read(u32 addr);
 	void tick();
 	TimerManager() {}
 

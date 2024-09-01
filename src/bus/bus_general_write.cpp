@@ -28,6 +28,7 @@ void Bus::write16(u32 addr, u16 data) {
 #ifdef DEBUG
 	printf("Writing %04x (16 bits) to %08x\n", data, addr);
 #endif
+	addr = addr - (addr % 2);
 	switch (addr & 0x0F000000) {
 	case 0x02000000:
 		*(u16*)(ewram + (addr & 0x0003FFFF)) = data;

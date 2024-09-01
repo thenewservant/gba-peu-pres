@@ -196,7 +196,7 @@ enum SHIFT_TYPE {
 	ROR_OR_RRX
 };
 
-bool Arm7tdmi::getAddressMode2(u32& op, u32& adress, const u32& rnVal, const u32& offset, u32* thingToWrite)
+bool Arm7tdmi::getAddressMode2(u32& op, u32& adress, const u32& rnVal, u32* thingToWrite)
 {
 	u32 finalOffset = 0;
 	if (!(op & BIT(25))) { // offset is immediate
@@ -226,10 +226,12 @@ bool Arm7tdmi::getAddressMode2(u32& op, u32& adress, const u32& rnVal, const u32
 				finalOffset = (rReg(RM(op)) >> 1) | ((cpsr & C) ? BIT(31) : 0);
 			}
 			break;
+		default: 
+			break;
 		}
 	}
 
-	if (BIT_P(op)) { // P and W set, pre-indexed addressing
+	if (BIT_P(op)) { // P and W set, pre-indexed addressing		
 		if (BIT_U(op)) {
 			adress = rnVal + finalOffset;
 		}
@@ -267,7 +269,7 @@ void Arm7tdmi::LDR(u32 op) { //LDR { , T, B, BT} (mode 2 or mode 2 P)
 	u32 baseOffset = 0;
 
 	u32 thingToWrite = 0;
-	bool writeNeeded = getAddressMode2(op, adress, rnVal, baseOffset, &thingToWrite);
+	bool writeNeeded = getAddressMode2(op, adress, rnVal, &thingToWrite);
 
 	if (writeNeeded) {
 		wReg(RN(op), thingToWrite);
@@ -294,16 +296,17 @@ void Arm7tdmi::STR(u32 op) {
 	u32 rnVal = rReg(RN(op));
 	u32 offset = 0;
 	u32 thingToWrite = 0;
-	bool writeNeeded = getAddressMode2(op, adress, rnVal, offset, &thingToWrite);
+	bool writeNeeded = getAddressMode2(op, adress, rnVal, &thingToWrite);
 	u32 data;
-	if (writeNeeded) {
-		wReg(RN(op), thingToWrite);
-	}
 	if (RD(op) == 15) {
 		data = rReg(RD(op)) + 4;
 	}
 	else {
 		data = rReg(RD(op));
+	}
+
+	if (writeNeeded) {
+		wReg(RN(op), thingToWrite);
 	}
 
 	if (BIT_B(op)) {

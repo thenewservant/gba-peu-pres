@@ -385,15 +385,12 @@ void Arm7tdmi::tick() {
 		pcHasChanged = false;
 	}
 	if (bus->intCtrl.regs.ime && (bus->intCtrl.regs.if_ & bus->intCtrl.regs.ie ) && (!(this->cpsr & I))) {
-		/*printf("IRQ!");
-		printf(" enabled: %04x", bus->intCtrl.regs.ie);
-		printf(" flags: %04x\n", bus->intCtrl.regs.if_);*/
+		rIrq[1] = r[15] + 4 ;
 		spsr[1] = this->cpsr;
-		this->cpsr |= I;
-		cpsr &= ~T;
 		cpsr &= ~ARM7TDMI_MODE_MASK;
 		cpsr |= ARM7TDMI_MODE_IRQ;
-		rIrq[1] = r[15] + 4;
+		cpsr &= ~T;
+		cpsr |= I;
 		r[15] = 0x18;
 	}
 

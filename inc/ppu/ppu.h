@@ -72,7 +72,6 @@ public:
 	LcdUnion lcd; // union containing all the lcd registers
 	Ppu(Screen* screen, Bus* bus);
 	u8* readIO(u32 addr);
-	u8 readIOValue(u32 addr);
 	void writeIO32(u32 addr, u32 data);
 	void writeIO16(u32 addr, u16 data);
 	void writeIO8(u32 addr, u8 data);

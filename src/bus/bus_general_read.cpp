@@ -79,6 +79,10 @@ u32 Bus::read32(u32 addr) {
 	addr = addr - (addr % 4);
 	switch (addr & 0x0F000000) {
 	case 0x00000000:
+		if (addr & 0xFF000000) {
+			printf("WARNING! Invalid u32 read attempted at %08X! returning dummy value\n", addr);
+			return potHole;
+		}
 		return *(u32*)(bios + addr);
 	case 0x02000000:
 		return *(u32*)(ewram + (addr & 0x0003FFFF));

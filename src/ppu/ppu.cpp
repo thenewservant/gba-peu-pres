@@ -21,10 +21,6 @@ u8* Ppu::readIO(u32 addr) {
 	return (lcd.array + (addr & 0xFF));
 }
 
-u8 Ppu::readIOValue(u32 addr) {
-	return lcd.array[addr & 0xFF];
-}
-
 void Ppu::writeIO32(u32 addr, u32 data) {
 	*(u32*)(lcd.array + (addr & 0xFF)) = data;
 }
@@ -140,7 +136,7 @@ void Ppu::tick() {
 		case 0x5:mode5();break;
 		default:break; // not supposed to happen
 		}
-		//obj();
+		obj();
 	}
 	cycle++;
 	if (cycle == REAL_HBLANK_CYCLES) {

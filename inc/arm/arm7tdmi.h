@@ -146,7 +146,7 @@ public:
 	u32 getNewBase(u32 op);
 	void STM(u32 op);
 
-	bool getAddressMode2(u32& op, u32& adress, const u32& rnVal, const u32& offset, u32* thingToWrite);
+	bool getAddressMode2(u32& op, u32& adress, const u32& rnVal, u32* thingToWrite);
 
 	void LDR(u32 op);
 	void STR(u32 op);
