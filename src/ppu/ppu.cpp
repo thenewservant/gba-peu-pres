@@ -34,19 +34,15 @@ void Ppu::writeIO8(u32 addr, u8 data) {
 }
 
 void Ppu::raiseHBlankIrqIfNeeded() {
-	//if (lcd.regs.dispstat & DISPSTAT_HBLANK_FLAG) {
 		if (lcd.regs.dispstat & 0x0010) {
 			bus->intCtrl.regs.if_ |= 0x0002;
 		}
-	//}
 }
 
 void Ppu::raiseVBlankIrqIfNeeded() {
-	//if (lcd.regs.dispstat & DISPSTAT_VBLANK_FLAG) {
 		if ((lcd.regs.dispstat & 0x0008)) {
 			bus->intCtrl.regs.if_ |= 0x0001;
 		}
-	//}
 }
 
 void Ppu::raiseVCountIrqIfNeeded() {
@@ -133,7 +129,7 @@ void Ppu::tick() {
 		case 0x2://printf("Mode 2\n");break;
 		case 0x3:mode3();break;
 		case 0x4:mode4();break;
-		case 0x5:mode5();break;
+		case 0x5:mode3();break;
 		default:break; // not supposed to happen
 		}
 		obj();

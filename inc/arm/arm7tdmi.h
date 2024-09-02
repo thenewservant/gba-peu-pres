@@ -3,7 +3,6 @@
 
 #include "common/types.h"
 #include "bus/gba_bus.h"
-
 enum ARM7TDMI_MODE {
 	ARM7TDMI_MODE_USER = 0x10,
 	ARM7TDMI_MODE_FIQ = 0x11,
@@ -18,9 +17,6 @@ enum ARM7TDMI_MODE {
 #define CURRENT_MODE (cpsr & 0x1F)
 #define CURRENT_MODE_HAS_SPSR ((CURRENT_MODE != ARM7TDMI_MODE_USER) && (CURRENT_MODE != ARM7TDMI_MODE_SYS))
 
-#define MASK_32BIT 0xFFFFFFFF
-#define MASK_16BIT 0xFFFF
-
 #define BIT(x) (1 << (x))
 #define FLAG(x) (cpsr & (x))
 
@@ -31,6 +27,7 @@ enum ARM7TDMI_MODE {
 #define BOOT_SP_USR 0x03007F00
 
 #define SWI_HANDLER_VECTOR 0x08
+#define IRQ_HANDLER_VECTOR 0x18
 
 #define FLAG_SET(x) ((cpsr & x) > 0)
 #define FLAG_UNSET(x) ((cpsr & x) == 0)
@@ -110,13 +107,9 @@ public:
 	void BX(u32 op);
 
 	void printRegsUserMode();
+	void printInterruptFlags();
 	void execMultiply(u32 op);
 	void MULT_SHORT(u32 op);
-	void SMULL(u32 op);
-	void UMULL(u32 op);
-	void UMLAL(u32 op);
-
-	void SMLAL(u32 op);
 	void MULT_LONG(u32 op);
 	void evaluateArm(u32 op);
 

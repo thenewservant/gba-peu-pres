@@ -4,7 +4,13 @@
 void Screen::initSDLScreen() {
 	screenW = SCREEN_WIDTH * ScreenScaleFactor;
 	screenH = SCREEN_HEIGHT * ScreenScaleFactor;
-	window = SDL_CreateWindow("gbapeupres", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, screenW, screenH, SDL_WINDOW_SHOWN | 0 * SDL_WINDOW_RESIZABLE);
+	const char* appName = "gbapeupres - ";
+	char* destination;
+	char* result = (char*)malloc(strlen(appName) + strlen(title) + 1);
+	strcpy(result, appName);
+	strcat(result, title);
+
+	window = SDL_CreateWindow(result, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, screenW, screenH, SDL_WINDOW_SHOWN | 0 * SDL_WINDOW_RESIZABLE);
 	
 	//SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | 1*SDL_RENDERER_PRESENTVSYNC);
@@ -25,13 +31,15 @@ void Screen::endSDLApplication() {
 	SDL_Quit();
 }
 
-Screen::Screen(u8 scaleFact) {
+Screen::Screen(u8 scaleFact, const char* title) {
+	this->title = title;
 	status = 0;
 	ScreenScaleFactor = scaleFact;
 	initSDLScreen();
 }
 
-Screen::Screen(u8 scaleFact, Arm7tdmi* cpu) {
+Screen::Screen(u8 scaleFact, Arm7tdmi* cpu, const char* title) {
+	this->title = title;
 	this->cpu = cpu;
 	status = 0;
 	ScreenScaleFactor = scaleFact;
@@ -80,6 +88,8 @@ void Screen::checkPressKey(SDL_Event event) {
 	case SDLK_e://R1 key
 		keysStatus &= ~0x100;
 		break;
+	case SDLK_n:
+		cpu->printInterruptFlags();
 	case SDLK_k:
 		keysStatus &= ~0x2;
 		break;

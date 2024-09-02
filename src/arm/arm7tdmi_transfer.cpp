@@ -176,7 +176,7 @@ void Arm7tdmi::STM(u32 op) {
 		}
 	}
 	if (op & BIT(15)) {
-		bus->write32(adress, rReg(15));
+		bus->write32(adress, rReg(15)+4); //TODO - be sure of +4
 		adress += 4;
 	}
 	if (BIT_W(op)) {
@@ -342,7 +342,9 @@ void Arm7tdmi::STR2(u32 op) { //STRH
 			adress = rnVal - offset;
 		}
 		if (BIT_W(op)) {
+			bus->write16(adress, rReg(RD(op)));
 			wReg(RN(op), adress);
+			return;
 		}
 	}
 

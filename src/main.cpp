@@ -15,6 +15,7 @@ void cpuRun(Arm7tdmi* cpu) {
 		cpu->tick();
 	}
 }
+static const char* getFileNameFromPath(const char* path);
 
 int main(int argc, char* argv[]) {
 #ifdef WIN32
@@ -35,7 +36,7 @@ int main(int argc, char* argv[]) {
 	}
 	Arm7tdmi* cpu = new Arm7tdmi(bus);
 
-	Screen* screen = new Screen(DISPLAY_MULTIPLIER, cpu);
+	Screen* screen = new Screen(DISPLAY_MULTIPLIER, cpu, getFileNameFromPath(argv[1]));
 	Ppu* ppu = new Ppu(screen, bus);
 	cpu->setPPU(ppu);
 	bus->setPPU(ppu);
@@ -60,4 +61,32 @@ int main(int argc, char* argv[]) {
 #endif
 #endif
 	return 0;
+}
+
+static const char* getFileNameFromPath(const char* path) {
+    if (path == nullptr) {
+        return nullptr;
+    }
+
+    const char* fileName = path;
+    const char* slash = strrchr(path, '/');
+    const char* backslash = strrchr(path, '\\');
+
+    if (slash || backslash) {
+        // Use the last slash or backslash found, whichever comes last.
+        const char* separator = (slash > backslash) ? slash : backslash;
+        fileName = separator + 1;
+    }
+
+    char* fn2 = (char*)malloc(100 * sizeof(char));
+    if (fn2 == nullptr) {
+        return nullptr;
+    }
+
+    strcpy(fn2, fileName);
+    char* dot = strrchr(fn2, '.');
+    if (dot) {
+        *dot = '\0';
+    }
+    return fn2;
 }

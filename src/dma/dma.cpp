@@ -25,7 +25,7 @@ enum DMA_NB Dma::selectDma(u32 addr) {
 }
 
 u8* Dma::readIO(u32 add) {
-	return controlRegs.array + (add & 0x000000FF);
+	return (u8*)nullptr;
 }
 
 void Dma::setBus(Bus* bus) {

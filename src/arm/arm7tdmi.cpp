@@ -1,5 +1,4 @@
 #include "arm/arm7tdmi.h"
-#include <windows.h>
 #include "ppu/ppu.h"
 
 /* arm7tdmi.cpp
@@ -207,6 +206,7 @@ void Arm7tdmi::wReg(u8 reg, u32 value) {
 }
 
 void Arm7tdmi::SWI(u32 op) {
+	printf("SWI\n");
 	rSvc[1] = r[15] + 4;
 	spsr[2] = cpsr;
 	cpsr &= ~(ARM7TDMI_MODE_MASK | BIT(5) | BIT(9));
@@ -342,7 +342,7 @@ Arm7tdmi::Arm7tdmi(Bus* bus) : bus(bus), cpsr(0), spsr{ 0 }, r{ 0 }, rFiq{ 0 }, 
 	rSvc[0] = BOOT_SP_SVC;
 	rIrq[0] = BOOT_SP_IRQ;
 	this->ppu = ppu;
-	r[15] =0x08000000;
+	r[15] = 0x08000000;
 	cpsr = 0x0000005f;
 }
 
@@ -384,14 +384,14 @@ void Arm7tdmi::tick() {
 
 		pcHasChanged = false;
 	}
-	if (bus->intCtrl.regs.ime && (bus->intCtrl.regs.if_ & bus->intCtrl.regs.ie ) && (!(this->cpsr & I))) {
-		rIrq[1] = r[15] + 4 ;
+	if (bus->intCtrl.regs.ime && (bus->intCtrl.regs.if_ & bus->intCtrl.regs.ie) && (!(this->cpsr & I))) {
+		rIrq[1] = r[15] + 4;
 		spsr[1] = this->cpsr;
 		cpsr &= ~ARM7TDMI_MODE_MASK;
 		cpsr |= ARM7TDMI_MODE_IRQ;
 		cpsr &= ~T;
 		cpsr |= I;
-		r[15] = 0x18;
+		r[15] = IRQ_HANDLER_VECTOR;
 	}
 
 	step++;
@@ -410,9 +410,15 @@ void Arm7tdmi::printRegsUserMode() {
 	for (int i = 0; i < 15; i++) {
 		if (rReg(i))printf("r%02d: %08x\n", i, rReg(i));
 	}
-	
+
 	printf("fake PC: %08x\nreal PC: %08x\n", rReg(15), r[15]);
 	printf("cpsr: %08x\n", cpsr);
 	printf("OP: %08x\n", bus->read32(r[15]));
 	printf("\n");
+}
+
+void Arm7tdmi::printInterruptFlags() {
+	printf("IME: %d\n", bus->intCtrl.regs.ime);
+	printf("IE: %04x\n", bus->intCtrl.regs.ie);
+	printf("IF: %04x\n", bus->intCtrl.regs.if_);
 }

@@ -3,7 +3,7 @@
 
 // TODO : check if u8 casts for 32 and 16 bits are adequate
 
-void Bus::ioWrite32(u32 addr, u32 data) {
+void Bus::ioWrite32(const u32 addr, u32 const data) {
 	if (addr <= 0x04000056) {
 		ppu->writeIO32(addr, data);
 	}
@@ -24,22 +24,22 @@ void Bus::ioWrite32(u32 addr, u32 data) {
 			intCtrl.regs.if_ &= ~(u16)data;
 		}
 		else if (addr2 == 0x200) {
-			intCtrl.array[(addr2 & 0x000000FF)] = (u8)data;
+			*(u32*)(intCtrl.array + (addr & 0x000000FF)) = data;
 		}
 		else if (addr2 == 0x300) {
-			pwrStatus.array[(addr2 & 0x000000FF)] = (u8)data;
+			*(u32*)(pwrStatus.array + (addr & 0x000000FF)) = data;
 		}
 		else if (addr2 == 0x400) { // supposedly a bug, unused and undocumented access
 			//return potHole;
 		}
 		else if ((addr2 & 0x0F00FFFF) == 0x04000800) {
-			internalMemoryControl = (u8)data;
+			internalMemoryControl = data;
 		}
 	}
 }
 
 
-void Bus::ioWrite16(u32 addr, u16 data) {
+void Bus::ioWrite16(const u32 addr, const u16 data) {
 	if (addr <= 0x04000056) {
 		ppu->writeIO16(addr, data);
 	}
@@ -56,17 +56,21 @@ void Bus::ioWrite16(u32 addr, u16 data) {
 	}
 	else if (addr >= 0x4000200) {
 		u16 addr2 = addr & 0xF00;
-		if (addr2 == 0x200) {
-			intCtrl.array[(addr2 & 0x000000FF)] = (u8)data;
+		if (addr == 0x04000202) {
+			intCtrl.regs.if_ &= ~(u16)data;
 		}
+		else if (addr2 == 0x200) {
+			*(u16*)(intCtrl.array + (addr & 0x000000FF)) = data;
+		}
+		
 		else if (addr2 == 0x300) {
-			pwrStatus.array[(addr2 & 0x000000FF)] = (u8)data;
+			*(u16*)(pwrStatus.array + (addr & 0x000000FF)) = data;
 		}
 		else if (addr2 == 0x400) { // supposedly a bug, unused and undocumented access
 			//return potHole;
 		}
 		else if ((addr2 & 0x0F00FFFF) == 0x04000800) {
-			internalMemoryControl = (u8)data;
+			internalMemoryControl = (u16)data;
 		}
 	}
 }

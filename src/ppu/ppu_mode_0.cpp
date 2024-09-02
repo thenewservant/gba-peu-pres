@@ -34,7 +34,7 @@ void Ppu::mode0() {
 	u16 scrollX = lcd.regs.bg0hofs & BG_OFFSET_MASK;//X Position of the first BG0 pixel
 	u16 scrollY = lcd.regs.bg0vofs & BG_OFFSET_MASK;//Y Position of the first BG0 pixel
 
-	u32 currentTileOffset =  (scanline / 8) * BG_ROW_SIZE + (cycle / 8) * SCREEN_ENTRY_SIZE; //Offset used along with BG_HOFS and VOFS. Depends on current pixel of the screen
+	u32 currentTileOffset = (scanline / 8) * BG_ROW_SIZE + (cycle / 8) * SCREEN_ENTRY_SIZE; //Offset used along with BG_HOFS and VOFS. Depends on current pixel of the screen
 
 	//TILE-specific data
 	

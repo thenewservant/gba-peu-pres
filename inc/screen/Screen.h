@@ -14,7 +14,7 @@ class Screen {
 private:
 	u16 keysStatus;
 	Arm7tdmi* cpu;
-	char title[150];
+	const char* title;
 	SDL_Window* window;
 	SDL_Renderer* renderer;
 	SDL_Texture* texture;
@@ -29,8 +29,8 @@ private:
 	char* newFilePath;
 public:
 	void advance();//tick cpu and update screen
-	Screen(u8 scaleFact);
-	Screen(u8 scaleFact, Arm7tdmi* cpu);
+	Screen(u8 scaleFact, const char* title);
+	Screen(u8 scaleFact, Arm7tdmi* cpu, const char* title);
 	u32* getPixels();
 	void updateScreen();
 	void checkPressKey(SDL_Event event);
