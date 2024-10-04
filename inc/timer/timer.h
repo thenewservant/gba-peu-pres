@@ -9,11 +9,13 @@ enum PRESCALE_SELECTOR {
 	F_256 = 2,
 	F_1024 = 3
 };
+class Bus;
 
 class Timer {
 private:
 	u8 timerId;
 	Timer* nextTimer;
+	Bus* bus;
 public:
 	u16 reloadValue;
 	u16 counter; // what value is the counter currently at
@@ -24,6 +26,7 @@ public:
 	bool timerEnable; // false = stop, true = operate
 	bool didOverflow; // true if the timer overflowed just then
 public:
+	void setBus(Bus* bus);
 	void tick();
 	void tickNextTimer(); // to be called by the next timer in the chain
 	void tickFromPreviousTimer();

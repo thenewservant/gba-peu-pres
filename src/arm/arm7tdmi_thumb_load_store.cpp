@@ -8,15 +8,7 @@
 #define RO(op) NN(op)
 
 #define LDR_ALIGN (data = data >> (8 * (adress & 0x3)) | data << (32 - (8 * (adress & 0x3)))); //rotation-based alignment
-static u8 countSetBits(u32 n) {
-	n = n & 0xFFFF; //16 least significant bits
-	u8 count = 0;
-	while (n) {
-		n &= (n - 1);
-		count++;
-	}
-	return count;
-}
+
 #define MSB_RD(op) (op & BIT(7))
 #define MSB_RM(op) (op & BIT(6))
 
@@ -32,24 +24,25 @@ void Arm7tdmi::TB_HIGH_REG_OPERATION(u16 op) {
 	u8 rd = MSB_RD(op) ? (RD_LOW(op) | 0x8) : RD_LOW(op);
 	u8 rm = (op >> 3) & (MSB_RM(op) ? 0xF : 0x7);
 	u32 rmVal = rRegThumb(rm);
+
 	switch ((op >> 8) & 0x3) {
 	case TB_HR_ADD:
 		wReg(rd, rRegThumb(rd) + rmVal);
 		break;
 	case TB_HR_CMP:
 	{
-		u32 rdVal = rRegThumb(rd);
-		u32 result = rdVal - rmVal;
-		cpsr = (cpsr & ~N) | ((result & (1 << (31))) ? N : 0);
-		cpsr = (cpsr & ~Z) | ((result > 0) ? 0 : Z);
-		cpsr = (cpsr & ~C) | ((rdVal >= rmVal) ? C : 0); // unsafe
-		cpsr = (cpsr & ~V) | (((((rdVal ^ result) & (rmVal ^ result)) >> 31) & 1) ? V : 0);
+		u32 armOp = 0b11100001010100000000000000000000;
+		armOp |= (rd << 16) | rm ;
+		CMP(armOp);
 	}
 	break;
 	case TB_HR_MOV:
 		wReg(rd, rmVal);
 		break;
 	case TB_HR_BX:
+		if (rm == 15) {
+			rmVal &= ~2; // Auto-align
+		}
 		cpsr &= ~T;
 		cpsr |= (rmVal & 0x1) ? T : 0; // Set T bit to bit 0 of Rm
 		wReg(15, (u32)((rmVal & 0xFFFFFFFE))); // Clear the bottom two bits of the adress
@@ -162,10 +155,9 @@ void Arm7tdmi::TB_LDR_STR_IMMEDIATE(u16 op) {
 		break;
 	case TB_LDR_IMM:
 	{
-		adress = rnVal + immed5 * 4;
-		u32 data = bus->read32(adress);
-		LDR_ALIGN;
-		wReg(rd, data);
+		u32 armOp = 0b11100101100100000000000000000000;
+		armOp |= (rd << 12) | (((op >> 3) & 0x7) << 16) | (immed5<<2);
+		LDR(armOp);
 	}
 		break;
 	case TB_STRB_IMM:
@@ -218,14 +210,16 @@ void Arm7tdmi::TB_LDRSP_STRSP(u16 op) {
 
 //THUMB.12
 void Arm7tdmi::TB_GET_REL_ADDR(u16 op) {
-	s8 off = op & 0xFF;
+	s8 off = (op & 0xFF);
 	s32 offset = ((s32)off) * 4;
 	u8 rd = RD_HIGH(op);
 	if (!(op & BIT(11))) { // ADD (5)
 		wReg(rd, (rRegThumb(15) & 0xFFFFFFFC) + offset);
+
 	}
 	else { // ADD(6)
 		wReg(rd, rRegThumb(13) + (off << 2));
+
 	}
 }
 
@@ -242,23 +236,18 @@ void Arm7tdmi::TB_ADD_OFFSET_SP(u16 op) {
 
 //THUMB.14
 void Arm7tdmi::TB_PUSH(u16 op) {
-	u32 startAddress = rRegThumb(13) - (countSetBits(op & 0x1FF) * 4);
-	u32 adress = startAddress;
-	for (int i = 0; i < 8; i++) {
-		if (op & BIT(i)) {
-			bus->write32(adress, rRegThumb(i));
-			adress += 4;
-		}
-	}
-	if (op & BIT(8)) {//BIT R
-		bus->write32(adress, rRegThumb(14));
-		adress += 4;
-	}
-	wReg(13, startAddress);
+	u32 armOp = 0b11101001001011010000000000000000;
+	armOp |= (op & BIT(8)) ? BIT(14) : 0;
+	armOp |= op & 0xFF;
+	STM(armOp);
 }
 
 //THUMB.14
-void Arm7tdmi::TB_POP(u16 op) {
+void Arm7tdmi::TB_POP(u16 op) { //TODO: check why arm translation fails
+	/*u32 armOp = 0b11101000101111010000000000000000;
+	armOp |= (op & BIT(8)) ? BIT(15) : 0;
+	armOp |= op & 0xFF;
+	LDM(armOp);*/ 
 	u32 adress = rRegThumb(13);
 
 	for (int i = 0; i < 8; i++) {
@@ -272,7 +261,6 @@ void Arm7tdmi::TB_POP(u16 op) {
 		u32 value = bus->read32(adress);
 		wReg(15, (value & 0xFFFFFFFE));
 		adress += 4;
-
 	}
 	wReg(13, adress);
 }

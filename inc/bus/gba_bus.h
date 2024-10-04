@@ -1,7 +1,7 @@
 #ifndef GBA_BUS_H
 #define GBA_BUS_H
 
-#include "dma/dma.h"
+#include "dma/dma_manager.h"
 #include "common/types.h"
 #include "timer/timer_manager.h"
 
@@ -34,7 +34,6 @@ class Arm7tdmi;
 
 class Bus {
 private:
-	Dma dmaArray[4];
 	Arm7tdmi* cpu;
 	Ppu* ppu;
 	
@@ -69,6 +68,7 @@ private:
 public:
 	TimerManager* timerManager;
 	InterruptControlUnion intCtrl;
+	DmaManager* dmaManager;
 public:
 	void setPPU(Ppu* p) {
 		ppu = p;

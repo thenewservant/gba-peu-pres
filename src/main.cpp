@@ -7,7 +7,7 @@
 #include <thread>
 #include <windows.h>
 
-#define DISPLAY_MULTIPLIER 4
+#define DISPLAY_MULTIPLIER 3
 
 //#define TEST
 void cpuRun(Arm7tdmi* cpu) {

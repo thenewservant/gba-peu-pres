@@ -1,4 +1,5 @@
 #include "timer/timer.h"
+#include "bus/gba_bus.h"
 
 Timer::Timer(u8 timerId, Timer* nextTimer) {
 	this->nextTimer = nextTimer;
@@ -15,6 +16,10 @@ Timer::Timer(u8 timerId, Timer* nextTimer) {
 	this->prescalerSelection = 0;
 }
 
+void Timer::setBus(Bus* bus) {
+	this->bus = bus;
+}
+
 void Timer::tick() {
 	if (!this->timerEnable || this->countUpTiming) {
 		return;
@@ -23,6 +28,9 @@ void Timer::tick() {
 	if (counter == 0xFFFF) {
 		didOverflow = true;
 		counter = reloadValue;
+		if (timerIrqEnable) {
+			this->bus->intCtrl.regs.if_ |= 1 << (3 + timerId);
+		}
 		return;
 	}
 	

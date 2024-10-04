@@ -4,6 +4,8 @@
 #define TIMER_FIRST_ADRESS 0x04000100
 #define TIMER_LAST_ADRESS 0x0400010F
 
+class Bus;
+
 class TimerManager {
 private:
 
@@ -16,8 +18,7 @@ private:
 
 public:
 	void tick();
-	TimerManager() {}
-
+	TimerManager(Bus* bus);
 	u8 read8(u32 addr);
 	u16 read16(u32 addr);
 	u32 read32(u32 addr);

@@ -3,6 +3,7 @@
 
 #include "common/types.h"
 #include "bus/gba_bus.h"
+
 enum ARM7TDMI_MODE {
 	ARM7TDMI_MODE_USER = 0x10,
 	ARM7TDMI_MODE_FIQ = 0x11,

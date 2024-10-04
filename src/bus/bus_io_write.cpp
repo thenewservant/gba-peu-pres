@@ -8,9 +8,7 @@ void Bus::ioWrite32(const u32 addr, u32 const data) {
 		ppu->writeIO32(addr, data);
 	}
 	else if ((addr >= DMA_FIRST_MAP_ADDRESS) && (addr <= DMA_LAST_MAP_ADDRESS)) {
-		u8 dmaNb = Dma::selectDma(addr);
-		printf("accessed dma %d\n", dmaNb);
-		//dmaArray[dmaNb].writeIO32((addr & 0xFF) - 0xB0 - 0xC * dmaNb, data);
+		this->dmaManager->write32(addr, data);
 	}
 	else if ((addr >= TIMER_FIRST_ADRESS) && (addr <= TIMER_LAST_ADRESS)) {
 		timerManager->write32(addr, data);
@@ -44,9 +42,7 @@ void Bus::ioWrite16(const u32 addr, const u16 data) {
 		ppu->writeIO16(addr, data);
 	}
 	else if ((addr >= DMA_FIRST_MAP_ADDRESS) && (addr <= DMA_LAST_MAP_ADDRESS)) {
-		u8 dmaNb = Dma::selectDma(addr);
-		printf("accessed dma %d\n", dmaNb);
-		//dmaArray[dmaNb].writeIO16((addr & 0xFF) - 0xB0 - 0xC * dmaNb, data);
+		this->dmaManager->write16(addr, data);
 	}
 	else if ((addr >= TIMER_FIRST_ADRESS) && (addr <= TIMER_LAST_ADRESS)) {
 		timerManager->write16(addr, data);

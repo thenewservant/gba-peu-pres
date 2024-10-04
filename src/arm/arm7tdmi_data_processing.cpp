@@ -328,14 +328,18 @@ void Arm7tdmi::RSC(u32 op) {
 	u32 op2 = aluReadRn(op) + ((cpsr & C) == 0);
 	u32 result = op1 - op2;
 	wReg(RD(op), result);
-	CHECK_SPSR
-	else if (BIT_S(op)) {
-		cpsr &= ~N & ~Z & ~C & ~V;
-		cpsr |= (result & BIT(31)) ? N : 0;
-		cpsr |= (result == 0) ? Z : 0;
-		cpsr |= (op1 < op2) ? 0 : C;
-		SUB_V_FLAG;
+
+	if (BIT_S(op)) {
+		if (RD(op) == 15 && CURRENT_MODE_HAS_SPSR) {
+			cpsr = getSPSRValue();
+		} else {
+			cpsr &= ~(N | Z | C | V);
+			cpsr |= (result & BIT(31)) ? N : 0;
+			cpsr |= (result == 0) ? Z : 0;
+			cpsr |= (op1 >= op2) ? C : 0;
+			cpsr |= (((op1 ^ op2) & (op1 ^ result)) & BIT(31)) ? V : 0;
 		}
+	}
 }
 
 void Arm7tdmi::CMP(u32 op) {
@@ -394,11 +398,21 @@ void Arm7tdmi::ORR(u32 op) {
 }
 
 void Arm7tdmi::MOV(u32 op) {
-	u8 carryOut;
-	u32 result = operand2(this, op, cpsr, &carryOut);
-	wReg(RD(op), result);
+	/*if (RD(op) != 15) {*/
+		u8 carryOut;
+		u32 result = operand2(this, op, cpsr, &carryOut);
+		wReg(RD(op), result);
 
-	checkCPSR_DP(op, carryOut);
+		checkCPSR_DP(op, carryOut);
+	/*}
+	else {
+		u8 carryOut;
+		cpsr = getSPSRValue();
+		u32 result = operand2(this, op, cpsr, &carryOut);
+		wReg(RD(op), result);
+
+		
+	}*/
 }
 
 void Arm7tdmi::BIC(u32 op) {

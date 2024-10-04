@@ -2,13 +2,18 @@
 
 Timer TimerManager::timers[4] = { Timer(0, &timers[1]), Timer(1, &timers[2]), Timer(2, &timers[3]), Timer(3, nullptr) };
 
+TimerManager::TimerManager(Bus* bus) {
+	for (u8 i = 0; i < 4; i++) {
+		timers[i].setBus(bus);
+	}
+}
+
 void TimerManager::tick() {
 	for (u8 i = 0; i < 4; i++) {
 		timers[i].tick();
 		timers[i].tickNextTimer();
 	}
 }
-
 
 u8 TimerManager::read8(u32 addr) {
 	bool isSecondByte = (addr & 0x1) == 1;

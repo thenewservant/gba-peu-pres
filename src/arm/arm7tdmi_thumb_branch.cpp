@@ -3,7 +3,6 @@
 #define GET_BRANCH_OPCODE(op) ((op >> 8) & 0xF)
 #define TEST_BRANCH(cond) if(cond){wReg(15, (rRegThumb(15) + (s32)(sOffSet << 1)));}
 
-
 void Arm7tdmi::TB_COND_BRANCH(u16 op) {
     s32 sOffSet = (s32)(s8)(op & 0xff);
     switch (GET_BRANCH_OPCODE(op)) {

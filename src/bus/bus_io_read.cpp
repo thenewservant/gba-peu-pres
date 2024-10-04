@@ -6,9 +6,7 @@ u32 Bus::ioRead32(u32 addr) {
 		return *(u32*)ppu->readIO(addr);
 	}
 	else if ((addr >= DMA_FIRST_MAP_ADDRESS) && (addr <= DMA_LAST_MAP_ADDRESS)) {
-		u8 dmaNb = Dma::selectDma(addr);
-		printf("accessed dma %d\n", dmaNb);
-		return potHole;/*(u8*)dmaArray[dmaNb].readIO((add & 0xFF) - 0xB0 - 0xC * dmaNb);*/
+		return this->dmaManager->read32(addr);
 	}
 	else if ((addr >= TIMER_FIRST_ADRESS) && (addr <= TIMER_LAST_ADRESS)) {
 		return timerManager->read32(addr);
@@ -38,9 +36,7 @@ u16 Bus::ioRead16(u32 addr) {
 		return *(u16*)ppu->readIO(addr);
 	}
 	else if ((addr >= DMA_FIRST_MAP_ADDRESS) && (addr <= DMA_LAST_MAP_ADDRESS)) {
-		u8 dmaNb = Dma::selectDma(addr);
-		printf("accessed dma %d\n", dmaNb);
-		return (u16)potHole;/*(u8*)dmaArray[dmaNb].readIO((add & 0xFF) - 0xB0 - 0xC * dmaNb);*/
+		return this->dmaManager->read16(addr);
 	}
 	else if ((addr >= TIMER_FIRST_ADRESS) && (addr <= TIMER_LAST_ADRESS)) {
 		return timerManager->read16(addr);
@@ -70,9 +66,7 @@ u8 Bus::ioRead8(u32 addr) {
 		return *ppu->readIO(addr);
 	}
 	else if ((addr >= DMA_FIRST_MAP_ADDRESS) && (addr <= DMA_LAST_MAP_ADDRESS)) {
-		u8 dmaNb = Dma::selectDma(addr);
-		printf("accessed dma %d\n", dmaNb);
-		return (u8)potHole;/*(u8*)dmaArray[dmaNb].readIO((add & 0xFF) - 0xB0 - 0xC * dmaNb);*/
+		return this->dmaManager->read8(addr);
 	}
 	else if ((addr >= TIMER_FIRST_ADRESS) && (addr <= TIMER_LAST_ADRESS)) {
 		return timerManager->read8(addr);

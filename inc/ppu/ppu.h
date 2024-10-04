@@ -14,6 +14,13 @@
 
 #define WINOBJ_ON ((lcd.regs.dispcnt & 0x4000) != 0)
 
+enum TILE_BG_ID {
+	BG0 = 0,
+	BG1 = 1,
+	BG2 = 2,
+	BG3 = 3
+};
+
 PACK(struct lcdIORegs_t {
 	u16 dispcnt;
 	u16 padding1;
@@ -80,7 +87,9 @@ public:
 	void raiseVBlankIrqIfNeeded();
 	void raiseVCountIrqIfNeeded();
 	void updateDispstatAndVCount();
+	void mode0SingleLineFeed(u32* line, TILE_BG_ID bgType, u16 scanline);
 	void mode0();
+	void mode0Orchestrator(u32* line);
 	void mode3();
 	void mode4();
 	void mode5();

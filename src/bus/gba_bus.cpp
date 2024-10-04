@@ -4,12 +4,8 @@
 #pragma warning(disable:4996)
 
 Bus::Bus() {
-	this->timerManager = new TimerManager();
-	for (int i = 0; i < 4; i++) {
-		enum DMA_NB dmaId = (enum DMA_NB)i;
-		dmaArray[i] = Dma(dmaId);
-		dmaArray[i].setBus(this);
-	} 
+	this->timerManager = new TimerManager(this);
+	this->dmaManager = new DmaManager(this);
 	keysStatus = 0xFFFF;
 }
 
@@ -40,11 +36,12 @@ u8* Bus::ioAccess(u32 add) {
 	else if ((add >= DMA_FIRST_MAP_ADDRESS) && (add <= DMA_LAST_MAP_ADDRESS)) {
 		u8 dmaNb = Dma::selectDma(add);
 		printf("accessed dma %d\n", dmaNb);
+		exit(12344);
 		return (u8*)&potHole;/*(u8*)dmaArray[dmaNb].readIO((add & 0xFF) - 0xB0 - 0xC * dmaNb);*/
 	}
 	else if ((add >= TIMER_FIRST_ADRESS) && (add <= TIMER_LAST_ADRESS)) {
 		printf("timer access attempt!\n");
-		exit(1);
+		exit(12345);
 		return (u8*)&potHole;
 	}
 	else if (add == 0x4000130) {

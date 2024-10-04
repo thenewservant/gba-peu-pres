@@ -98,7 +98,7 @@ u32 Arm7tdmi::rReg(u8 reg) {
 
 u32 Arm7tdmi::rRegThumb(u8 reg) {
 	if (reg == 15) {
-		return r[15] + 4;
+		return (r[15] + 4) ;
 	}
 	else {
 		return rReg(reg);
@@ -403,6 +403,7 @@ void Arm7tdmi::tick() {
 		nbShots++;
 	}
 	bus->timerManager->tick();
+	bus->dmaManager->tick();
 }
 
 void Arm7tdmi::printRegsUserMode() {

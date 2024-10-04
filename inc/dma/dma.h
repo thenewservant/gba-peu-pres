@@ -56,10 +56,12 @@ class Dma {
 private:
 	Bus* bus;
 	enum DMA_NB dmaId;
-	u32 dmaDest;
-	u32 dmaSource;
-	u16 dmaCount;
-	
+public:
+	u8 unusedValue; //Bits 0-4 of CONTROL
+	u32 destAdress;
+	u32 srcAdress;
+	u16 countValue;
+	u16 control;
 	u8 destAdrControl;
 	u8 srcAdrControl;
 	bool repeat;
@@ -69,14 +71,12 @@ private:
 	bool irqUponEnd;
 	bool dmaEnable;
 
-public:
 	static enum DMA_NB selectDma(u32 addr);
-	u8* readIO(u32 add);
 	void notify(u8 signal); // is called by the bus when a signal (HBLANK, VBLANK) is triggered
 	void setBus(Bus* bus);
+	void instantTransfer();
 	void transfer();
 	Dma(enum DMA_NB dmaId);
-	Dma(){}
 };
 
 
