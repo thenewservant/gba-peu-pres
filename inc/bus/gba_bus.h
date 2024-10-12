@@ -78,10 +78,11 @@ public:
 	u16 read16(u32 addr);
 	u32 read32(u32 addr);
 
-	u8 read8VRAM(u32 addr);
-	u16 read16Palette(u32 addr);
+	u8 read8VRAM(u32 addr) const;
+	u16 read16VRAM(u32 addr) const;
+	u16 read16Palette(u32 addr) const;
 	//Mainly for PPU reads
-	u16 read16OAM(u32 addr);
+	u16 read16OAM(u32 addr) const;
 
 	void write8(u32 addr, u8 data);
 	void write16(u32 addr, u16 data);

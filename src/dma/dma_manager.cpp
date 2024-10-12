@@ -19,11 +19,11 @@ void DmaManager::tick(){
 void DmaManager::writeControl0(u8 dmaId, u8 data) {
 	dmas[dmaId].unusedValue = data & 0x1F;
 	dmas[dmaId].destAdrControl = (data >> 5) & 0x3;
-	dmas[dmaId].srcAdrControl = dmas[dmaId].srcAdrControl & 0b10 | (data >> 7) & 0x1;
+	dmas[dmaId].srcAdrControl = (dmas[dmaId].srcAdrControl & 0b10) | ((data >> 7) & 0x1);
 }
 
 void DmaManager::writeControl1(u8 dmaId, u8 data) {
-	dmas[dmaId].srcAdrControl = dmas[dmaId].srcAdrControl & 0b01 | (data) & 0x1;
+	dmas[dmaId].srcAdrControl = (dmas[dmaId].srcAdrControl & 0b01) | ((data & 0x1) << 1);
 	dmas[dmaId].transferType =(enum DMA_TRANSFER_TYPE)( (data >> 2) & 0x1);
 	dmas[dmaId].timingMode = (enum DMA_TIMING_MODE)( (data >> 4) & 0x3);
 	dmas[dmaId].irqUponEnd = (bool)((data >> 6) & 0x1);
@@ -125,7 +125,7 @@ u8 DmaManager::read8(u32 addr)
 	case DMA_WORD_COUNT_0:
 	case DMA_WORD_COUNT_1:
 	default:
-		printf("WARNING: unable to READ from DMA field @ %08X\n", addr);
+		//printf("WARNING: unable to READ from DMA field @ %08X\n", addr);
 		return 0;
 	}
 }

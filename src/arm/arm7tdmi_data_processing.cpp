@@ -6,7 +6,7 @@
 #define BIT_S(op) (op & BIT(20))
 #define BIT_I(op) (op & BIT(25))
 
-#define CHECK_SPSR 	if (BIT_S(op) && (RD(op) == 15)) {\
+#define CHECK_SPSR if (BIT_S(op) && (RD(op) == 15)) {\
 						if (CURRENT_MODE_HAS_SPSR) {\
 							cpsr = getSPSRValue();\
 						}\
@@ -34,7 +34,7 @@ enum OPERAND2_SHIFT_TYPE {
 	ROR_REG
 };
 
-u32 operand2(Arm7tdmi* cpu, u32 op, u32 cpsr, u8* carryOut) {
+static u32 operand2(Arm7tdmi* cpu, u32 op, u32 cpsr, u8* carryOut) {
 	if (BIT_I(op)) {
 		u8 rotateImm = (op >> 8) & 0xF;
 		u8 imm = op & 0xFF;
@@ -198,7 +198,6 @@ u32 operand2(Arm7tdmi* cpu, u32 op, u32 cpsr, u8* carryOut) {
 		default:
 			break;
 		}
-		
 	}
 	return 0;
 }
@@ -398,21 +397,10 @@ void Arm7tdmi::ORR(u32 op) {
 }
 
 void Arm7tdmi::MOV(u32 op) {
-	/*if (RD(op) != 15) {*/
 		u8 carryOut;
 		u32 result = operand2(this, op, cpsr, &carryOut);
 		wReg(RD(op), result);
-
 		checkCPSR_DP(op, carryOut);
-	/*}
-	else {
-		u8 carryOut;
-		cpsr = getSPSRValue();
-		u32 result = operand2(this, op, cpsr, &carryOut);
-		wReg(RD(op), result);
-
-		
-	}*/
 }
 
 void Arm7tdmi::BIC(u32 op) {

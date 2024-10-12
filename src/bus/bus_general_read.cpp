@@ -16,7 +16,7 @@ u8 Bus::read8(u32 addr) {
 	case 0x05000000:
 		return *(palette_ram + (addr & 0x000003FF));
 	case 0x06000000:
-		return *(vram + (addr & 0x0001FFFF)); /*TODO: check mirroring*/
+		return *(vram + vramMirroredAdress(addr)); /*TODO: check mirroring*/
 	case 0x07000000:
 		return *(oam + (addr & 0x000003FF));
 	case 0x08000000:
@@ -111,14 +111,18 @@ u32 Bus::read32(u32 addr) {
 	}
 }
 
-u16 Bus::read16OAM(u32 addr) {
-	return *(u16*)(oam + (addr & 0x000003FF));
+u16 Bus::read16OAM(u32 addr) const {
+	return *(u16*)(oam + (addr ) );
 }
 
-u8 Bus::read8VRAM(u32 addr) {
-	return *(vram + (addr & 0x0001FFFF));
+u8 Bus::read8VRAM(u32 addr) const {
+	return *(vram + vramMirroredAdress(addr));
 }
 
-u16 Bus::read16Palette(u32 addr) {
-	return *(u16*)(palette_ram + (addr & 0x000003FF));
+u16 Bus::read16VRAM(u32 addr) const {
+	return *(u16*)(vram + vramMirroredAdress(addr));
+}
+
+u16 Bus::read16Palette(u32 addr) const {
+	return *(u16*)(palette_ram + (addr & 0x3FF));
 }

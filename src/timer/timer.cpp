@@ -68,7 +68,6 @@ void Timer::tick() {
 	default:
 		break;
 	}
-	
 }
 
 void Timer::tickNextTimer() {

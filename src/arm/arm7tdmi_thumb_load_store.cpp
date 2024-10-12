@@ -4,10 +4,6 @@
 #define RD_LOW(op) (op & 0x7)
 #define RD_HIGH(op) ((op >> 8) & 0x7)
 #define RB(op) ((op >> 3) & 0x7)
-#define NN(op) ((op >> 6) & 0x1F) // for thumb 10 only
-#define RO(op) NN(op)
-
-#define LDR_ALIGN (data = data >> (8 * (adress & 0x3)) | data << (32 - (8 * (adress & 0x3)))); //rotation-based alignment
 
 #define MSB_RD(op) (op & BIT(7))
 #define MSB_RM(op) (op & BIT(6))
@@ -32,7 +28,7 @@ void Arm7tdmi::TB_HIGH_REG_OPERATION(u16 op) {
 	case TB_HR_CMP:
 	{
 		u32 armOp = 0b11100001010100000000000000000000;
-		armOp |= (rd << 16) | rm ;
+		armOp |= (rd << 16) | rm;
 		CMP(armOp);
 	}
 	break;
@@ -94,7 +90,7 @@ void Arm7tdmi::TB_LDR_STR_RELATIVE(u16 op) {
 }
 
 enum LDR_STR_SE_HW_OPCODE {
-	TB_SE_STRSH = 0,
+	TB_SE_STRH = 0,
 	TB_SE_LDSB,
 	TB_SE_LDRH,
 	TB_SE_LDSH
@@ -103,36 +99,26 @@ enum LDR_STR_SE_HW_OPCODE {
 //THUMB.08
 // LDR/STR with Sign-extension and halfword/byte transfer
 void Arm7tdmi::TB_LDR_STR_SE_HW(u16 op) {
-	u32 opp = op;
-	u32 rnVal = rRegThumb(RB(op));
-	u32 rmVal = rRegThumb((op >> 6) & 0x7);
-	u8 rd = RD_LOW(op);
-	u32 adress = rnVal + rmVal;
-	u32 data = 0;
+	u32 armOp = 0b11100001100000000000000010010000;
+	armOp |= (RD_LOW(op) << 12) | (RB(op) << 16) | ((op >> 6) & 0x7);
 	switch ((op & 0x0C00) >> 10) {
-	case TB_SE_STRSH:
-		bus->write16(adress, rRegThumb(rd));
-		break;
+	case TB_SE_STRH:
+		armOp |= 0b10110000;
+		STR2(armOp);
+		return;
 	case TB_SE_LDSB:
-		wReg(rd, (s32)(s8)bus->read8(adress));
+		armOp |= 0b100000000000011010000;
 		break;
 	case TB_SE_LDRH:
-	{
-		u32 armOp = 0b11100001100100000000000010110000;
-		armOp |= (rd << 12) | (RB(op) << 16) | ((op >> 6) & 0x7);
-		LDR2(armOp);
-	}
-	break;
+		armOp |= 0b100000000000010110000;
+		break;
 	case TB_SE_LDSH:
-	{
-		u32 armOp = 0b11100001100100000000000011110000;
-		armOp |= (rd << 12) | (RB(op) << 16) | ((op >> 6) & 0x7);
-		LDR2(armOp);
-	}
-	break;
+		armOp |= 0b100000000000011110000;
+		break;
 	default:
 		break;
 	}
+	LDR2(armOp);
 }
 
 enum LDR_STR_IMMEDIATE_OPCODE {
@@ -156,10 +142,10 @@ void Arm7tdmi::TB_LDR_STR_IMMEDIATE(u16 op) {
 	case TB_LDR_IMM:
 	{
 		u32 armOp = 0b11100101100100000000000000000000;
-		armOp |= (rd << 12) | (((op >> 3) & 0x7) << 16) | (immed5<<2);
+		armOp |= (rd << 12) | (((op >> 3) & 0x7) << 16) | (immed5 << 2);
 		LDR(armOp);
 	}
-		break;
+	break;
 	case TB_STRB_IMM:
 		adress = rnVal + immed5;
 		bus->write8(adress, (u8)rRegThumb(rd));
@@ -234,6 +220,16 @@ void Arm7tdmi::TB_ADD_OFFSET_SP(u16 op) {
 	}
 }
 
+//#include <cassert>
+//static u32 countSetBits(u16 n) {
+//	u32 count = 0;
+//	while (n) {
+//		count += n & 1;
+//		n >>= 1;
+//	}
+//	return count;
+//}
+
 //THUMB.14
 void Arm7tdmi::TB_PUSH(u16 op) {
 	u32 armOp = 0b11101001001011010000000000000000;
@@ -242,12 +238,9 @@ void Arm7tdmi::TB_PUSH(u16 op) {
 	STM(armOp);
 }
 
+
 //THUMB.14
-void Arm7tdmi::TB_POP(u16 op) { //TODO: check why arm translation fails
-	/*u32 armOp = 0b11101000101111010000000000000000;
-	armOp |= (op & BIT(8)) ? BIT(15) : 0;
-	armOp |= op & 0xFF;
-	LDM(armOp);*/ 
+void Arm7tdmi::TB_POP(u16 op) {
 	u32 adress = rRegThumb(13);
 
 	for (int i = 0; i < 8; i++) {
@@ -262,6 +255,7 @@ void Arm7tdmi::TB_POP(u16 op) { //TODO: check why arm translation fails
 		wReg(15, (value & 0xFFFFFFFE));
 		adress += 4;
 	}
+	//assert((adress == (rRegThumb(13) + 4 * countSetBits(op&0x1ff))));
 	wReg(13, adress);
 }
 

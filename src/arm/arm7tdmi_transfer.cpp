@@ -28,10 +28,10 @@
 #define IB(sa, op)		sa = rReg(RN(op)) + 4;
 
 //decrement after
-#define DA(sa, op)		sa = rReg(RN(op)) - (countSetBits(op) * 4) + 4;
+#define DA(sa, op)		sa = rReg(RN(op)) - (setBits * 4) + 4;
 
 //decrement before
-#define DB(sa, op)		sa = rReg(RN(op)) - (countSetBits(op) * 4);
+#define DB(sa, op)		sa = rReg(RN(op)) - (setBits * 4);
 
 static u8 countSetBits(u32 n) {
 	n = n & 0xFFFF; //16 least significant bits
@@ -59,6 +59,7 @@ void Arm7tdmi::SWPB(u32 op) {
 }
 
 void Arm7tdmi::LDM(u32 op) {
+	u8 setBits = countSetBits(op);
 	u32 start_adress;
 	bool allowWriteback = true;
 	switch ((op & (BIT(24) | BIT(23))) >> 23) {
@@ -111,17 +112,16 @@ void Arm7tdmi::LDM(u32 op) {
 			}
 		}
 	}
-
 	if (BIT_W(op) && allowWriteback) {
 		if (BIT_U(op)) {
-			wReg(RN(op), rReg(RN(op)) + (countSetBits(op) * 4));
+			wReg(RN(op), rReg(RN(op)) + (setBits * 4));
 		}
 		else {
-			wReg(RN(op), rReg(RN(op)) - (countSetBits(op) * 4));
+			wReg(RN(op), rReg(RN(op)) - (setBits * 4));
 		}
 	}
 
-	if (!countSetBits(op)) {// weird behaviour impl.
+	if (!setBits) {// weird behaviour impl.
 		wReg(15, bus->read32(rReg(RN(op))));
 		wReg(RN(op), rReg(RN(op)) + 0x40);
 	}
@@ -137,6 +137,7 @@ u32 Arm7tdmi::getNewBase(u32 op) {
 }
 
 void Arm7tdmi::STM(u32 op) {
+	u8 setBits = countSetBits(op);
 	u32 start_adress = 0;
 	u8 howManySoFar = 0;
 	switch ((op & (BIT(24) | BIT(23))) >> 23) {
@@ -146,7 +147,6 @@ void Arm7tdmi::STM(u32 op) {
 	case 3: default: IB(start_adress, op); break;
 	}
 	u32 adress = start_adress;
-	u32 end_adress = adress + (countSetBits(op) * 4);
 	if ((op & BIT(22)) == 0) {//STM (1)
 		for (u8 i = 0; i < 15; i++) {
 			if (op & BIT(i)) {
@@ -183,7 +183,7 @@ void Arm7tdmi::STM(u32 op) {
 		wReg(RN(op), getNewBase(op));
 	}
 
-	if (!countSetBits(op)) {// empty rList behaviour
+	if (!setBits) {// empty rList behaviour
 		bus->write32(rReg(RN(op)), getPCInArmOrThumb());
 		wReg(RN(op), rReg(RN(op)) + 0x40);
 	}
@@ -266,7 +266,6 @@ void Arm7tdmi::LDR(u32 op) { //LDR { , T, B, BT} (mode 2 or mode 2 P)
 	// the access as if the processor were in User mode.
 	u32 adress = 0;
 	u32 rnVal = rReg(RN(op));
-	u32 baseOffset = 0;
 
 	u32 thingToWrite = 0;
 	bool writeNeeded = getAddressMode2(op, adress, rnVal, &thingToWrite);
@@ -294,7 +293,6 @@ void Arm7tdmi::LDR(u32 op) { //LDR { , T, B, BT} (mode 2 or mode 2 P)
 void Arm7tdmi::STR(u32 op) {
 	u32 adress = 0;
 	u32 rnVal = rReg(RN(op));
-	u32 offset = 0;
 	u32 thingToWrite = 0;
 	bool writeNeeded = getAddressMode2(op, adress, rnVal, &thingToWrite);
 	u32 data;
@@ -387,15 +385,13 @@ void Arm7tdmi::LDR2(u32 op) {//LDRSB, LDRH, LDRSH
 			wReg(RN(op), adress);
 		}
 	}
-	else if (!BIT_W(op) && !BIT_P(op)) { // post indexed
+	else if (!BIT_W(op)) { // post indexed
 		adress = rnVal;
-		if (!BIT_W(op) && !BIT_P(op)) {
-			if (BIT_U(op)) { // U set
-				wReg(RN(op), rnVal + offset);
-			}
-			else {
-				wReg(RN(op), rnVal - offset);
-			}
+		if (BIT_U(op)) { // U set
+			wReg(RN(op), rnVal + offset);
+		}
+		else {
+			wReg(RN(op), rnVal - offset);
 		}
 	}
 

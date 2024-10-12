@@ -276,7 +276,7 @@ void Arm7tdmi::evaluateArm(u32 op) {
 	}
 
 	else if (IS_MULTIPLY(op)) {
-		execMultiply(op);
+		MUL(op);
 	}
 
 	else if (IS_HALFWORD_DAT_TRANS_REG(op)) {
@@ -346,6 +346,7 @@ Arm7tdmi::Arm7tdmi(Bus* bus) : bus(bus), cpsr(0), spsr{ 0 }, r{ 0 }, rFiq{ 0 }, 
 	cpsr = 0x0000005f;
 }
 
+#pragma optimize("", off)
 void Arm7tdmi::tick() {
 	static u32 step = 0;
 	if (this->cpsr & T) { // Thumb mode
@@ -402,7 +403,7 @@ void Arm7tdmi::tick() {
 		step = 0;
 		nbShots++;
 	}
-	bus->timerManager->tick();
+	//bus->timerManager->tick();
 	bus->dmaManager->tick();
 }
 

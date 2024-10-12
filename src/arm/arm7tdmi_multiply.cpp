@@ -41,7 +41,7 @@ void Arm7tdmi::MULT_LONG(u32 op) {
 	}
 }
 
-void Arm7tdmi::execMultiply(u32 op) {
+void Arm7tdmi::MUL(u32 op) {
 	if (op & BIT(23)) {
 		MULT_LONG(op);
 	}

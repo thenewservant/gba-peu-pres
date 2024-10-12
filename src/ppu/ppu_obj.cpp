@@ -26,10 +26,11 @@ void Ppu::obj() {//pixel based strategy for now.
 		if (OBJ_IS_SHOWN(objAttr0)) {
 			totalObjFound++;
 			if (yPos == scanline && xPos == cycle) {
-				screen->getPixels()[scanline * SCREEN_WIDTH + cycle] = 0xFF00FF00;
-				
+				//pixels[scanline * SCREEN_WIDTH + cycle] = 0xFF00FF00;
+				for (u8 i = 0; i < 8; i++) {
+					pixels[(scanline) * SCREEN_WIDTH + cycle + i%8] = 0xFF00FF00;
+				}
 			}
 		}
 	}
-	
 }

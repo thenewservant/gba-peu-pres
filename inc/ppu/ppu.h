@@ -73,6 +73,7 @@ class Ppu {
 private:
 	Bus* bus;
 	Screen* screen;
+	u32* pixels;
 	u16 scanline = 0;
 	u16 cycle = 0;
 public:
@@ -82,13 +83,11 @@ public:
 	void writeIO32(u32 addr, u32 data);
 	void writeIO16(u32 addr, u16 data);
 	void writeIO8(u32 addr, u8 data);
-	void writeIO(u32 addr, u32 data);
 	void raiseHBlankIrqIfNeeded();
 	void raiseVBlankIrqIfNeeded();
 	void raiseVCountIrqIfNeeded();
 	void updateDispstatAndVCount();
-	void mode0SingleLineFeed(u32* line, TILE_BG_ID bgType, u16 scanline);
-	void mode0();
+	void mode0SingleLineFeed(u32* line, enum TILE_BG_ID bgType, u16 scanline);
 	void mode0Orchestrator(u32* line);
 	void mode3();
 	void mode4();
@@ -96,5 +95,6 @@ public:
 	void tick();
 	void obj();
 };
+
 
 #endif

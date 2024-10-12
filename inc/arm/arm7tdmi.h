@@ -109,7 +109,7 @@ public:
 
 	void printRegsUserMode();
 	void printInterruptFlags();
-	void execMultiply(u32 op);
+	void MUL(u32 op);
 	void MULT_SHORT(u32 op);
 	void MULT_LONG(u32 op);
 	void evaluateArm(u32 op);

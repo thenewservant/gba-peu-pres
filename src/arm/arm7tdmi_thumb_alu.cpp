@@ -7,12 +7,6 @@ add/subtract, add/subtract with carry, compare, logical operations...
 #define RD(op)			(op & 0x7)
 #define RS(op)			((op >> 3) & 0x7)
 #define ALU_OPCODE(op)	((op >> 6) & 0xF)
-//should be used only after assignments are done
-#define CHECKCPSR_NZ cpsr = (cpsr & ~N) | ((result & BIT(31)) ? N : 0); \
-					 cpsr = (cpsr & ~Z) | ((result == 0) ? Z : 0)
-
-#define ASSIGN_TO_REG_NZ wReg(rd, result); \
-					 CHECKCPSR_NZ
 
 enum THUMB_MOVE_SHIFTED_REGISTER_OPCODES {
 	TB_MOVE_LSL = 0x0,
@@ -51,10 +45,6 @@ enum THUMB_ALU_OPCODE {
 
 void Arm7tdmi::TB_ALU_OP(u16 op) {
 	u8 rd = RD(op);
-	u32 rdVal = rRegThumb(rd);
-	u32 rsVal = rRegThumb(RS(op));
-	u32 result = 0;
-
 	switch (ALU_OPCODE(op)) {
 	case TB_ALU_AND:
 	{
@@ -64,9 +54,12 @@ void Arm7tdmi::TB_ALU_OP(u16 op) {
 		return;
 	}
 	case TB_ALU_EOR:
-		result = rdVal ^ rsVal;
-		ASSIGN_TO_REG_NZ;
-		break;
+	{
+		u32 armOp = 0b11100000001100000000000000000000;
+		armOp |= (rd << 16) | (rd << 12) | RS(op);
+		EOR(armOp);
+		return;
+	}
 	case TB_ALU_LSL:
 	{
 		u32 armOp = 0b11100001101100000000000000010000;
@@ -110,9 +103,12 @@ void Arm7tdmi::TB_ALU_OP(u16 op) {
 		return;
 	}
 	case TB_ALU_TST:
-		result = rdVal & rsVal;
-		CHECKCPSR_NZ;
-		break;
+	{
+		u32 armOp = 0b11100001000100000000000000000000;
+		armOp |= (rd << 16) | RS(op);
+		TST(armOp);
+		return;
+	}
 	case TB_ALU_NEG:
 	{
 		u32 armOp = 0b11100010011100000000000000000000;
@@ -137,23 +133,32 @@ void Arm7tdmi::TB_ALU_OP(u16 op) {
 	}
 	break;
 	case TB_ALU_ORR:
-		result = rdVal | rsVal;
-		ASSIGN_TO_REG_NZ;
-		break;
+	{
+		u32 armOp = 0b11100001100100000000000000000000;
+		armOp |= (rd << 16) | (rd << 12) | RS(op);
+		ORR(armOp);
+	}
+	break;
 	case TB_ALU_MUL:
-		result = rdVal * rsVal;
-		ASSIGN_TO_REG_NZ;
-		cpsr = (cpsr & ~C);
+	{
+		u32 armOp = 0b11100000000100000000000010010000;
+		armOp |= (rd << 16) | (rd << 8) | RS(op);
+		MUL(armOp);
 		break;
+	}
 	case TB_ALU_BIC:
-		result = rdVal & ~rsVal;
-		wReg(rd, result);
-		cpsr = (cpsr & ~N) | ((result & BIT(31)) ? N : 0);
-		cpsr = (cpsr & ~Z) | ((result == 0) ? Z : 0);
-		break;
+	{
+		u32 armOp = 0b11100001110100000000000000000000;
+		armOp |= (rd << 16) | (rd << 12) | RS(op);
+		BIC(armOp);
+	}
+	break;
 	case TB_ALU_MVN:
-		result = ~rsVal;
-		ASSIGN_TO_REG_NZ;
+	{
+		u32 armOp = 0b11100001111100000000000000000000;
+		armOp |= (rd << 12) | RS(op);
+		MVN(armOp);
+	}
 		break;
 	default:
 		break;

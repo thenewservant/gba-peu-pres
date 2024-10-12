@@ -14,6 +14,14 @@ void Bus::write8(u32 addr, u8 data) {
 	case 0x04000000:
 		*(writeIo(addr, data)) = data;
 		break;
+	case 0x05000000:
+		*(palette_ram + (addr & 0x000003FE)) = data;
+		*(palette_ram + ((addr & 0x000003FF) | 1)) = data;
+		break;
+	case 0x06000000:
+		*(vram + vramMirroredAdress(addr & ~1)) = data;
+		*(vram + vramMirroredAdress(addr | 1)) = data;
+		break;
 	case 0x0E000000:
 	case 0x0F000000:
 		sram[addr & 0x0000FFFF] = data; /*GamePak SRAM*/

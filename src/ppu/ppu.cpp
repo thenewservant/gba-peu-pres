@@ -15,10 +15,21 @@
 #define DISPSTAT_VCOUNT_MATCH_FLAG 0x0004
 #define IN_VDRAW_AREA ((cycle < SCREEN_WIDTH) && (scanline < SCREEN_HEIGHT))
 
-Ppu::Ppu(Screen* s, Bus* bus) : lcd{ 0 }, bus{ bus }, screen{ s } {}
+Ppu::Ppu(Screen* s, Bus* bus) : lcd{ 0 }, bus{ bus }, screen{ s } {
+	this->pixels = screen->getPixels();
 
+}
+
+static u8 dummy = 0;
 u8* Ppu::readIO(u32 addr) {
-	return (lcd.array + (addr & 0xFF));
+//return (lcd.array + (addr & 0xFF));
+	if ((addr < 0x04000010) || (addr >= 0x04000048)) {
+		return (lcd.array + (addr & 0xFF));
+	}
+	else {
+		printf("Invalid PPU read at address %08x\n", addr);
+		return &dummy;
+	}
 }
 
 void Ppu::writeIO32(u32 addr, u32 data) {
@@ -99,9 +110,9 @@ void Ppu::tick() {
 		case 0x1://printf("Mode 1\n");break;
 		case 0x2://printf("Mode 2\n");break;
 			if (cycle == 1)mode0Orchestrator(nullptr); break;
-		case 0x3:mode3();break;
-		case 0x4:mode4();break;
-		case 0x5:mode3();break;
+		case 0x3:if (cycle == 1)mode3();break;
+		case 0x4:if (cycle == 1)mode4();break;
+		case 0x5:if (cycle == 1)mode5();break;
 		default:break; // not supposed to happen
 		}
 		//obj();
@@ -115,6 +126,7 @@ void Ppu::tick() {
 	if (scanline == (REAL_VBLANK_CYCLES - 1)) {
 		lcd.regs.vcount = 0;
 		screen->updateScreen();
+		memset(pixels, 0, SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(u32));
 		scanline = 0;
 	}
 	

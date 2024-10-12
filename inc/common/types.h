@@ -14,12 +14,12 @@
 #endif
 
 #ifdef __GNUC__
-#define PACK( __Declaration__ ) __Declaration__ __attribute__((__packed__))
+	#define PACK( __Declaration__ ) __Declaration__ __attribute__((__packed__))
+#elif defined(_MSC_VER)
+	#define PACK( __Declaration__ ) __pragma( pack(push, 1) ) __Declaration__ __pragma(pack(pop)) 
+	#define NOINLINE __declspec(noinline)
 #endif
 
-#ifdef _MSC_VER
-#define PACK( __Declaration__ ) __pragma( pack(push, 1) ) __Declaration__ __pragma(pack(pop)) 
-#endif
 
 typedef uint8_t u8;
 typedef uint16_t u16;
