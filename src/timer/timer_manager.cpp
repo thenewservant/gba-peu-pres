@@ -10,14 +10,14 @@ TimerManager::TimerManager(Bus* bus) {
 
 void TimerManager::tick() {
 	for (u8 i = 0; i < 4; i++) {
-		timers[i].tick();
 		timers[i].tickNextTimer();
+		timers[i].tick();
 	}
 }
 
 u8 TimerManager::read8(u32 addr) {
 	bool isSecondByte = (addr & 0x1) == 1;
-	bool isControl = (addr & 0x2) == 1;
+	bool isControl = (addr & 0x2) == 2;
 	u8 timerId = (addr & 0xC) >> 2;
 	if (isControl) {
 		return (u8)(timers[timerId].getControl() >> (isSecondByte ? 8 : 0));
@@ -61,6 +61,7 @@ void TimerManager::write16(u32 addr, u16 data) {
 }
 
 void TimerManager::write32(u32 addr, u32 data) {
+	printf("Writing 32 bits to %x: %x\n", addr & 0xFFFF, data);
 	write16(addr, (u16)data);
 	write16(addr + 2, (u16)(data >> 16));
 }

@@ -1,5 +1,5 @@
 #include "ppu/ppu.h"
-#include <vector>
+#include <array>
 #include <algorithm>
 
 constexpr u32 VRAM_BASE = 0x06000000;
@@ -29,21 +29,13 @@ enum TEXT_MODE_ENTRYTYPE {
 	E512_512 = 3
 };
 
-
 struct sort_by_priority {
 	bool operator()(const std::pair<enum TILE_BG_ID, u8>& left, const std::pair<enum TILE_BG_ID, u8>& right) {
 		return ((left.second!=right.second) ? (left.second > right.second) : (left.first>right.first));
 	}
 };
 
-static u32 getRgbFromPaletteAdress(u16 adress) {
-	u32 r = (adress & 0x1F) << 3;
-	u32 g = ((adress & 0x3E0) >> 5) << 3;
-	u32 b = ((adress & 0x7C00) >> 10) << 3;
-	return (r << 24) | (g << 16) | (b << 8);
-}
-
-void Ppu::mode0SingleLineFeed(u32* line, enum TILE_BG_ID bgType, u16 scanline) {
+void Ppu::mode0SingleLineFeed(u32* line, enum TILE_BG_ID bgType, u16 scanline, bool isFirstPlane) {
 	u16 cnt=0, hofs=0, vofs=0;
 	switch (bgType) {
 	case BG0: BG0_PACK_ASSIGN(cnt,hofs, vofs); break;
@@ -116,36 +108,44 @@ void Ppu::mode0SingleLineFeed(u32* line, enum TILE_BG_ID bgType, u16 scanline) {
 
 			u8 currentByteForThisPixel = bus->read8VRAM(bgTileData + 32 * currentTileIndex + (currentXValue / 2) + currentYValue * 4);
 			u32 currentPixelPaletteId = ((currentByteForThisPixel >> (((horFlip ? 1 : 0) + (cyclicXScroll)) % 2) * 4) & 0xF);
-			finalColor = getRgbFromPaletteAdress(bus->read16Palette(paletteNumber * 16 * 2 + currentPixelPaletteId * 2));
+			finalColor = bitmapLut[bus->read16Palette(paletteNumber * 16 * 2 + currentPixelPaletteId * 2)];
 			if (((currentPixelPaletteId) & 0xF) == 0) {
 				isColor0 = true;
+				//The shown color is the backdrop color (palette 0)
+				finalColor = bitmapLut[bus->read16Palette(0 * 16 * 2 + currentPixelPaletteId * 2)];
 			}
 		}
 		else { // 256 colors(8bpp)
 			u8 currentByteForThisPixel = bus->read8VRAM(bgTileData + 64 * currentTileIndex + currentXValue + currentYValue * 8);
-			finalColor = getRgbFromPaletteAdress(bus->read16Palette(currentByteForThisPixel * 2));
+			finalColor = bitmapLut[bus->read16Palette(currentByteForThisPixel * 2)];
 			if (currentByteForThisPixel == 0) {
 				isColor0 = true;
 			}
 		}
-		if (!isColor0) { pixels[scanline * SCREEN_WIDTH + cyc] = finalColor; }
+		if (!isColor0) { 
+			pixels[scanline * SCREEN_WIDTH + cyc] = finalColor; 
+		}
+		else if (isFirstPlane){
+			pixels[scanline * SCREEN_WIDTH + cyc] = finalColor;
+		}
+		
 	}
 }
 
 void Ppu::mode0Orchestrator(u32* line) {
-	std::vector<std::pair<enum TILE_BG_ID, u8>> bgPriorities;
+	std::array<std::pair<enum TILE_BG_ID, u8>, 4> bgPriorities;
 	static const enum TILE_BG_ID bgTypes[] = { BG0, BG1, BG2, BG3 };
-	 u16 cnts[] = { lcd.regs.bg0cnt, lcd.regs.bg1cnt, lcd.regs.bg2cnt, lcd.regs.bg3cnt };
-	
+	u16 cnts[] = { lcd.regs.bg0cnt, lcd.regs.bg1cnt, lcd.regs.bg2cnt, lcd.regs.bg3cnt };
+	size_t bgCount = 0;
+
 	for (u8 i = 0; i < 4; i++) {
 		if (IS_BG_ENABLED(bgTypes[i])) {
-			//if (CNT_PRIORITY(cnts[i])) exit(0);
-			bgPriorities.push_back(std::make_pair(bgTypes[i], CNT_PRIORITY(cnts[i])));
+			bgPriorities[bgCount++] = std::make_pair(bgTypes[i], CNT_PRIORITY(cnts[i]));
 		}
 	}
 
-	std::sort(bgPriorities.begin(), bgPriorities.end(), sort_by_priority());
-	for (u8 i = 0; i < bgPriorities.size(); i++) {
-		mode0SingleLineFeed(line, bgPriorities[i].first, scanline);
+	std::sort(bgPriorities.begin(), bgPriorities.begin() + bgCount, sort_by_priority());
+	for (size_t i = 0; i < bgCount; i++) {
+		mode0SingleLineFeed(line, bgPriorities[i].first, scanline, i == 0);
 	}
 }

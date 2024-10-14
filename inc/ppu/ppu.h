@@ -14,6 +14,26 @@
 
 #define WINOBJ_ON ((lcd.regs.dispcnt & 0x4000) != 0)
 
+constexpr u32 bitmapColorDecoder(uint16_t value) {
+	u32 r = (value & 0x1F) << 3;        //red component
+	u32 g = ((value & 0x3E0) >> 5) << 3; //green component
+	u32 b = ((value & 0x7C00) >> 10) << 3; //blue component
+	return (r << 24) | (g << 16) | (b << 8);
+}
+
+constexpr size_t LUT_SIZE = 65536;
+
+constexpr u32 generateLUT(u32 lut[LUT_SIZE], uint16_t index) {
+	for (size_t index = 0; index < LUT_SIZE; ++index) {
+		lut[index] = bitmapColorDecoder(index);
+	}
+	return 0;
+}
+
+static u32 bitmapLut[LUT_SIZE] = {};
+static const u32 lutDummy = generateLUT(bitmapLut, 0);
+
+
 enum TILE_BG_ID {
 	BG0 = 0,
 	BG1 = 1,
@@ -87,7 +107,7 @@ public:
 	void raiseVBlankIrqIfNeeded();
 	void raiseVCountIrqIfNeeded();
 	void updateDispstatAndVCount();
-	void mode0SingleLineFeed(u32* line, enum TILE_BG_ID bgType, u16 scanline);
+	void mode0SingleLineFeed(u32* line, enum TILE_BG_ID bgType, u16 scanline, bool isFirstPlane);
 	void mode0Orchestrator(u32* line);
 	void mode3();
 	void mode4();
@@ -95,6 +115,5 @@ public:
 	void tick();
 	void obj();
 };
-
 
 #endif

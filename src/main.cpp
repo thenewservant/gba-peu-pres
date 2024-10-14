@@ -21,9 +21,9 @@ int main(int argc, char* argv[]) {
 #ifdef WIN32
 	SetProcessDPIAware();
 #endif
-	char* filename= 0;
+	char* filename = 0;
 	if (argc > 1) {
-		 filename = argv[1];
+		filename = argv[1];
 	}
 	else {
 		printf("Usage: %s <gamepack>\n", argv[0]);
@@ -64,29 +64,29 @@ int main(int argc, char* argv[]) {
 }
 
 static const char* getFileNameFromPath(const char* path) {
-    if (path == nullptr) {
-        return nullptr;
-    }
+	if (path == nullptr) {
+		return nullptr;
+	}
 
-    const char* fileName = path;
-    const char* slash = strrchr(path, '/');
-    const char* backslash = strrchr(path, '\\');
+	const char* fileName = path;
+	const char* slash = strrchr(path, '/');
+	const char* backslash = strrchr(path, '\\');
 
-    if (slash || backslash) {
-        // Use the last slash or backslash found, whichever comes last.
-        const char* separator = (slash > backslash) ? slash : backslash;
-        fileName = separator + 1;
-    }
+	if (slash || backslash) {
+		// Use the last slash or backslash found, whichever comes last.
+		const char* separator = (slash > backslash) ? slash : backslash;
+		fileName = separator + 1;
+	}
 
-    char* fn2 = (char*)malloc(100 * sizeof(char));
-    if (fn2 == nullptr) {
-        return nullptr;
-    }
+	char* fn2 = (char*)malloc(100 * sizeof(char));
+	if (fn2 == nullptr) {
+		return nullptr;
+	}
 
-    strcpy(fn2, fileName);
-    char* dot = strrchr(fn2, '.');
-    if (dot) {
-        *dot = '\0';
-    }
-    return fn2;
+	strcpy(fn2, fileName);
+	char* dot = strrchr(fn2, '.');
+	if (dot) {
+		*dot = '\0';
+	}
+	return fn2;
 }

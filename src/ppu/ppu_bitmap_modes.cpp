@@ -1,4 +1,4 @@
-#include "ppu/ppu_bitmap_modes.h"
+#include "ppu/ppu.h"
 
 #define MODE_5_WIDTH 160
 

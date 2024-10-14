@@ -10,7 +10,7 @@ DmaManager::DmaManager(Bus* bus) {
 	}
 }
 
-void DmaManager::tick(){
+void DmaManager::tick() {
 	for (int i = 0; i < 4; i++) {
 		dmas[i].transfer();
 	}
@@ -24,8 +24,8 @@ void DmaManager::writeControl0(u8 dmaId, u8 data) {
 
 void DmaManager::writeControl1(u8 dmaId, u8 data) {
 	dmas[dmaId].srcAdrControl = (dmas[dmaId].srcAdrControl & 0b01) | ((data & 0x1) << 1);
-	dmas[dmaId].transferType =(enum DMA_TRANSFER_TYPE)( (data >> 2) & 0x1);
-	dmas[dmaId].timingMode = (enum DMA_TIMING_MODE)( (data >> 4) & 0x3);
+	dmas[dmaId].transferType = (enum DMA_TRANSFER_TYPE)((data >> 2) & 0x1);
+	dmas[dmaId].timingMode = (enum DMA_TIMING_MODE)((data >> 4) & 0x3);
 	dmas[dmaId].irqUponEnd = (bool)((data >> 6) & 0x1);
 	dmas[dmaId].dmaEnable = (bool)((data >> 7) & 0x1);
 }

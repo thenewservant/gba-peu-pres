@@ -159,7 +159,7 @@ void Arm7tdmi::TB_ALU_OP(u16 op) {
 		armOp |= (rd << 12) | RS(op);
 		MVN(armOp);
 	}
-		break;
+	break;
 	default:
 		break;
 	}
@@ -216,7 +216,7 @@ void Arm7tdmi::TB_ADD_SUBSTRACT(u16 op) {
 	armOp |= (op & BIT(10)) ? BIT(25) : 0; // immed_3 or register
 	armOp |= ((op >> 3) & 0x7) << 16; //RN
 	armOp |= (op & 0x7) << 12; //RD
-	armOp |= ((op >> 6) & 0x7) ; //RM or immed_3
+	armOp |= ((op >> 6) & 0x7); //RM or immed_3
 	if (op & BIT(9)) {
 		SUB(armOp);
 	}

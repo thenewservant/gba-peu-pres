@@ -1,5 +1,6 @@
 #include "ppu/ppu.h"
-
+//include a clock to measure the time taken by the function
+#include <ctime>
 #define LINE_SIZE_IN_DRAWN_PX SCREEN_WIDTH
 #define NUMBER_OF_DRAWN_LINES SCREEN_HEIGHT
 
@@ -22,7 +23,7 @@ Ppu::Ppu(Screen* s, Bus* bus) : lcd{ 0 }, bus{ bus }, screen{ s } {
 
 static u8 dummy = 0;
 u8* Ppu::readIO(u32 addr) {
-//return (lcd.array + (addr & 0xFF));
+	//return (lcd.array + (addr & 0xFF));
 	if ((addr < 0x04000010) || (addr >= 0x04000048)) {
 		return (lcd.array + (addr & 0xFF));
 	}
@@ -45,15 +46,15 @@ void Ppu::writeIO8(u32 addr, u8 data) {
 }
 
 void Ppu::raiseHBlankIrqIfNeeded() {
-		if (lcd.regs.dispstat & 0x0010) {
-			bus->intCtrl.regs.if_ |= 0x0002;
-		}
+	if (lcd.regs.dispstat & 0x0010) {
+		bus->intCtrl.regs.if_ |= 0x0002;
+	}
 }
 
 void Ppu::raiseVBlankIrqIfNeeded() {
-		if ((lcd.regs.dispstat & 0x0008)) {
-			bus->intCtrl.regs.if_ |= 0x0001;
-		}
+	if ((lcd.regs.dispstat & 0x0008)) {
+		bus->intCtrl.regs.if_ |= 0x0001;
+	}
 }
 
 void Ppu::raiseVCountIrqIfNeeded() {
@@ -88,7 +89,7 @@ void Ppu::updateDispstatAndVCount() {
 
 	if (scanline > (NUMBER_OF_DRAWN_LINES - 1)) {
 		dispstatAndVcount |= DISPSTAT_VBLANK_FLAG;
-		if (scanline == (NUMBER_OF_DRAWN_LINES ) && (cycle == 0)) {
+		if (scanline == (NUMBER_OF_DRAWN_LINES) && (cycle == 0)) {
 			raiseVBlankIrqIfNeeded();
 		}
 	}
@@ -104,18 +105,21 @@ void Ppu::updateDispstatAndVCount() {
 
 
 void Ppu::tick() {
+	static u8 frameCounter = 0;
+	//clock init
+	static clock_t start = clock();
 	if (IN_VDRAW_AREA) {
 		switch (lcd.regs.dispcnt & DISPCNT_MODE_MASK) {
 		case 0x0:
 		case 0x1://printf("Mode 1\n");break;
 		case 0x2://printf("Mode 2\n");break;
 			if (cycle == 1)mode0Orchestrator(nullptr); break;
-		case 0x3:if (cycle == 1)mode3();break;
-		case 0x4:if (cycle == 1)mode4();break;
-		case 0x5:if (cycle == 1)mode5();break;
+		case 0x3:if (cycle == 1)mode3(); break;
+		case 0x4:if (cycle == 1)mode4(); break;
+		case 0x5:if (cycle == 1 && scanline < 128)mode5(); break;
 		default:break; // not supposed to happen
 		}
-		//obj();
+		obj();
 	}
 	cycle++;
 	if (cycle == REAL_HBLANK_CYCLES) {
@@ -126,9 +130,15 @@ void Ppu::tick() {
 	if (scanline == (REAL_VBLANK_CYCLES - 1)) {
 		lcd.regs.vcount = 0;
 		screen->updateScreen();
+		frameCounter++;
+		if (frameCounter == 60) {
+			printf("FPS: %f\n", (double)CLOCKS_PER_SEC / (clock() - start) * 60);
+			frameCounter = 0;
+			start = clock();
+		}
 		memset(pixels, 0, SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(u32));
 		scanline = 0;
 	}
-	
+
 	updateDispstatAndVCount();
 }

@@ -206,7 +206,6 @@ void Arm7tdmi::wReg(u8 reg, u32 value) {
 }
 
 void Arm7tdmi::SWI(u32 op) {
-	printf("SWI\n");
 	rSvc[1] = r[15] + 4;
 	spsr[2] = cpsr;
 	cpsr &= ~(ARM7TDMI_MODE_MASK | BIT(5) | BIT(9));
@@ -346,20 +345,11 @@ Arm7tdmi::Arm7tdmi(Bus* bus) : bus(bus), cpsr(0), spsr{ 0 }, r{ 0 }, rFiq{ 0 }, 
 	cpsr = 0x0000005f;
 }
 
-#pragma optimize("", off)
 void Arm7tdmi::tick() {
 	static u32 step = 0;
 	if (this->cpsr & T) { // Thumb mode
 		u16 op = bus->read16(r[15]);
-#ifdef DEBUG
-		printf("PC: %08x\n", r[15]);
-		printf("op: %04x\n", op);
-#endif
 		this->evaluateThumb(op);
-		while (op == 0) {
-			printf("FATAL: OPCODE 0 @ r15 = %08x\n", r[15]);
-
-		}
 		if (!pcHasChanged) {
 			this->r[15] += 2;
 		}
@@ -367,22 +357,10 @@ void Arm7tdmi::tick() {
 	}
 	else { // ARM mode
 		u32 op = bus->read32(r[15]);
-		if (op == 0) {
-			printf("FATAL: OPCODE 0 @ r15 = %08x\n", r[15]);
-			exit(1);
-		}
-#ifdef DEBUG
-		printf("PC: %08x\n", r[15]);
-		printf("op: %08x\n", op);
-#endif
 		this->evaluateArm(op);
 		if (!pcHasChanged) {
 			this->r[15] += 4;
 		}
-#ifdef DEBUG
-		printf("pcHascChanged? %s\n", pcHasChanged ? "true" : "false");
-#endif
-
 		pcHasChanged = false;
 	}
 	if (bus->intCtrl.regs.ime && (bus->intCtrl.regs.if_ & bus->intCtrl.regs.ie) && (!(this->cpsr & I))) {
@@ -403,7 +381,7 @@ void Arm7tdmi::tick() {
 		step = 0;
 		nbShots++;
 	}
-	//bus->timerManager->tick();
+	bus->timerManager->tick();
 	bus->dmaManager->tick();
 }
 

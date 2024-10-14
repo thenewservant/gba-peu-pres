@@ -14,7 +14,7 @@ void Bus::ioWrite32(const u32 addr, u32 const data) {
 		timerManager->write32(addr, data);
 	}
 	else if (addr == 0x4000130) {
-		 keysStatus = (u16)data;
+		keysStatus = (u16)data;
 	}
 	else if (addr >= 0x4000200) {
 		u16 addr2 = addr & 0xF00;
@@ -58,7 +58,7 @@ void Bus::ioWrite16(const u32 addr, const u16 data) {
 		else if (addr2 == 0x200) {
 			*(u16*)(intCtrl.array + (addr & 0x000000FF)) = data;
 		}
-		
+
 		else if (addr2 == 0x300) {
 			*(u16*)(pwrStatus.array + (addr & 0x000000FF)) = data;
 		}

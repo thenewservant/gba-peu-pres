@@ -11,10 +11,10 @@ void Screen::initSDLScreen() {
 	strcat(result, title);
 
 	window = SDL_CreateWindow(result, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, screenW, screenH, SDL_WINDOW_SHOWN | 0 * SDL_WINDOW_RESIZABLE);
-	
+
 	//SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
-	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | 1*SDL_RENDERER_PRESENTVSYNC);
-	
+	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+
 	// Create SDL texture
 	texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBX8888, SDL_TEXTUREACCESS_STREAMING, SCREEN_WIDTH, SCREEN_HEIGHT);
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
@@ -70,16 +70,16 @@ void Screen::checkPressKey(SDL_Event event) {
 	case SDLK_RETURN:
 		keysStatus &= ~8;
 		break;
-	case SDLK_DOWN:
+	case SDLK_s:
 		keysStatus &= ~0x80;
 		break;
-	case SDLK_UP:
+	case SDLK_z:
 		keysStatus &= ~0x40;
 		break;
-	case SDLK_LEFT:
+	case SDLK_q:
 		keysStatus &= ~0x20;
 		break;
-	case SDLK_RIGHT:
+	case SDLK_d:
 		keysStatus &= ~0x10;
 		break;
 	case SDLK_a://L1 key
@@ -105,11 +105,11 @@ void Screen::checkPressKey(SDL_Event event) {
 		break;
 	case SDLK_F10:
 		printf("100 ticks at a time\n");
-		for (int i = 0; i < 100; i++){
+		for (int i = 0; i < 100; i++) {
 			advance();
 			cpu->printRegsUserMode();
 		}
-		
+
 		break;
 	case SDLK_F11:
 		printf("10000 ticks at a time\n");
@@ -123,22 +123,22 @@ void Screen::checkPressKey(SDL_Event event) {
 	}
 }
 
-void Screen::checkRaiseKey( SDL_Event event) {
+void Screen::checkRaiseKey(SDL_Event event) {
 	switch (event.key.keysym.sym) {
 
 	case SDLK_RETURN:
 		keysStatus |= 8;
 		break;
-	case SDLK_DOWN:
+	case SDLK_s:
 		keysStatus |= 0x80;
 		break;
-	case SDLK_UP:
+	case SDLK_z:
 		keysStatus |= 0x40;
 		break;
-	case SDLK_LEFT:
+	case SDLK_q:
 		keysStatus |= 0x20;
 		break;
-	case SDLK_RIGHT:
+	case SDLK_d:
 		keysStatus |= 0x10;
 		break;
 	case SDLK_a://L1 key

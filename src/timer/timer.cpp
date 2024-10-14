@@ -4,7 +4,7 @@
 Timer::Timer(u8 timerId, Timer* nextTimer) {
 	this->nextTimer = nextTimer;
 	this->timerId = timerId;
-
+	this->bus = nullptr;
 	this->reloadValue = 0;
 	this->counter = 0;
 	this->prescalerSelection = 0;
@@ -73,7 +73,9 @@ void Timer::tick() {
 void Timer::tickNextTimer() {
 	if (this->didOverflow) {
 		this->didOverflow = false;
-		this->nextTimer->tickFromPreviousTimer();
+		if (this->nextTimer != nullptr) {
+			this->nextTimer->tickFromPreviousTimer();
+		}
 	}
 }
 

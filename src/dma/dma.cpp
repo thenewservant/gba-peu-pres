@@ -38,7 +38,7 @@ void Dma::instantTransfer() {
 		u32 src = srcAdress;
 		u32 dest = destAdress;
 		u8 wordSize = (transferType == DMA_16BIT) ? 2 : 4;
-		u8 srcIncrement=0, destIncrement=0;
+		u8 srcIncrement = 0, destIncrement = 0;
 		switch (srcAdrControl) {
 		case DMA_SRC_INCREMENT:
 			srcIncrement = wordSize;

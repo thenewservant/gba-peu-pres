@@ -40,7 +40,6 @@ public:
 	SDL_Window* getWindow();
 	void writePixel(u32 where, u32 what);
 	char* getFilePath();
-	
 };
 
 #endif

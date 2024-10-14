@@ -99,7 +99,7 @@ void Arm7tdmi::LDM(u32 op) {
 		}
 		u32 value = bus->read32(adress);
 		wReg(15, value);
-		
+
 	}
 	else { // LDM (2)
 		for (u8 i = 0; i < 15; i++) {
@@ -128,12 +128,12 @@ void Arm7tdmi::LDM(u32 op) {
 }
 
 u32 Arm7tdmi::getNewBase(u32 op) {
-		if (BIT_U(op)) {
-			return(rReg(RN(op)) + (countSetBits(op) * 4));
-		}
-		else {
-			return (rReg(RN(op)) - (countSetBits(op) * 4));
-		}
+	if (BIT_U(op)) {
+		return(rReg(RN(op)) + (countSetBits(op) * 4));
+	}
+	else {
+		return (rReg(RN(op)) - (countSetBits(op) * 4));
+	}
 }
 
 void Arm7tdmi::STM(u32 op) {
@@ -150,8 +150,8 @@ void Arm7tdmi::STM(u32 op) {
 	if ((op & BIT(22)) == 0) {//STM (1)
 		for (u8 i = 0; i < 15; i++) {
 			if (op & BIT(i)) {
-				if ((howManySoFar != 0) && i == RN(op) && BIT_W(op) ) {
-					bus->write32(adress,getNewBase(op));
+				if ((howManySoFar != 0) && i == RN(op) && BIT_W(op)) {
+					bus->write32(adress, getNewBase(op));
 				}
 				else {
 					bus->write32(adress, rReg(i));
@@ -165,10 +165,10 @@ void Arm7tdmi::STM(u32 op) {
 		for (u8 i = 0; i < 15; i++) {
 			if (op & BIT(i)) {
 				if (howManySoFar != 0 && i == RN(op) && BIT_W(op)) {
-					bus->write32(adress,getNewBase(op)); //UNCHECKED
+					bus->write32(adress, getNewBase(op)); //UNCHECKED
 				}
 				else {
-					bus->write32(adress, rRegMode(i, ARM7TDMI_MODE_USER)); 
+					bus->write32(adress, rRegMode(i, ARM7TDMI_MODE_USER));
 				}
 				adress += 4;
 				howManySoFar++;
@@ -176,7 +176,7 @@ void Arm7tdmi::STM(u32 op) {
 		}
 	}
 	if (op & BIT(15)) {
-		bus->write32(adress, rReg(15)+4); //TODO - be sure of +4
+		bus->write32(adress, rReg(15) + 4); //TODO - be sure of +4
 		adress += 4;
 	}
 	if (BIT_W(op)) {
@@ -226,7 +226,7 @@ bool Arm7tdmi::getAddressMode2(u32& op, u32& adress, const u32& rnVal, u32* thin
 				finalOffset = (rReg(RM(op)) >> 1) | ((cpsr & C) ? BIT(31) : 0);
 			}
 			break;
-		default: 
+		default:
 			break;
 		}
 	}
@@ -280,7 +280,7 @@ void Arm7tdmi::LDR(u32 op) { //LDR { , T, B, BT} (mode 2 or mode 2 P)
 	else { // LDR
 		u32 data = bus->read32(adress);
 		u32 final = data >> (8 * (adress & 0x3)) | data << (32 - (8 * (adress & 0x3)));
-		
+
 		if (RD(op) == 15) {
 			wReg(15, final & 0xFFFFFFFC);
 		}
